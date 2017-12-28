@@ -217,6 +217,6 @@ DIM SHARED idewx, idewy, idecustomfont, idecustomfontfile$, idecustomfontheight,
 DIM SHARED iderunmode
 'IDE MODULE SECTION END: shared data & definitions
 
-DIM SHARED IdeAndroidMenu
-DIM SHARED IdeAndroidStartScript AS STRING
-DIM SHARED IdeAndroidMakeScript AS STRING
+'DIM SHARED IdeAndroidMenu
+'DIM SHARED IdeAndroidStartScript AS STRING
+'DIM SHARED IdeAndroidMakeScript AS STRING

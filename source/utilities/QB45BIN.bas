@@ -121,6 +121,7 @@ DIM SHARED QBTxtFile AS INTEGER
 DIM SHARED QBBinProcedureName AS STRING
 DIM SHARED QBBinProcedureType AS STRING
 
+
 '----------------------------------------------------------------------------
 ' Variables used to store common token codes referenced in the code. Faster
 ' than doing GetHashedSymbol("tokenname") every time, and flexible since the
@@ -247,6 +248,7 @@ DATA SINGLE,SNG,!
 DATA DOUBLE,DBL,#
 DATA STRING,STR,$
 
+
 QB45TOKENS:
 '
 ' Most of the tokens for QB45 are defined here, along with the length of the
@@ -324,6 +326,7 @@ QB45TOKENS:
 '
 '
 '
+
 
 REM     Token   Length  Rule(s)
 REM     -------+-------+-------
@@ -554,6 +557,7 @@ DATA "PRINT {prnuse:2} {prnsmc|prncma|prnsrl:1} {expr:0}"
 DATA "PRINT {prnsmc|prncma|prnsrl:1} {expr:0}"
 DATA "PRINT {prnsmc|prncma|prnsrl|expr:0}"
 
+
 DATA 0x097,*,"{#tabi:0}'{#raw:2}"
 '       0x098           nothing?
 DATA 0x099,*,"$INCLUDE: '{#raw:0}"
@@ -591,6 +595,7 @@ DATA 0x0b3,2,"GET {2}, {1}, {0}"
 DATA 0x0b4,"GET {1}, {0}"
 DATA 0x0b5,2,"PUT {1}, {0}, {#action-verb}"
 
+
 DATA 0x0b6,"inputs::={inputs:1}, {0}|{0}"
 DATA 0x0b7,"IOCTL {1}, {0}"
 DATA 0x0b8,2,"KEY {#keymode}"
@@ -621,6 +626,8 @@ DATA 0x0cc,"OPEN {3}, {2}, {1}, {0}"
 DATA 0x0cd,"OPTION BASE 0"
 DATA 0x0ce,"OPTION BASE 1"
 DATA 0x0cf,"OUT {1}, {0}"
+
+
 
 DATA 0x0d0,"PAINT {2}{nularg:1}{nularg:0}"
 DATA "PAINT {2}, {nularg:1}, {0}"
@@ -861,9 +868,11 @@ FUNCTION DbgPlainText$ (Txt2$)
         TagParam$ = "$" + TagParam$
         IF TagTxt$ <> "" THEN TagParam$ = TagTxt$ + ":" + TagParam$
 
+
         Txt$ = LEFT$(Txt$, Marker - 1) + "{" + TagParam$ + "}" + MID$(Txt$, Marker + 8 + TagTxtLen)
 
     LOOP
+
 
     DO
         Marker = INSTR(Txt$, CHR$(&HD))
@@ -948,11 +957,13 @@ FUNCTION DelimitParseRule$ (ParseRule AS STRING, DefaultRuleID AS STRING)
 
     IF PipeOffset = 0 THEN PipeOffset = RuleEnd
 
+
     '----------------------------------------------------------------------------
     ' Extract the first rule and return if there is nothing left.
     '----------------------------------------------------------------------------
     FirstRule = LEFT$(ParseRule, PipeOffset - 1)
     ParseRule = MID$(ParseRule, PipeOffset + 1)
+
 
     '----------------------------------------------------------------------------
     ' If the first rule has a symbol on the left-hand side and the next rule
@@ -985,6 +996,7 @@ SUB DumpStack
         ID = CVI(LEFT$(STACK(i), 2))
         Txt$ = MID$(STACK(i), 3)
 
+
         DO
             Marker = INSTR(Txt$, CHR$(&HD))
             IF Marker = 0 THEN EXIT DO
@@ -1004,6 +1016,8 @@ SUB DumpStack
         TRIM = 76 - POS(0) - LEN(Txt$)
         IF TRIM < 0 THEN PRINT #5, LEFT$(Txt$, LEN(Txt$) + TRIM); " ..." ELSE PRINT #5, Txt$
         '80-60-19=1
+
+
 
     NEXT i
 END SUB
@@ -1058,6 +1072,7 @@ FUNCTION ExecuteParseRule% (RuleID AS INTEGER, ParseRule AS STRING)
                 OutTxt = OutTxt + MKL$(0) + MKI$(LEN(TagTxt)) + MKI$(TagParam) + TagTxt
                 RuleOffset = TagEnd
 
+
             CASE TagType.StackABS
 
                 IF NOT ValidateStackTag(RuleID, TagTxt, TagParam) THEN
@@ -1071,15 +1086,21 @@ FUNCTION ExecuteParseRule% (RuleID AS INTEGER, ParseRule AS STRING)
 
                 RuleOffset = TagEnd
 
+
             CASE TagType.Recursive
                 RuleTxt = LEFT$(RuleTxt, TagBegin - 1) + GetTaggedItem(TagTxt, TagParam) + MID$(RuleTxt, TagEnd)
                 RuleOffset = TagBegin
+
 
             CASE TagType.TokenData
                 OutTxt = OutTxt + GetTaggedItem(TagTxt, TagParam)
                 RuleOffset = TagEnd
 
+
         END SELECT
+
+
+
 
     LOOP WHILE RuleOffset <= LEN(RuleTxt)
 
@@ -1167,6 +1188,7 @@ END FUNCTION
 
 FUNCTION FetchIDList$ (DP AS INTEGER)
 
+
     TkLen = LEN(TOKEN)
     IF DP < 0 OR DP > TkLen - 2 THEN EXIT FUNCTION
 
@@ -1228,6 +1250,7 @@ FUNCTION FetchLiteralDBL$ (DP)
 
     Value# = CVD(MID$(TOKEN, DP + 3, 8))
     Txt$ = LTRIM$(STR$(Value#))
+
 
     ' If the single and double precision representations are equal, we will
     ' insert a # to indicate double precision.
@@ -1429,6 +1452,7 @@ FUNCTION GetHashedSymbol (ParseRuleSymbol AS STRING)
 
     GetHashedSymbol% = SymbolID% '+ UBOUND(ParseRules) + 1
 
+
 END FUNCTION
 
 '
@@ -1450,6 +1474,7 @@ FUNCTION GetID$ (SymTblOffset AS INTEGER)
         GetID$ = "0"
         EXIT FUNCTION
     END IF
+
 
     '----------------------------------------------------------------------------
     ' Make sure we can at least read the first 4 bytes
@@ -1491,6 +1516,7 @@ FUNCTION GetID$ (SymTblOffset AS INTEGER)
 
         GetID$ = ID$
     END IF
+
 
 END FUNCTION
 
@@ -1625,6 +1651,7 @@ FUNCTION GetTotalLines%
         TotalLines = TotalLines + (NumTotLines% AND &HFFFF&)
         IncludeLines = IncludeLines + (NumIncLines% AND &HFFFF&)
 
+
         SEEK #QBBinFile, LOC(QBBinFile) + 5
         Byte$ = CHR$(0)
         GET #QBBinFile, , Byte$
@@ -1720,6 +1747,7 @@ FUNCTION HashPJW% (Identifier AS STRING)
 
     DIM h AS LONG, g AS LONG, k AS LONG
 
+
     FOR i = 1 TO LEN(Identifier)
 
         k = ASC(MID$(Identifier, i, 1))
@@ -1800,6 +1828,7 @@ END FUNCTION
 
 FUNCTION LoadNextProcedure
 
+
     IF QBBinProcedureIndex = "" THEN
         QBBinCloseFile
         EXIT FUNCTION
@@ -1812,6 +1841,8 @@ FUNCTION LoadNextProcedure
     SEEK #QBBinFile, ProcedureLOC&
 
     DIM Junk AS STRING
+
+
 
     Junk = CHR$(0)
     GET #QBBinFile, , Junk
@@ -1868,6 +1899,7 @@ SUB LoadParseRules
 
     REDIM ParseRules(TokenLBound TO TokenUBound) AS STRING
 
+
     '----------------------------------------------------------------------------
     ' PASS 2: Generate token strings
     '----------------------------------------------------------------------------
@@ -1903,6 +1935,7 @@ END SUB
 ' an array declaration, for reasons best known to the QB45 dev team.
 '
 FUNCTION LookAhead
+
 
     IF IP < LBOUND(CODE) OR IP > UBOUND(CODE) THEN
         LookAhead = -1
@@ -1942,6 +1975,7 @@ FUNCTION ParseArrayDecl$
         RuleDeclID = GetHashedSymbol("decl")
         RuleDeclsID = GetHashedSymbol("decls")
     END IF
+
 
     nElmts = FetchINT(0)
     ID$ = FetchID(2) + GetTypeSuffix(HPARAM)
@@ -2069,6 +2103,7 @@ FUNCTION ParseProcDecl$ (DP AS INTEGER, Parenthesis AS INTEGER)
         CASE 3: ID$ = "DEF " + ID$ + TS$: QBBinProcedureType = "DEF"
     END SELECT
 
+
     '
     ' Process arguments list
     '
@@ -2097,6 +2132,7 @@ FUNCTION ParseProcDecl$ (DP AS INTEGER, Parenthesis AS INTEGER)
     NEXT ArgI
 
     IF Parenthesis OR Arguments$ <> "" THEN Arguments$ = " (" + Arguments$ + ")"
+
 
     '
     ' Process CDECL and ALIAS modifiers
@@ -2128,6 +2164,7 @@ FUNCTION ParseVarArgs$
         ArgV$ = STAG(ArgI) + ArgV$
 
     NEXT ArgI
+
 
     '----------------------------------------------------------------------------
     ' Trim trailing commas
@@ -2291,6 +2328,7 @@ SUB ProcessProcDefType
 
         FOR j = 1 TO 27
 
+
             BITSET = 0
 
             IF j < 27 THEN
@@ -2414,6 +2452,7 @@ SUB QBBinOpenFile (FileName AS STRING)
 END SUB
 
 FUNCTION QBBinReadLine$ (Meta AS LONG)
+
 
     STATIC NewProc
 
@@ -2562,6 +2601,7 @@ FUNCTION ReadParseRule (TokenID AS INTEGER, OpLen AS INTEGER, ParseRule AS STRIN
 
     END IF
 
+
     '------------------------------------------------------------------------
     ' Extract rule and return
     '------------------------------------------------------------------------
@@ -2613,6 +2653,7 @@ SUB ReadToArrayINT (FileNumber AS INTEGER, Array() AS INTEGER, ByteCount AS LONG
 
     NEXT i
 
+
 END SUB
 
 '
@@ -2634,6 +2675,7 @@ FUNCTION ReadToken
     PCODE = CODE(IP) AND &H3FF
     HPARAM = (CODE(IP) AND &HFC00&) \ 1024
     ReadToken = -1
+
 
     '----------------------------------------------------------------------------
     ' If the token is outside the known token range, we have a problem.
@@ -2748,6 +2790,8 @@ FUNCTION SetHashedSymbol% (ParseRuleSymbol AS STRING, SymbolID AS INTEGER)
     END IF
 
     'GetHashedSymbol% = SymbolID% + UBOUND(ParseRules) + 1
+
+
 
 END FUNCTION
 
@@ -2985,6 +3029,7 @@ FUNCTION SubstTagLINE$
     ' 0x0bd : LINE x-x,n,[b[f]],n
     ' 0x0be : LINE x-x, ,[b[f]],n
 
+
     IF BF$ <> "" THEN
 
         SELECT CASE LineForm
@@ -3133,9 +3178,11 @@ FUNCTION TokenizeTag (TagTxt AS STRING, TagParam AS INTEGER)
 
     END IF
 
+
 END FUNCTION
 
 FUNCTION ValidateStackTag (RuleID AS INTEGER, TagTxt AS STRING, OffsetSP AS INTEGER)
+
 
     DIM RuleSymbol AS STRING
 
@@ -3178,5 +3225,6 @@ FUNCTION ValidateStackTag (RuleID AS INTEGER, TagTxt AS STRING, OffsetSP AS INTE
     ELSE
         ValidateStackTag = -1
     END IF
+
 
 END FUNCTION

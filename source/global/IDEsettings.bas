@@ -4,7 +4,7 @@ DIM SHARED IDEBackgroundColor AS _UNSIGNED LONG
 DIM SHARED IDEBackgroundColor2 AS _UNSIGNED LONG, IDEBracketHighlightColor AS _UNSIGNED LONG
 DIM SHARED IDEKeywordColor AS _UNSIGNED LONG, IDENumbersColor AS _UNSIGNED LONG
 DIM SHARED IDE_AutoPosition AS _BYTE, IDE_TopPosition AS INTEGER, IDE_LeftPosition AS INTEGER
-DIM SHARED IDE_BypassAutoPosition AS _BYTE, idesortsubs AS _BYTE
+DIM SHARED IDE_BypassAutoPosition AS _BYTE
 DIM SHARED IDENormalCursorStart AS LONG, IDENormalCursorEnd AS LONG
 DIM SHARED IDE_Index$
 DIM SHARED LoadedIDESettings AS INTEGER
@@ -176,19 +176,6 @@ IF LoadedIDESettings = 0 THEN
     ELSE
         WriteConfigSetting "'[GENERAL SETTINGS]", "SaveExeWithSource", "FALSE"
         SaveExeWithSource = 0
-    END IF
-
-    result = ReadConfigSetting("IDE_SortSUBs", value$)
-    IF result THEN
-        IF value$ = "TRUE" OR VAL(value$) = -1 THEN
-            idesortsubs = -1
-        ELSE
-            idesortsubs = 0
-            WriteConfigSetting "'[IDE DISPLAY SETTINGS]", "IDE_SortSUBs", "FALSE"
-        END IF
-    ELSE
-        WriteConfigSetting "'[IDE DISPLAY SETTINGS]", "IDE_SortSUBs", "FALSE"
-        idesortsubs = 0
     END IF
 
     result = ReadConfigSetting("ShowErrorsImmediately", value$)
@@ -385,19 +372,19 @@ IF LoadedIDESettings = 0 THEN
     END IF
     Include_GDB_Debugging_Info = idedebuginfo
 
-    result = ReadConfigSetting("IDE_AndroidMenu", value$)
-    IdeAndroidMenu = ABS(VAL(value$))
-    IF UCASE$(value$) = "TRUE" THEN IdeAndroidMenu = 1
-    IF IdeAndroidMenu <> 1 THEN ideideandroidmenu = 0: WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMenu", "FALSE"
+    'result = ReadConfigSetting("IDE_AndroidMenu", value$)
+    'IdeAndroidMenu = ABS(VAL(value$))
+    'IF UCASE$(value$) = "TRUE" THEN IdeAndroidMenu = 1
+    'IF IdeAndroidMenu <> 1 THEN ideideandroidmenu = 0: WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMenu", "FALSE"
 
-    result = ReadConfigSetting("IDE_AndroidStartScript$", value$)
-    IdeAndroidStartScript$ = value$ 'no default values in case this fails??
-    IF result = 0 THEN WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidStartScript$", "programs\android\start_android.bat"
+    'result = ReadConfigSetting("IDE_AndroidStartScript$", value$)
+    'IdeAndroidStartScript$ = value$ 'no default values in case this fails??
+    'IF result = 0 THEN WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidStartScript$", "programs\android\start_android.bat"
 
-    result = ReadConfigSetting("IDE_AndroidMakeScript$", value$)
-    IdeAndroidMakeScript$ = value$ 'no default values in case this fails??
-    IF result = 0 THEN WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMakeScript$", "programs\android\start_android.bat"
-    IF result = 0 THEN WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMakeScript$", "programs\android\start_android.bat"
+    'result = ReadConfigSetting("IDE_AndroidMakeScript$", value$)
+    'IdeAndroidMakeScript$ = value$ 'no default values in case this fails??
+    'IF result = 0 THEN WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMakeScript$", "programs\android\start_android.bat"
+    'IF result = 0 THEN WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMakeScript$", "programs\android\start_android.bat"
 
     GOTO SkipCheckConfigFileExists
     CheckConfigFileExists:
@@ -405,9 +392,9 @@ IF LoadedIDESettings = 0 THEN
         'There's no config file in the folder.  Let's make one for future use.
         IF ConfigFile$ = "internal/config.txt" THEN 'It's the main file which we use for default/global settings
             WriteConfigSetting "'[CONFIG VERSION]", "ConfigVersion", "1"
-            WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMakeScript$", "programs\android\start_android.bat"
-            WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidStartScript$", "programs\android\start_android.bat"
-            WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMenu", "FALSE"
+            'WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMakeScript$", "programs\android\start_android.bat"
+            'WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidStartScript$", "programs\android\start_android.bat"
+            'WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMenu", "FALSE"
             IF INSTR(_OS$, "WIN") THEN WriteConfigSetting "'[GENERAL SETTINGS]", "AllowIndependentSettings", "FALSE"
             WriteConfigSetting "'[GENERAL SETTINGS]", "BackupSize", "100 'in MB"
             WriteConfigSetting "'[GENERAL SETTINGS]", "DebugInfo", "FALSE 'INTERNAL VARIABLE USE ONLY!! DO NOT MANUALLY CHANGE!"

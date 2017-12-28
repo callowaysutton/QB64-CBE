@@ -92,17 +92,9 @@ void sub__glrender (int32 method)
     }
 }
 
-
 #ifndef QB64_GUI //begin stubs
 
-
-
-
 #else //end stubs
-
-
-
-
 
 void GLUT_RESHAPE_FUNC (int width, int height)
 {
@@ -119,28 +111,14 @@ void GLUT_RESHAPE_FUNC (int width, int height)
     //   within GLUT_RESHAPE_FUNC***
 }
 
-
-
-
 //displaycall is the window of time to update our display
-
 
 #ifdef DEPENDENCY_GL
     extern void SUB__GL();
 #endif
 
-
-
-
-
-
-
-
-
 #define GL_BGR 0x80E0
 #define GL_BGRA 0x80E1
-
-
 
 /* reference
    struct hardware_img_struct{
@@ -152,8 +130,6 @@ void GLUT_RESHAPE_FUNC (int width, int height)
    }
    list *hardware_img_handles=NULL;
 */
-
-
 
 void free_hardware_img (int32 handle, int32 caller_id)
 {
@@ -192,7 +168,6 @@ void free_hardware_img (int32 handle, int32 caller_id)
 
 }
 
-
 /*
   int32 new_hardware_frame(int32 x, int32 y){
   int32 handle=new_hardware_frame_handle();
@@ -206,9 +181,6 @@ void free_hardware_img (int32 handle, int32 caller_id)
   glDeleteTextures(1, &texture);
   }
 */
-
-
-
 
 void prepare_environment_2d() //called prior to rendering 2D content
 {
@@ -332,7 +304,6 @@ void prepare_environment_2d() //called prior to rendering 2D content
 
 }//prepare_environment_2d
 
-
 int32 environment_2d__get_window_x1_coord (int32 x)
 {
     return qbr_float_to_long ( ( (float) x) * environment_2d__screen_x_scale) + environment_2d__screen_x1;
@@ -380,44 +351,6 @@ environment_2d__window_rect_struct *environment_2d__screen_to_window_rect (int32
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 float *hardware_buffer_vertices = (float *) malloc (sizeof (float) * 1);
 int32 hardware_buffer_vertices_max = 1;
 int32 hardware_buffer_vertices_count = 0;
@@ -450,9 +383,6 @@ void hardware_buffer_flush()
     }
 }
 
-
-
-
 void set_smooth (int32 new_mode_shrunk, int32 new_mode_stretched)
 {
     static int32 current_mode_shrunk;
@@ -472,7 +402,7 @@ void set_smooth (int32 new_mode_shrunk, int32 new_mode_stretched)
 
         } else {
             glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                             GL_NEAREST); //Use _MAPTRIANGLE's _SMOOTHSHRUNK to apply linear filtering here
+                             GL_NEAREST);//Use _MAPTRIANGLE's _SMOOTHSHRUNK to apply linear filtering here
         }
     }
 
@@ -490,7 +420,7 @@ void set_smooth (int32 new_mode_shrunk, int32 new_mode_stretched)
     }
 
     if (new_mode_stretched == SMOOTH_MODE__SMOOTH) {
-        glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
 
     render_state.source->smooth_shrunk = new_mode_shrunk;
@@ -680,9 +610,6 @@ void set_view (int32 new_mode) //set view can only be called after the correct d
             glCullFace (GL_BACK);
         }
 
-
-
-
         if (render_state.dest_handle == 0) {
             static int32 dst_w, dst_h;
             dst_w = environment__window_width;
@@ -699,7 +626,6 @@ void set_view (int32 new_mode) //set view can only be called after the correct d
             glScalef (1, -1, 1); //flip vertically
             glTranslatef (0, -dst_h, 0); //move to new vertical position
             glViewport (0, 0, dst_w, dst_h);
-
 
         } else {
             static hardware_img_struct *hardware_img;
@@ -784,7 +710,6 @@ void set_view (int32 new_mode) //set view can only be called after the correct d
 
     render_state.view_mode = new_mode;
 }//change_render_state
-
 
 void set_render_source (int32 new_handle)
 {
@@ -884,32 +809,6 @@ void set_render_dest (int32 new_handle)
     render_state.dest_handle = new_handle;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void hardware_img_put (int32 dst_x1, int32 dst_y1, int32 dst_x2, int32 dst_y2,
                        int32 src_img, int32 dst_img,
                        int32 src_x1, int32 src_y1, int32 src_x2, int32 src_y2,
@@ -945,10 +844,7 @@ void hardware_img_put (int32 dst_x1, int32 dst_y1, int32 dst_x2, int32 dst_y2,
 
     set_render_dest (dst_img);
 
-
     set_view (VIEW_MODE__2D);
-
-
 
     if (dst_img) {
         //static hardware_img_struct* dst_hardware_img;
@@ -970,8 +866,6 @@ void hardware_img_put (int32 dst_x1, int32 dst_y1, int32 dst_x2, int32 dst_y2,
     src_hardware_img = (hardware_img_struct *) list_get (hardware_img_handles, src_img);
     src_h = src_hardware_img->h;
     src_w = src_hardware_img->w;
-
-
 
     if (smooth) {
         set_smooth (SMOOTH_MODE__SMOOTH, SMOOTH_MODE__SMOOTH);
@@ -1061,14 +955,9 @@ void hardware_img_put (int32 dst_x1, int32 dst_y1, int32 dst_x2, int32 dst_y2,
     hardware_buffer_texcoords[hardware_buffer_texcoords_count++] = x2f;
     hardware_buffer_texcoords[hardware_buffer_texcoords_count++] = y2f;
 
-
     //hardware_buffer_flush(); //uncomment for debugging only
 
 }
-
-
-
-
 
 void hardware_img_tri2d (float dst_x1, float dst_y1, float dst_x2, float dst_y2, float dst_x3, float dst_y3,
                          int32 src_img, int32 dst_img,
@@ -1351,7 +1240,6 @@ void hardware_img_tri2d (float dst_x1, float dst_y1, float dst_x2, float dst_y2,
     y2f = ( (float) src_y2 + 0.5f) / (float) src_h;
     y3f = ( (float) src_y3 + 0.5f) / (float) src_h;
 
-
     //expand buffers if necessary
     if ( (hardware_buffer_vertices_count + 9) > hardware_buffer_vertices_max) {
         hardware_buffer_vertices_max = hardware_buffer_vertices_max * 2 + 9;
@@ -1363,7 +1251,6 @@ void hardware_img_tri2d (float dst_x1, float dst_y1, float dst_x2, float dst_y2,
         hardware_buffer_texcoords = (float *) realloc (hardware_buffer_texcoords,
                                     hardware_buffer_texcoords_max * sizeof (float) );
     }
-
 
 
     //clockwise
@@ -1521,57 +1408,6 @@ void hardware_img_tri3d (float dst_x1, float dst_y1, float dst_z1, float dst_x2,
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 static int32 software_screen_hardware_frame = 0;
 
 static int32 in_GLUT_DISPLAY_REQUEST = 0;
@@ -1634,7 +1470,6 @@ void GLUT_DISPLAY_REQUEST()
         display_frame[i].state = DISPLAY_FRAME_STATE__DISPLAYING;
     }
 
-
     static int64 order;
     order = last_hardware_display_frame_order;
 
@@ -1670,26 +1505,11 @@ void GLUT_DISPLAY_REQUEST()
 
     first_command_prev_order = 0;
 
-
     //set environment variables
     environment_2d__screen_width = display_frame[i].w;
     environment_2d__screen_height = display_frame[i].h;
 
-
-
-
-
-
-
-
-
-
-
     os_resize_event = 0; //turn off flag which forces a render to take place even if no content has changed
-
-
-
-
 
     if ( (full_screen == 0) && (full_screen_set == -1) ) { //not in (or attempting to enter) full screen
 
@@ -1702,12 +1522,9 @@ void GLUT_DISPLAY_REQUEST()
             framesize_changed = 1;
         }
 
-
         resize_auto_ideal_aspect = (float) display_frame[i].w / (float) display_frame[i].h;
         resize_snapback_x = display_required_x;
         resize_snapback_y = display_required_y;
-
-
 
         if (resize_auto) {
             //maintain aspect ratio
@@ -1750,8 +1567,6 @@ void GLUT_DISPLAY_REQUEST()
             }
         }//resize_auto
 
-
-
         if ( (display_required_x != display_x) || (display_required_y != display_y) ) {
             if (resize_snapback || framesize_changed) {
                 glutReshapeWindow (display_required_x, display_required_y);
@@ -1759,8 +1574,6 @@ void GLUT_DISPLAY_REQUEST()
                 resize_pending = 1;
             }
         }
-
-
 
     auto_resized:
         ;
@@ -1791,11 +1604,6 @@ void GLUT_DISPLAY_REQUEST()
             }//enter full screen
         }//full_screen_set check
     }//size pending check
-
-
-
-
-
 
     //This code is deprecated but kept for reference purposes
     // 1) It was found to be unstable
@@ -1864,88 +1672,13 @@ void GLUT_DISPLAY_REQUEST()
       }//size pending check
     */
 
-
-
-
-
-
-
     //set window environment variables
     environment__window_width = display_x;
     environment__window_height = display_y;
 
     prepare_environment_2d();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     //need a few variables here
-
-
-
 
     static int32 first_hardware_layer_rendered;
     static int32 first_hardware_layer_command;
@@ -1994,7 +1727,6 @@ void GLUT_DISPLAY_REQUEST()
 #endif //DEPENDENCY_GL
             }//level==displayorder_glrender
 
-
             if (level == displayorder_screen) { //defaults to 1
 
                 if (software_screen_hardware_frame != 0 && i != last_i) {
@@ -2023,8 +1755,6 @@ void GLUT_DISPLAY_REQUEST()
                     use_alpha = 1;
                 }
 
-
-
                 //put the software screen
                 hardware_img_put (0, 0, environment_2d__screen_width - 1, environment_2d__screen_height - 1,
                                   software_screen_hardware_frame, 0,
@@ -2032,9 +1762,7 @@ void GLUT_DISPLAY_REQUEST()
                                   use_alpha, environment_2d__screen_smooth);
                 hardware_buffer_flush();
 
-
             }//level==displayorder_screen
-
 
             if (level == displayorder_hardware || level == displayorder_hardware1) {
 
@@ -2082,8 +1810,7 @@ void GLUT_DISPLAY_REQUEST()
                         //process/skip pending hardware puts before this frame's order value
                         while (command) {
                             hardware_graphics_command_struct *hgc = (hardware_graphics_command_struct *) list_get (
-                                    hardware_graphics_command_handles,
-                                    command);
+                                    hardware_graphics_command_handles, command);
 
                             if (hgc->order < order) {
 
@@ -2148,7 +1875,6 @@ void GLUT_DISPLAY_REQUEST()
 
                     }//first_hardware_command
 
-
                     first_hardware_layer_command = command;
 
                 } else {
@@ -2158,14 +1884,12 @@ void GLUT_DISPLAY_REQUEST()
                 //process pending hardware puts for this frame's order value
                 while (command) {
                     hardware_graphics_command_struct *hgc = (hardware_graphics_command_struct *) list_get (
-                            hardware_graphics_command_handles,
-                            command);
+                            hardware_graphics_command_handles, command);
 
                     if (hgc == NULL) {
 
                         hardware_graphics_command_struct *hgcx = (hardware_graphics_command_struct *) list_get (
-                                    hardware_graphics_command_handles,
-                                    next_hardware_command_to_remove);
+                                    hardware_graphics_command_handles, next_hardware_command_to_remove);
                         alert (order);
                         alert (hgcx->order);
                         alert (command);
@@ -2237,7 +1961,6 @@ void GLUT_DISPLAY_REQUEST()
                         goto finished_all_commands_for_current_frame;
                     }
 
-
                 }
 
             finished_all_commands_for_current_frame:
@@ -2245,11 +1968,8 @@ void GLUT_DISPLAY_REQUEST()
 
                 first_hardware_layer_rendered = 1;
 
-
-
                 hardware_buffer_flush();
             }//level==displayorder_hardware||level==displayorder_hardware1
-
 
             if (level == 5) {
 
@@ -2297,7 +2017,6 @@ void GLUT_DISPLAY_REQUEST()
 
             }//level==5
 
-
         }//level!=0
     }//level loop
 
@@ -2320,8 +2039,6 @@ void GLUT_DISPLAY_REQUEST()
 
     last_rendered_hardware_display_frame_order = last_hardware_display_frame_order;
 
-
-
     if (suspend_program) { //Otherwise skipped SUB__GL content becomes "invisible"
         //...
     } else {
@@ -2331,10 +2048,6 @@ void GLUT_DISPLAY_REQUEST()
     in_GLUT_DISPLAY_REQUEST = 0;
 
 }//GLUT_DISPLAY_REQUEST
-
-
-
-
 
 void GLUT_MouseButton_Up (int button, int x, int y)
 {
@@ -2610,7 +2323,6 @@ void GLUT_PASSIVEMOTION_FUNC (int x, int y)
     GLUT_MOTION_FUNC (x, y);
 }
 
-
 void GLUT_MOUSEWHEEL_FUNC (int wheel, int direction, int x, int y)
 {
 #ifdef QB64_GLUT
@@ -2632,14 +2344,5 @@ void GLUT_MOUSEWHEEL_FUNC (int wheel, int direction, int x, int y)
 
 #endif
 }
-
-
-
-
-
-
-
-
-
 
 #endif

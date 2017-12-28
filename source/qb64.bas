@@ -21,9 +21,6 @@ DEFLNG A-Z
 'INCLUDE:'virtual_keyboard\virtual_keyboard_global.bas'
 DEFLNG A-Z
 
-'$INCLUDE:'android\android_global.bas'
-DEFLNG A-Z
-
 '-------- Optional IDE Component (1/2) --------
 '$INCLUDE:'ide\ide_global.bas'
 
@@ -32,10 +29,9 @@ REDIM SHARED PL(0) AS INTEGER 'Priority Level
 DIM SHARED QuickReturn AS INTEGER
 Set_OrderOfOperations 'This will also make certain our directories are valid, and if not make them.
 
-DIM SHARED MakeAndroid 'build an Android project (refer to SUB UseAndroid)
-DIM SHARED VirtualKeyboardState
-DIM SHARED DesiredVirtualKeyboardState
-DIM SHARED RecompileAttemptsForVirtualKeyboardState
+'DIM SHARED VirtualKeyboardState
+'DIM SHARED DesiredVirtualKeyboardState
+'DIM SHARED RecompileAttemptsForVirtualKeyboardState
 
 REDIM EveryCaseSet(100), SelectCaseCounter AS _UNSIGNED LONG
 DIM ExecLevel(255), ExecCounter AS INTEGER
@@ -102,7 +98,7 @@ OS_BITS = 64: IF INSTR(_OS$, "[32BIT]") THEN OS_BITS = 32
 
 IF OS_BITS = 32 THEN _TITLE "QB64 x32" ELSE _TITLE "QB64 x64"
 
-DIM SHARED ConsoleMode, No_C_Compile_Mode, Cloud, NoIDEMode
+DIM SHARED ConsoleMode, No_C_Compile_Mode, NoIDEMode
 DIM SHARED CMDLineFile AS STRING
 
 DIM SHARED ExeIconSet AS LONG
@@ -633,7 +629,7 @@ TYPE idstruct
     sfid AS LONG 'id number of variable's parent sub/function
     sfarg AS INTEGER 'argument/parameter # within call (1=first)
 
-    NoCloud AS INTEGER
+'    NoCloud AS INTEGER
 END TYPE
 
 DIM SHARED id AS idstruct
@@ -956,131 +952,6 @@ IF C = 9 THEN 'run
         idecompiled = 1
     END IF
 
-    IF MakeAndroid THEN
-
-        CreateAndroidProject file$
-
-        'generate program name
-
-        'pf$ = "programs\android\" + file$
-
-        'IF _DIREXISTS(pf$) = 0 THEN
-        '    'once only setup
-
-        '    COLOR 7, 1: LOCATE idewy - 3, 2: PRINT SPACE$(idewx - 2);: LOCATE idewy - 2, 2: PRINT SPACE$(idewx - 2);: LOCATE idewy - 1, 2: PRINT SPACE$(idewx - 2); 'clear status window
-        '    LOCATE idewy - 3, 2: PRINT "Initializing project [programs\android\" + file$ + "]...";
-        '    PCOPY 3, 0
-
-        '    MKDIR pf$
-        '    SHELL _HIDE "cmd /c xcopy /e programs\android\project_template\*.* " + pf$
-        '    SHELL _HIDE "cmd /c xcopy /e programs\android\eclipse_template\*.* " + pf$
-
-        '    'modify templates
-        '    fr_fh = FREEFILE
-        '    OPEN pf$ + "\AndroidManifest.xml" FOR BINARY AS #fr_fh
-        '    a$ = SPACE$(LOF(fr_fh))
-        '    GET #fr_fh, , a$
-        '    CLOSE fr_fh
-        '    OPEN pf$ + "\AndroidManifest.xml" FOR OUTPUT AS #fr_fh
-        '    ss$ = CHR$(34) + "com.example.native_activity" + CHR$(34)
-        '    file_namespace$ = LCASE$(file$)
-        '    a = ASC(file_namespace$)
-        '    IF a >= 48 AND a <= 57 THEN file_namespace$ = "ns_" + file_namespace$
-        '    i = INSTR(a$, ss$)
-        '    a$ = LEFT$(a$, i - 1) + CHR$(34) + "com.example." + file_namespace$ + CHR$(34) + RIGHT$(a$, LEN(a$) - i - LEN(ss$) + 1)
-        '    PRINT #fr_fh, a$;
-        '    CLOSE fr_fh
-
-        '    fr_fh = FREEFILE
-        '    OPEN pf$ + "\res\values\strings.xml" FOR BINARY AS #fr_fh
-        '    a$ = SPACE$(LOF(fr_fh))
-        '    GET #fr_fh, , a$
-        '    CLOSE fr_fh
-        '    OPEN pf$ + "\res\values\strings.xml" FOR OUTPUT AS #fr_fh
-        '    ss$ = ">NativeActivity<"
-        '    i = INSTR(a$, ss$)
-        '    a$ = LEFT$(a$, i - 1) + ">" + file$ + "<" + RIGHT$(a$, LEN(a$) - i - LEN(ss$) + 1)
-        '    PRINT #fr_fh, a$;
-        '    CLOSE fr_fh
-
-        '    fr_fh = FREEFILE
-        '    OPEN pf$ + "\.project" FOR BINARY AS #fr_fh
-        '    a$ = SPACE$(LOF(fr_fh))
-        '    GET #fr_fh, , a$
-        '    CLOSE fr_fh
-        '    OPEN pf$ + "\.project" FOR OUTPUT AS #fr_fh
-        '    ss$ = "<name>NativeActivity</name>"
-        '    i = INSTR(a$, ss$)
-        '    a$ = LEFT$(a$, i - 1) + "<name>" + file$ + "</name>" + RIGHT$(a$, LEN(a$) - i - LEN(ss$) + 1)
-        '    PRINT #fr_fh, a$;
-        '    CLOSE fr_fh
-
-        '    IF _DIREXISTS(pf$ + "\jni\temp") = 0 THEN MKDIR pf$ + "\jni\temp"
-
-        '    IF _DIREXISTS(pf$ + "\jni\c") = 0 THEN MKDIR pf$ + "\jni\c"
-
-        '    'c
-        '    ex_fh = FREEFILE
-        '    OPEN "internal\temp\xcopy_exclude.txt" FOR OUTPUT AS #ex_fh
-        '    PRINT #ex_fh, "c_compiler\"
-        '    CLOSE ex_fh
-        '    SHELL _HIDE "cmd /c xcopy /e /EXCLUDE:internal\temp\xcopy_exclude.txt internal\c\*.* " + pf$ + "\jni\c"
-
-        'ELSE
-
-        '    COLOR 7, 1: LOCATE idewy - 3, 2: PRINT SPACE$(idewx - 2);: LOCATE idewy - 2, 2: PRINT SPACE$(idewx - 2);: LOCATE idewy - 1, 2: PRINT SPACE$(idewx - 2); 'clear status window
-        '    LOCATE idewy - 3, 2: PRINT "Updating project [programs\android\" + file$ + "]...";
-        '    PCOPY 3, 0
-
-        'END IF
-
-        ''temp
-        'SHELL _HIDE "cmd /c del " + pf$ + "\jni\temp\*.txt"
-        'SHELL _HIDE "cmd /c copy " + tmpdir$ + "*.txt " + pf$ + "\jni\temp"
-
-        ''touch main.cpp (for ndk)
-        'fr_fh = FREEFILE
-        'OPEN pf$ + "\jni\main.cpp" FOR BINARY AS #fr_fh
-        'a$ = SPACE$(LOF(fr_fh))
-        'GET #fr_fh, , a$
-        'CLOSE fr_fh
-        'OPEN pf$ + "\jni\main.cpp" FOR OUTPUT AS #fr_fh
-        'IF ASC(a$, LEN(a$)) <> 32 THEN a$ = a$ + " " ELSE a$ = LEFT$(a$, LEN(a$) - 1)
-        'PRINT #fr_fh, a$;
-        'CLOSE fr_fh
-
-        ''note: .bat files affect the directory they are called from
-        'CHDIR pf$
-        'IF INSTR(IdeAndroidStartScript$, ":") THEN
-        '    SHELL _HIDE IdeAndroidMakeScript$
-        'ELSE
-        '    SHELL _HIDE "..\..\..\" + IdeAndroidMakeScript$
-        'END IF
-        'CHDIR "..\..\.."
-
-        '''touch manifest (for Eclipse)
-        ''fr_fh = FREEFILE
-        ''OPEN pf$ + "\AndroidManifest.xml" FOR BINARY AS #fr_fh
-        ''a$ = SPACE$(LOF(fr_fh))
-        ''GET #fr_fh, , a$
-        ''CLOSE fr_fh
-        ''OPEN pf$ + "\AndroidManifest.xml" FOR OUTPUT AS #fr_fh
-        ''IF ASC(a$, LEN(a$)) <> 32 THEN a$ = a$ + " " ELSE a$ = LEFT$(a$, LEN(a$) - 1)
-        ''PRINT #fr_fh, a$;
-        ''CLOSE fr_fh
-        ''^^^^above inconsistent^^^^
-
-        ''clear the gen folder (for Eclipse)
-        'IF _DIREXISTS(pf$ + "\gen") THEN
-        '    SHELL _HIDE "cmd /c rmdir /s /q " + pf$ + "\gen"
-        '    SHELL _HIDE "cmd /c md " + pf$ + "\gen"
-        'END IF
-
-        sendc$ = CHR$(11) '".EXE file created" aka "Android project created"
-        GOTO sendcommand
-
-    END IF
-
     IF iderunmode = 2 THEN
         sendc$ = CHR$(11) '.EXE file created
         GOTO sendcommand
@@ -1218,18 +1089,17 @@ sflistn = -1 'no entries
 SubNameLabels = sp 'QB64 will perform a repass to resolve sub names used as labels
 
 DesiredVirtualKeyboardState = 0
-IF MakeAndroid THEN DesiredVirtualKeyboardState = 1
 RecompileAttemptsForVirtualKeyboardState = 0
 
 recompile:
 
 'For installing Android assets
-REDIM SHARED installFiles(0) AS STRING
-REDIM SHARED installFilesSourceLocation(0) AS STRING
-REDIM SHARED installFilesIn(0) AS STRING
-REDIM SHARED installFolder(0) AS STRING
-REDIM SHARED installFolderSourceLocation(0) AS STRING
-REDIM SHARED installFolderIn(0) AS STRING
+'REDIM SHARED installFiles(0) AS STRING
+'REDIM SHARED installFilesSourceLocation(0) AS STRING
+'REDIM SHARED installFilesIn(0) AS STRING
+'REDIM SHARED installFolder(0) AS STRING
+'REDIM SHARED installFolderSourceLocation(0) AS STRING
+'REDIM SHARED installFolderIn(0) AS STRING
 
 'move desired state into active state
 VirtualKeyboardState = DesiredVirtualKeyboardState
@@ -1469,7 +1339,7 @@ UserDefineCount = 6
 'import _MEM type
 ptrsz = OS_BITS \ 8
 
-IF Cloud = 0 THEN
+'IF Cloud = 0 THEN
     lasttype = lasttype + 1: i = lasttype
     udtxname(i) = "_MEM"
     udtxcname(i) = "_MEM"
@@ -1533,7 +1403,7 @@ IF Cloud = 0 THEN
     udtenext(i3) = i2
     udtenext(i2) = 0
 
-END IF 'cloud = 0
+'END IF 'cloud = 0
 
 'begin compilation
 FOR closeall = 1 TO 255: CLOSE closeall: NEXT
@@ -1561,7 +1431,7 @@ END IF
 reginternal
 
 OPEN tmpdir$ + "global.txt" FOR OUTPUT AS #18
-IF Cloud THEN PRINT #18, "int32 cloud_app=1;" ELSE PRINT #18, "int32 cloud_app=0;"
+'IF Cloud THEN PRINT #18, "int32 cloud_app=1;" ELSE PRINT #18, "int32 cloud_app=0;"
 
 IF iderecompile THEN
     iderecompile = 0
@@ -2303,7 +2173,7 @@ DO
                         'declare library
                         IF firstelement$ = "DECLARE" THEN
                             IF secondelement$ = "LIBRARY" OR secondelement$ = "DYNAMIC" OR secondelement$ = "CUSTOMTYPE" OR secondelement$ = "STATIC" THEN
-                                IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'                                IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
                                 declaringlibrary = 1
                                 indirectlibrary = 0
                                 IF secondelement$ = "CUSTOMTYPE" OR secondelement$ = "DYNAMIC" THEN indirectlibrary = 1
@@ -2967,8 +2837,8 @@ DO
         '$INSTALLFILES [src_relative_to_bas_path_like_include]  [IN dst_relative_to_application_root]
         '$INSTALLFOLDER  [src_relative_to_bas_path_like_include]  [IN dst_relative_to_application_root]
         metacommand$ = ""
-        IF INSTR(a3u$, "$INSTALLFILES ") = 1 THEN metacommand$ = "$INSTALLFILES"
-        IF INSTR(a3u$, "$INSTALLFOLDER ") = 1 THEN metacommand$ = "$INSTALLFOLDER"
+        'IF INSTR(a3u$, "$INSTALLFILES ") = 1 THEN metacommand$ = "$INSTALLFILES"
+        'IF INSTR(a3u$, "$INSTALLFOLDER ") = 1 THEN metacommand$ = "$INSTALLFOLDER"
         metacommandHint$ = "Expected " + CHR$(34) + "source-location" + CHR$(34) + " [IN " + CHR$(34) + "dest-location" + CHR$(34) + "]"
         IF metacommand$ <> "" THEN
             sourceContent$ = ""
@@ -3027,17 +2897,17 @@ DO
             END IF
             sourceLocation$ = p$
 
-            IF metacommand$ = "$INSTALLFILES" THEN
-                AryAddStr installFiles(), sourceContent$
-                AryAddStr installFilesSourceLocation(), sourceLocation$
-                AryAddStr installFilesIn(), destLocation$
-            ELSE
-                AryAddStr installFolder(), sourceContent$
-                AryAddStr installFolderSourceLocation(), sourceLocation$
-                AryAddStr installFolderIn(), destLocation$
-            END IF
+            'IF metacommand$ = "$INSTALLFILES" THEN
+            '    AryAddStr installFiles(), sourceContent$
+            '    AryAddStr installFilesSourceLocation(), sourceLocation$
+            '    AryAddStr installFilesIn(), destLocation$
+            'ELSE
+            '    AryAddStr installFolder(), sourceContent$
+            '    AryAddStr installFolderSourceLocation(), sourceLocation$
+            '    AryAddStr installFolderIn(), destLocation$
+            'END IF
 
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+            'IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = l$
             GOTO finishednonexec
         END IF
@@ -3060,7 +2930,7 @@ DO
         END IF
 
         IF a3u$ = "$CHECKING:OFF" THEN
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$CHECKING:OFF"
             NoChecks = 1
             GOTO finishednonexec
@@ -3073,7 +2943,7 @@ DO
         END IF
 
         IF a3u$ = "$CONSOLE" THEN
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$CONSOLE"
             Console = 1
             GOTO finishednonexec
@@ -3092,33 +2962,33 @@ DO
             GOTO finishednonexec
         END IF
         IF a3u$ = "$SCREENSHOW" THEN
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$SCREENSHOW"
             ScreenHide = 0
             GOTO finishednonexec
         END IF
 
         IF a3u$ = "$RESIZE:OFF" THEN
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$RESIZE:OFF"
             Resize = 0: Resize_Scale = 0
             GOTO finishednonexec
         END IF
         IF a3u$ = "$RESIZE:ON" THEN
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$RESIZE:ON"
             Resize = 1: Resize_Scale = 0
             GOTO finishednonexec
         END IF
 
         IF a3u$ = "$RESIZE:STRETCH" THEN
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$RESIZE:STRETCH"
             Resize = 1: Resize_Scale = 1
             GOTO finishednonexec
         END IF
         IF a3u$ = "$RESIZE:SMOOTH" THEN
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$RESIZE:SMOOTH"
             Resize = 1: Resize_Scale = 2
             GOTO finishednonexec
@@ -8040,7 +7910,7 @@ DO
                 END IF
             ELSE
                 'assume it's a string containing a filename to execute
-                IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'                IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
                 e$ = evaluatetotyp(e$, ISSTRING)
                 IF Error_Happened THEN GOTO errmes
                 PRINT #12, "sub_run(" + e$ + ");"
@@ -8334,7 +8204,7 @@ DO
     '(_MEM) _MEMPUT _MEMGET
     IF n >= 1 THEN
         IF firstelement$ = "_MEMGET" THEN
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             'get expressions
             e$ = ""
             B = 0
@@ -8429,7 +8299,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "_MEMPUT" THEN
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             'get expressions
             typ$ = ""
             e$ = ""
@@ -8562,7 +8432,7 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "_MEMFILL" THEN
-            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             'get expressions
             typ$ = ""
             e$ = ""
@@ -8902,9 +8772,9 @@ DO
                     END IF
                 END IF
 
-                IF id.NoCloud THEN
-                    IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
-                END IF
+'                IF id.NoCloud THEN
+'                    IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'                END IF
 
                 'generate error on driect _GL call
                 IF firstelement$ = "_GL" THEN a$ = "Cannot call SUB _GL directly": GOTO errmes
@@ -11253,7 +11123,7 @@ x = INSTR(ver$, "."): IF x THEN ASC(ver$, x) = 95 'change "." to "_"
 libs$ = ""
 
 IF DEPENDENCY(DEPENDENCY_GL) THEN
-    IF Cloud THEN a$ = "GL not supported on QLOUD": GOTO errmes '***NOCLOUD***
+'    IF Cloud THEN a$ = "GL not supported on QLOUD": GOTO errmes '***NOCLOUD***
     defines$ = defines$ + defines_header$ + "DEPENDENCY_GL"
 END IF
 
@@ -11405,10 +11275,10 @@ IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN
     IF mac THEN defines$ = defines$ + " -framework AudioUnit -framework AudioToolbox "
 END IF
 
-IF MakeAndroid THEN
+'IF MakeAndroid THEN
 
-    GOTO Skip_Build
-END IF
+'    GOTO Skip_Build
+'END IF
 
 IF os$ = "WIN" THEN
 
@@ -15047,9 +14917,9 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
     skipargnumchk:
 
-    IF id2.NoCloud THEN
-        IF Cloud THEN Give_Error "Feature not supported on QLOUD" '***NOCLOUD***
-    END IF
+'    IF id2.NoCloud THEN
+'        IF Cloud THEN Give_Error "Feature not supported on QLOUD" '***NOCLOUD***
+'    END IF
 
     r$ = RTRIM$(id2.callname) + "("
 
@@ -19027,7 +18897,7 @@ FUNCTION lineformat$ (a$)
             END IF
 
             IF MID$(c$, x, 8) = "$INCLUDE" THEN
-                IF Cloud THEN Give_Error "Feature not supported on QLOUD": EXIT FUNCTION
+'                IF Cloud THEN Give_Error "Feature not supported on QLOUD": EXIT FUNCTION
                 'note: INCLUDE adds the file AFTER the line it is on has been processed
                 'note: No other metacommands can follow the INCLUDE metacommand!
                 'skip spaces until :
@@ -20385,11 +20255,11 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
         i = INSTR(a$, sp3): o$ = RIGHT$(a$, LEN(a$) - i)
         n$ = "UDT_" + RTRIM$(id.n): IF id.t = 0 THEN n$ = "ARRAY_" + n$ + "[0]"
 
-        IF Cloud = 0 THEN
+'        IF Cloud = 0 THEN
             IF E <> 0 AND u = 1 THEN 'Setting _MEM type elements is not allowed!
                 Give_Error "Cannot set read-only element of _MEM TYPE": EXIT SUB
             END IF
-        END IF
+'        END IF
 
         IF E = 0 THEN
             'use u and u's size
@@ -22504,32 +22374,32 @@ SUB PATH_SLASH_CORRECT (a$)
     END IF
 END SUB
 
-SUB UseAndroid (Yes)
+'SUB UseAndroid (Yes)
 
-    STATIC inline_DATA_backup
-    STATIC inline_DATA_backup_set
-    IF inline_DATA_backup_set = 0 THEN
-        inline_DATA_backup_set = 1
-        inline_DATA_backup = inline_DATA
-    END IF
+'    STATIC inline_DATA_backup
+'    STATIC inline_DATA_backup_set
+'    IF inline_DATA_backup_set = 0 THEN
+'        inline_DATA_backup_set = 1
+'        inline_DATA_backup = inline_DATA
+'    END IF
 
-    IF Yes THEN
-        IF MakeAndroid = 0 THEN
-            MakeAndroid = 1
-            inline_DATA = 1
-            idechangemade = 1
-            IDEBuildModeChanged = 1
-        END IF
-    ELSE
-        IF MakeAndroid THEN
-            MakeAndroid = 0
-            inline_DATA = inline_DATA_backup
-            idechangemade = 1
-            IDEBuildModeChanged = 1
-        END IF
-    END IF
+'    IF Yes THEN
+'        IF MakeAndroid = 0 THEN
+'            MakeAndroid = 1
+'            inline_DATA = 1
+'            idechangemade = 1
+'            IDEBuildModeChanged = 1
+'        END IF
+'    ELSE
+'        IF MakeAndroid THEN
+'            MakeAndroid = 0
+'            inline_DATA = inline_DATA_backup
+'            idechangemade = 1
+'            IDEBuildModeChanged = 1
+'        END IF
+'    END IF
 
-END SUB
+'END SUB
 
 'Steve Subs/Functins for _MATH support with CONST
 FUNCTION Evaluate_Expression$ (e$)
@@ -24540,7 +24410,7 @@ DEFLNG A-Z
 'INCLUDE:'virtual_keyboard\virtual_keyboard_methods.bas'
 DEFLNG A-Z
 
-'$INCLUDE:'android\android_methods.bas'
+'$INCLUDE:'ide\ide_extra_functions.bas'
 DEFLNG A-Z
 
 '-------- Optional IDE Component (2/2) --------

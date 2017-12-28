@@ -40,23 +40,7 @@ int32 new_hardware_img (int32 x, int32 y, uint32 *pixels, int32 flags)
     return handle;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #else //end stubs
-
-
 
 int32 force_NPO2_fix = 0; //This should only be set to 1 for debugging QB64
 
@@ -160,14 +144,12 @@ uint32 *NPO2_texture_generate (int32 *px, int32 *py, uint32 *pixels)
 
 }
 
-
 int32 new_texture_handle()
 {
     GLuint texture = 0;
     glGenTextures (1, &texture);
     return (int32) texture;
 }
-
 
 int32 new_hardware_img (int32 x, int32 y, uint32 *pixels, int32 flags)
 {
@@ -200,65 +182,63 @@ int32 new_hardware_img (int32 x, int32 y, uint32 *pixels, int32 flags)
         if (flags & NEW_HARDWARE_IMG__DUPLICATE_PROVIDED_BUFFER) {
             hardware_img->software_pixel_buffer = (uint32 *) malloc (x * y * 4);
             memcpy (hardware_img->software_pixel_buffer, pixels, x * y * 4);
-#ifdef QB64_ANDROID
+            /* #ifdef QB64_ANDROID
             //BGRA->RGBA
-            uint32 *pos = (uint32 *) hardware_img->software_pixel_buffer;
-            int32 numPixels = x * y;
-            uint32 col;
+                   uint32 *pos=(uint32*)hardware_img->software_pixel_buffer;
+                   int32 numPixels=x*y;
+                   uint32 col;
+                   while(numPixels--){
+                     col=*pos;
+                     *pos++= (col&0xFF00FF00) | ((col & 0xFF0000) >> 16) | ((col & 0x0000FF) << 16);
+                   }
+     #endif */
 
-            while (numPixels--) {
-                col = *pos;
-                *pos++ = (col & 0xFF00FF00) | ( (col & 0xFF0000) >> 16) | ( (col & 0x0000FF) << 16);
-            }
+} else {
+    hardware_img->software_pixel_buffer = pixels;
+}
 
-#endif
+} else {
+    hardware_img->software_pixel_buffer = NULL;
+    hardware_img->texture_handle = new_texture_handle();
+    glBindTexture (GL_TEXTURE_2D, hardware_img->texture_handle);
+    //non-power of 2 dimensions fallback support
+    static int glerrorcode;
+    glerrorcode = glGetError(); //clear any previous errors
 
-        } else {
-            hardware_img->software_pixel_buffer = pixels;
-        }
+    if (force_NPO2_fix == 0) {
+        glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
+    }
 
-    } else {
-        hardware_img->software_pixel_buffer = NULL;
-        hardware_img->texture_handle = new_texture_handle();
-        glBindTexture (GL_TEXTURE_2D, hardware_img->texture_handle);
-        //non-power of 2 dimensions fallback support
-        static int glerrorcode;
-        glerrorcode = glGetError(); //clear any previous errors
+    glerrorcode = glGetError();
 
-        if (force_NPO2_fix == 0) {
-            glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
-        }
-
+    if (glerrorcode != 0 || force_NPO2_fix == 1) {
+        int32 nx = x, ny = y;
+        uint32 *npixels = NPO2_texture_generate (&nx, &ny, pixels);
+        glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, nx, ny, 0, GL_BGRA, GL_UNSIGNED_BYTE, npixels);
+        hardware_img->source_state.PO2_fix = PO2_FIX__EXPANDED;
+        hardware_img->PO2_w = nx;
+        hardware_img->PO2_h = ny;
         glerrorcode = glGetError();
 
-        if (glerrorcode != 0 || force_NPO2_fix == 1) {
-            int32 nx = x, ny = y;
-            uint32 *npixels = NPO2_texture_generate (&nx, &ny, pixels);
-            glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, nx, ny, 0, GL_BGRA, GL_UNSIGNED_BYTE, npixels);
-            hardware_img->source_state.PO2_fix = PO2_FIX__EXPANDED;
-            hardware_img->PO2_w = nx;
-            hardware_img->PO2_h = ny;
+        if (glerrorcode) {
+            gluBuild2DMipmaps (GL_TEXTURE_2D, GL_RGBA, x, y, GL_BGRA, GL_UNSIGNED_BYTE, pixels );
             glerrorcode = glGetError();
 
             if (glerrorcode) {
-                gluBuild2DMipmaps (GL_TEXTURE_2D, GL_RGBA, x, y, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
-                glerrorcode = glGetError();
-
-                if (glerrorcode) {
-                    alert ("gluBuild2DMipmaps failed");
-                    alert (glerrorcode);
-                }
-
-                hardware_img->source_state.PO2_fix = PO2_FIX__MIPMAPPED;
-                hardware_img->PO2_w = x;
-                hardware_img->PO2_h = y;
+                alert ("gluBuild2DMipmaps failed");
+                alert (glerrorcode);
             }
-        }
 
-        set_render_source (INVALID_HARDWARE_HANDLE);
+            hardware_img->source_state.PO2_fix = PO2_FIX__MIPMAPPED;
+            hardware_img->PO2_w = x;
+            hardware_img->PO2_h = y;
+        }
     }
 
-    return handle;
+    set_render_source (INVALID_HARDWARE_HANDLE);
+}
+
+return handle;
 }
 
 void hardware_img_buffer_to_texture (int32 handle)
@@ -342,6 +322,5 @@ void hardware_img_requires_depthbuffer (hardware_img_struct *hardware_img)
         set_render_source (INVALID_HARDWARE_HANDLE);
     }
 }
-
 
 #endif

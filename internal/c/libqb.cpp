@@ -42,12 +42,12 @@
     #endif
 #endif
 
-#ifdef QB64_ANDROID
+/* #ifdef QB64_ANDROID
     #include <cstdlib> //required for system()
     struct android_app *android_state;
     JavaVM *android_vm;
     JNIEnv *android_env;
-#endif
+#endif */
 
 #ifdef QB64_WINDOWS
     #include <fcntl.h>
@@ -151,9 +151,9 @@ void *generic_window_handle = NULL;
 extern "C" void QB64_Window_Handle (void *handle)
 {
     generic_window_handle = handle;
-		#ifdef QB64_WINDOWS
-		    window_handle = (HWND) handle;
-		#endif
+#ifdef QB64_WINDOWS
+    window_handle = (HWND) handle;
+#endif
     //...
 }
 
@@ -182,7 +182,7 @@ float environment_2d__screen_y_scale = 1.0f;
 int32 environment_2d__screen_smooth = 0; //1(LINEAR) or 0(NEAREST)
 int32 environment_2d__letterbox = 0; //1=vertical black stripes required, 2=horizontal black stripes required
 
-int32 qloud_next_input_index = 1;
+// int32 qloud_next_input_index = 1;
 
 int32 window_exists = 0;
 int32 create_window = 0;
@@ -229,9 +229,9 @@ extern "C" int qb64_custom_event (int event, int v1, int v2, int v3, int v4, int
 #ifdef QB64_LINUX
     #ifdef QB64_GUI //Cannot have X11 events without a GUI
         #ifndef QB64_MACOSX
-            #ifndef QB64_ANDROID
-                extern "C" void qb64_os_event_linux (XEvent *event, Display *display, int *qb64_os_event_info);
-            #endif
+            //            #ifndef QB64_ANDROID
+            extern "C" void qb64_os_event_linux (XEvent *event, Display *display, int *qb64_os_event_info);
+            //            #endif
         #endif
     #endif
 #endif
@@ -1158,9 +1158,9 @@ typedef enum {
 #define KMOD_ALT    (KMOD_LALT|KMOD_RALT)
 #define KMOD_META   (KMOD_LMETA|KMOD_RMETA)
 
-extern int32 cloud_app;
-int32 cloud_chdir_complete = 0;
-int32 cloud_port[8];
+//extern int32 cloud_app;
+//int32 cloud_chdir_complete = 0;
+// cloud_port[8];
 
 /* Restricted Functionality: (Security focused approach, does not include restricting sound etc)
 
@@ -3971,22 +3971,22 @@ void FreeConsole()
 
 int MessageBox2 (int ignore, char *message, char *title, int type)
 {
-    if (cloud_app) {
-        FILE *f = fopen ("..\\final.txt", "w");
+    /*    if (cloud_app) {
+            FILE *f = fopen ("..\\final.txt", "w");
 
-        if (f != NULL) {
-            fprintf (f, "%s", title);
-            fprintf (f, "\n");
-            fprintf (f, "%s", message);
-            fclose (f);
-        }
+            if (f != NULL) {
+                fprintf (f, "%s", title);
+                fprintf (f, "\n");
+                fprintf (f, "%s", message);
+                fclose (f);
+            }
 
-        exit (0); //should log error
-    }
+            exit (0); //should log error
+        } */
 
-#ifdef QB64_ANDROID
-    showErrorOnScreen (message, 0, 0); //display error message on screen and enter infinite loop
-#endif
+    //#ifdef QB64_ANDROID
+    //    showErrorOnScreen (message, 0, 0); //display error message on screen and enter infinite loop
+    //#endif
 #ifdef QB64_WINDOWS
     return MessageBox (window_handle, message, title, type);
 #else
@@ -4366,42 +4366,42 @@ char *fixdir (qbs *filename)
     //applied to QB commands: open, bload/bsave, loadfont, loadimage, sndopen/sndplayfile
     static int32 i;
 
-    if (cloud_app) {
-        for (i = 0; i < filename->len; i++) {
-            if ( (filename->chr[i] >= 48) && (filename->chr[i] <= 57) ) {
-                goto ok;
-            }
-
-            if ( (filename->chr[i] >= 65) && (filename->chr[i] <= 90) ) {
-                filename->chr[i] += 32;    //force lowercase
-                goto ok;
-            }
-
-            if ( (filename->chr[i] >= 97) && (filename->chr[i] <= 122) ) {
-                goto ok;
-            }
-
-            if (filename->chr[i] == 95) {
-                goto ok;    //underscore
-            }
-
-            if (filename->chr[i] == 46) {
-                if (i != 0) {
-                    goto ok;    //period cannot be the first character
+    /*    if (cloud_app) {
+            for (i = 0; i < filename->len; i++) {
+                if ( (filename->chr[i] >= 48) && (filename->chr[i] <= 57) ) {
+                    goto ok;
                 }
-            }
 
-            if (filename->chr[i] == 0) {
-                if (i == (filename->len - 1) ) {
-                    goto ok;    //NULL terminator
+                if ( (filename->chr[i] >= 65) && (filename->chr[i] <= 90) ) {
+                    filename->chr[i] += 32;    //force lowercase
+                    goto ok;
                 }
-            }
 
-            error (263); //"Paths/Filename illegal in QLOUD"
-        ok:
-            ;
-        }
-    }
+                if ( (filename->chr[i] >= 97) && (filename->chr[i] <= 122) ) {
+                    goto ok;
+                }
+
+                if (filename->chr[i] == 95) {
+                    goto ok;    //underscore
+                }
+
+                if (filename->chr[i] == 46) {
+                    if (i != 0) {
+                        goto ok;    //period cannot be the first character
+                    }
+                }
+
+                if (filename->chr[i] == 0) {
+                    if (i == (filename->len - 1) ) {
+                        goto ok;    //NULL terminator
+                    }
+                }
+
+                error (263); //"Paths/Filename illegal in QLOUD"
+            ok:
+                ;
+            }
+        }*/
 
     for (i = 0; i < filename->len; i++) {
 #ifdef QB64_WINDOWS
@@ -9267,9 +9267,9 @@ void fix_error()
 
         snprintf (errtitle, len + 1, FIXERRMSG_TITLE, (!prevent_handling ? FIXERRMSG_UNHAND : FIXERRMSG_CRIT), new_error);
         //Android cannot halt threads, so the easiest compromise is to just display the error
-#ifdef QB64_ANDROID
-        showErrorOnScreen (cp, new_error, ercl);
-#endif
+        //#ifdef QB64_ANDROID
+        //        showErrorOnScreen (cp, new_error, ercl);
+        //#endif
 
         if (prevent_handling) {
             v = MessageBox2 (NULL, errmess, errtitle, MB_OK);
@@ -9435,15 +9435,15 @@ void error (int32 error_number)
         exit (0);
     }
 
-    if (error_number == 262) {
+    /* if (error_number == 262) {
         MessageBox2 (NULL, "Function unavailable in QLOUD", "Critical Error", MB_OK | MB_SYSTEMMODAL);
         exit (0);
-    }
+    } */
 
-    if (error_number == 263) {
+    /* if (error_number == 263) {
         MessageBox2 (NULL, "Paths/Filename illegal in QLOUD", "Critical Error", MB_OK | MB_SYSTEMMODAL);
         exit (0);
-    }
+    } */
 
     if (error_number == 270) {
         MessageBox2 (NULL, "_GL command called outside of SUB _GL's scope", "Critical Error", MB_OK | MB_SYSTEMMODAL);
@@ -11497,12 +11497,12 @@ qbs *qbs_inkey()
 
     qbs *tqbs;
 
-    if (cloud_app) {
-        Sleep (20);
+    /*    if (cloud_app) {
+            Sleep (20);
 
-    } else {
-        Sleep (0);
-    }
+        } else { */
+    Sleep (0);
+    // }
 
     tqbs = qbs_new (2, 1);
 
@@ -21212,9 +21212,9 @@ void sub_open (qbs *name, int32 type, int32 access, int32 sharing, int32 i, int6
         g_restrictions = 2;
     }
 
-    if (cloud_app) {
-        g_restrictions = 0;    //applying restrictions on server not possible
-    }
+    /*    if (cloud_app) {
+            g_restrictions = 0;    //applying restrictions on server not possible
+        } */
 
     //note: In QB, opening a file already open for OUTPUT/APPEND created the 'file already open' error.
     //      However, from a new cmd window (or a SHELLed QB program) it can be opened!
@@ -27348,10 +27348,10 @@ int64 func_shell (qbs *str)
         return 1;
     }
 
-    if (cloud_app) {
-        error (262);
-        return 1;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return 1;
+        } */
 
     int64 return_code;
     //exit full screen mode if necessary
@@ -27669,10 +27669,10 @@ int64 func__shellhide (qbs *str) //func _SHELLHIDE(...
         return 1;
     }
 
-    if (cloud_app) {
-        error (262);
-        return 1;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return 1;
+        } */
 
     static int64 return_code;
     return_code = 0;
@@ -27901,10 +27901,10 @@ void sub_shell (qbs *str, int32 passed)
         return;
     }
 
-    if (cloud_app) {
-        error (262);
-        return;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return;
+        } */
 
     //exit full screen mode if necessary
     static int32 full_screen_mode;
@@ -28213,10 +28213,10 @@ void sub_shell2 (qbs *str, int32 passed) //HIDE
         return;
     }
 
-    if (cloud_app) {
-        error (262);
-        return;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return;
+        } */
 
     if (passed & 1) {
         sub_shell4 (str, passed & 2);
@@ -28448,10 +28448,10 @@ void sub_shell3 (qbs *str, int32 passed) //_DONTWAIT
         return;
     }
 
-    if (cloud_app) {
-        error (262);
-        return;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return;
+        } */
 
     if (passed & 1) {
         sub_shell4 (str, passed & 2);
@@ -28665,10 +28665,10 @@ void sub_shell4 (qbs *str, int32 passed) //_DONTWAIT & _HIDE
         return;
     }
 
-    if (cloud_app) {
-        error (262);
-        return;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return;
+        } */
 
     static qbs *strz = NULL;
     static int32 i;
@@ -29033,19 +29033,19 @@ void sub_chdir (qbs *str)
     static int32 tmp_long;
     static int32 got_ports = 0;
 
-    if (cloud_app) {
-        cloud_chdir_complete = 1;
+    /*    if (cloud_app) {
+            cloud_chdir_complete = 1;
 
-        if (!got_ports) {
-            got_ports = 1;
-            static FILE *file = fopen ("..\\ports.txt\0", "r");
-            fscanf (file, "%d", &tmp_long);
-            cloud_port[1] = tmp_long;
-            fscanf (file, "%d", &tmp_long);
-            cloud_port[2] = tmp_long;
-            fclose (file);
-        }
-    }
+            if (!got_ports) {
+                got_ports = 1;
+                static FILE *file = fopen ("..\\ports.txt\0", "r");
+                fscanf (file, "%d", &tmp_long);
+                cloud_port[1] = tmp_long;
+                fscanf (file, "%d", &tmp_long);
+                cloud_port[2] = tmp_long;
+                fclose (file);
+            }
+        } */
 }
 
 void sub_mkdir (qbs *str)
@@ -29054,10 +29054,10 @@ void sub_mkdir (qbs *str)
         return;
     }
 
-    if (cloud_app) {
-        error (262);
-        return;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return;
+        } */
 
     static qbs *strz = NULL;
 
@@ -29136,9 +29136,9 @@ void sub__mousehide()
         }
 
 #ifdef QB64_GLUT
-#ifndef QB64_ANDROID
+        //#ifndef QB64_ANDROID
         glutSetCursor (GLUT_CURSOR_NONE);
-#endif
+        //#endif
 #endif
     }
 
@@ -29218,9 +29218,9 @@ cursor_valid:
             Sleep (100);
         }
 
-#ifndef QB64_ANDROID
+        //#ifndef QB64_ANDROID
         glutSetCursor (mouse_cursor_style);
-#endif
+        //#endif
     }
 
 #endif
@@ -29648,7 +29648,6 @@ void sub__mousepipeclose (int32 context)
 
     //todo!
 }
-
 
 int32 func__mouseinput (int32 context, int32 passed)
 {
@@ -32477,45 +32476,45 @@ void sub_end()
     sub_close (NULL, 0);
     exit_blocked = 0; //allow exit via X-box or CTRL+BREAK
 
-    if (cloud_app) {
-        //1. set the display page as the destination page
-        sub__dest (func__display() );
-        //2. VIEW PRINT bottomline,bottomline
-        static int32 y;
+    /*    if (cloud_app) {
+            //1. set the display page as the destination page
+            sub__dest (func__display() );
+            //2. VIEW PRINT bottomline,bottomline
+            static int32 y;
 
-        if (write_page->text) {
-            y = write_page->height;
+            if (write_page->text) {
+                y = write_page->height;
 
-        } else {
-            y = write_page->height / fontheight[write_page->font];
-        }
+            } else {
+                y = write_page->height / fontheight[write_page->font];
+            }
 
-        qbg_sub_view_print (y, y, 1 | 2);
-        //3. PRINT 'clears the line without having to worry about its contents/size
-        qbs_print (nothingstring, 1);
-        //4. PRINT "Press any key to continue"
-        qbs_print (qbs_new_txt ("Program ended. Closing (10 seconds)..."), 0);
-        //6. Enable autodisplay
-        autodisplay = 1;
-        int sec = 7;
+            qbg_sub_view_print (y, y, 1 | 2);
+            //3. PRINT 'clears the line without having to worry about its contents/size
+            qbs_print (nothingstring, 1);
+            //4. PRINT "Press any key to continue"
+            qbs_print (qbs_new_txt ("Program ended. Closing (10 seconds)..."), 0);
+            //6. Enable autodisplay
+            autodisplay = 1;
+            int sec = 7;
 
-        while (sec--) {
-            evnt (1);
-            SDL_Delay (1000);
-            qbs_print (qbs_new_txt ("."), 0);
-        }
+            while (sec--) {
+                evnt (1);
+                SDL_Delay (1000);
+                qbs_print (qbs_new_txt ("."), 0);
+            }
 
-        sec = 3;
+            sec = 3;
 
-        while (sec--) {
-            SDL_Delay (1000);
-            evnt (1);
-        }
+            while (sec--) {
+                SDL_Delay (1000);
+                evnt (1);
+            }
 
-        close_program = 1;
-        end();
-        exit (0); //<-- should never happen
-    }
+            close_program = 1;
+            end();
+            exit (0); //<-- should never happen
+        } */
 
 #ifdef DEPENDENCY_CONSOLE_ONLY
     screen_hide = 1;
@@ -33729,10 +33728,10 @@ void sub_run (qbs *f)
         return;
     }
 
-    if (cloud_app) {
-        error (262);
-        return;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return;
+        } */
 
     //run program
     static qbs *str = NULL;
@@ -34090,11 +34089,12 @@ void sub__autodisplay()
 
 void sub__display()
 {
-    if (cloud_app == 0) {
-        if (screen_hide) {
-            return;
-        }
+    //    if (cloud_app == 0) {
+    if (screen_hide) {
+        return;
     }
+
+    //    }
 
     //disable autodisplay (if enabled)
     if (autodisplay) {
@@ -34925,14 +34925,14 @@ qbs *func_environ (qbs *name)
     static int32 bytes;
     cp = getenv ( (char *) name->chr);
 
-    if (cp && (cloud_app == 0) ) {
-        bytes = strlen (cp);
-        tqbs = qbs_new (bytes, 1);
-        memcpy (tqbs->chr, cp, bytes);
+    //    if (cp && (cloud_app == 0) ) {
+    bytes = strlen (cp);
+    tqbs = qbs_new (bytes, 1);
+    memcpy (tqbs->chr, cp, bytes);
 
-    } else {
-        tqbs = qbs_new (0, 1);
-    }
+    //    } else {
+    //        tqbs = qbs_new (0, 1);
+    //    }
 
     return tqbs;
 }
@@ -34943,11 +34943,11 @@ qbs *func_environ (int32 number)
     static char *cp;
     static int32 bytes;
 
-    if (cloud_app) {
-        tqbs = qbs_new (0, 1);
-        error (5);
-        return tqbs;
-    }
+    /*    if (cloud_app) {
+            tqbs = qbs_new (0, 1);
+            error (5);
+            return tqbs;
+        } */
 
     if (number <= 0) {
         tqbs = qbs_new (0, 1);
@@ -34969,10 +34969,10 @@ qbs *func_environ (int32 number)
 
 void sub_environ (qbs *str)
 {
-    if (cloud_app) {
-        error (262);
-        return;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return;
+        } */
 
     static char *cp;
     cp = (char *) malloc (str->len + 1);
@@ -35377,7 +35377,7 @@ void tcp_out (void *connection, void *offset, ptrszint bytes)
 #endif
 }
 
-int32 cloud_port_redirect = -1;
+//int32 cloud_port_redirect = -1;
 struct connection_struct {
     int8 in_use;//0=not being used, 1=in use
     int8 protocol;//1=TCP/IP
@@ -35577,11 +35577,11 @@ int32 connection_new (int32 method, qbs *info_in, int32 value)
                 return -1;
             }
 
-            if (cloud_app) {
-                if (port == cloud_port_redirect) {
-                    port = cloud_port[1];
-                }
-            }
+            /*            if (cloud_app) {
+                            if (port == cloud_port_redirect) {
+                                port = cloud_port[1];
+                            }
+                        } */
 
             static void *connection;
             qbs_set (str, qbs_add (info_part[3], strz) );
@@ -35623,25 +35623,25 @@ int32 connection_new (int32 method, qbs *info_in, int32 value)
                 return -1;
             }
 
-            if (cloud_app) {
-                if (port == cloud_port[1]) {
-                    goto gotcloudport;
-                }
+            /*            if (cloud_app) {
+                            if (port == cloud_port[1]) {
+                                goto gotcloudport;
+                            }
 
-                if (port == cloud_port[2]) {
-                    goto gotcloudport;
-                }
+                            if (port == cloud_port[2]) {
+                                goto gotcloudport;
+                            }
 
-                if ( (port >= 1) && (port <= 2) ) {
-                    port = cloud_port[port];
-                    goto gotcloudport;
-                }
+                            if ( (port >= 1) && (port <= 2) ) {
+                                port = cloud_port[port];
+                                goto gotcloudport;
+                            }
 
-                cloud_port_redirect = port;
-                port = cloud_port[1]; //unknown values default to primary hosting port
-            }
+                            cloud_port_redirect = port;
+                            port = cloud_port[1]; //unknown values default to primary hosting port
+                        } */
 
-        gotcloudport:
+            //gotcloudport:
             static void *connection;
             connection = tcp_host_open (port);
 
@@ -38859,9 +38859,9 @@ void sub_unlock (int32 i, int64 start, int64 end, int32 passed)
 #ifdef DEPENDENCY_SCREENIMAGE
 int32 func__screenimage (int32 x1, int32 y1, int32 x2, int32 y2, int32 passed)
 {
-    if (cloud_app) {
-        return func__newimage (1024, 768, 32, 1);
-    }
+    /*    if (cloud_app) {
+            return func__newimage (1024, 768, 32, 1);
+        } */
 
 #ifdef QB64_WINDOWS
     static int32 init = 0;
@@ -39188,10 +39188,10 @@ int32 func__screenimage (int32 x1, int32 y1, int32 x2, int32 y2, int32 passed)
 
 void sub__screenclick (int32 x, int32 y, int32 button, int32 passed)
 {
-    if (cloud_app) {
-        error (262);
-        return;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return;
+        } */
 
 #ifdef QB64_WINDOWS
     static INPUT input;
@@ -39658,10 +39658,10 @@ int32 MACVK_JIS_Kana                  = 0x68;
 
 void sub__screenprint (qbs *txt)
 {
-    if (cloud_app) {
-        error (262);
-        return;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return;
+        } */
 
     static int32 i, s, x, vk, c;
 #ifdef QB64_MACOSX
@@ -40308,10 +40308,10 @@ void sub_files (qbs *str, int32 passed)
         return;
     }
 
-    if (cloud_app) {
-        error (262);
-        return;
-    }
+    /*    if (cloud_app) {
+            error (262);
+            return;
+        } */
 
     static int32 i, i2, i3;
     static qbs *strz = NULL;
@@ -44412,12 +44412,12 @@ qbs *func__startdir()
 
 qbs *rootDir = NULL; //the dir moved to when program begins
 
-char *android_dir_downloads = NULL;
-char *android_dir_documents = NULL;
-char *android_dir_pictures = NULL;
-char *android_dir_music = NULL;
-char *android_dir_video = NULL;
-char *android_dir_dcim = NULL;
+//char *android_dir_downloads = NULL;
+//char *android_dir_documents = NULL;
+//char *android_dir_pictures = NULL;
+//char *android_dir_music = NULL;
+//char *android_dir_video = NULL;
+//char *android_dir_dcim = NULL;
 
 qbs *func__dir (qbs *context_in)
 {
@@ -44432,10 +44432,10 @@ qbs *func__dir (qbs *context_in)
     if (qbs_equal (qbs_ucase (context), qbs_new_txt ("TEXT") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("DOCUMENT") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("DOCUMENTS") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("MY DOCUMENTS") ) ) {
-#ifdef QB64_ANDROID
-        mkdir (android_dir_documents, 0770);
-        return qbs_new_txt (android_dir_documents);
-#endif
+        //#ifdef QB64_ANDROID
+        //        mkdir (android_dir_documents, 0770);
+        //        return qbs_new_txt (android_dir_documents);
+        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44449,10 +44449,10 @@ qbs *func__dir (qbs *context_in)
     if (qbs_equal (qbs_ucase (context), qbs_new_txt ("MUSIC") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("AUDIO") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("SOUND") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("SOUNDS") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("MY MUSIC") ) ) {
-#ifdef QB64_ANDROID
-        mkdir (android_dir_music, 0770);
-        return qbs_new_txt (android_dir_music);
-#endif
+        //#ifdef QB64_ANDROID
+        //        mkdir (android_dir_music, 0770);
+        //        return qbs_new_txt (android_dir_music);
+        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44467,10 +44467,10 @@ qbs *func__dir (qbs *context_in)
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("PICTURES") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("IMAGE") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("IMAGES") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("MY PICTURES") ) ) {
-#ifdef QB64_ANDROID
-        mkdir (android_dir_pictures, 0770);
-        return qbs_new_txt (android_dir_pictures);
-#endif
+        //#ifdef QB64_ANDROID
+        //        mkdir (android_dir_pictures, 0770);
+        //        return qbs_new_txt (android_dir_pictures);
+        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44485,10 +44485,10 @@ qbs *func__dir (qbs *context_in)
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("CAMERA ROLL") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("PHOTO") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("PHOTOS") ) ) {
-#ifdef QB64_ANDROID
-        mkdir (android_dir_dcim, 0770);
-        return qbs_new_txt (android_dir_dcim);
-#endif
+        //#ifdef QB64_ANDROID
+        //        mkdir (android_dir_dcim, 0770);
+        //        return qbs_new_txt (android_dir_dcim);
+        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44502,10 +44502,10 @@ qbs *func__dir (qbs *context_in)
     if (qbs_equal (qbs_ucase (context), qbs_new_txt ("MOVIE") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("MOVIES") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("VIDEO") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("VIDEOS") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("MY VIDEOS") ) ) {
-#ifdef QB64_ANDROID
-        mkdir (android_dir_video, 0770);
-        return qbs_new_txt (android_dir_video);
-#endif
+        //#ifdef QB64_ANDROID
+        //        mkdir (android_dir_video, 0770);
+        //        return qbs_new_txt (android_dir_video);
+        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44518,10 +44518,10 @@ qbs *func__dir (qbs *context_in)
 
     if (qbs_equal (qbs_ucase (context), qbs_new_txt ("DOWNLOAD") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("DOWNLOADS") ) ) {
-#ifdef QB64_ANDROID
-        mkdir (android_dir_downloads, 0770);
-        return qbs_new_txt (android_dir_downloads);
-#endif
+        //#ifdef QB64_ANDROID
+        //        mkdir (android_dir_downloads, 0770);
+        //        return qbs_new_txt (android_dir_downloads);
+        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44535,10 +44535,10 @@ qbs *func__dir (qbs *context_in)
     }
 
     if (qbs_equal (qbs_ucase (context), qbs_new_txt ("DESKTOP") ) ) {
-#ifdef QB64_ANDROID
-        mkdir (android_dir_downloads, 0770);
-        return qbs_new_txt (android_dir_downloads);
-#endif
+        //#ifdef QB64_ANDROID
+        //        mkdir (android_dir_downloads, 0770);
+        //        return qbs_new_txt (android_dir_downloads);
+        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44553,9 +44553,9 @@ qbs *func__dir (qbs *context_in)
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("APPLICATION DATA") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("PROGRAM DATA") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("DATA") ) ) {
-#ifdef QB64_ANDROID
-        return qbs_add (rootDir, qbs_new_txt ("/") );
-#endif
+        //#ifdef QB64_ANDROID
+        //        return qbs_add (rootDir, qbs_new_txt ("/") );
+        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44570,9 +44570,9 @@ qbs *func__dir (qbs *context_in)
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("LOCAL APPLICATION DATA") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("LOCAL PROGRAM DATA") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("LOCAL DATA") ) ) {
-#ifdef QB64_ANDROID
-        return qbs_add (rootDir, qbs_new_txt ("/") );
-#endif
+        //#ifdef QB64_ANDROID
+        //        return qbs_add (rootDir, qbs_new_txt ("/") );
+        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44593,19 +44593,19 @@ qbs *func__dir (qbs *context_in)
 
     return qbs_new_txt (".\\"); //current location
 #else
-#ifdef QB64_ANDROID
-    mkdir (android_dir_downloads, 0770);
-    return qbs_new_txt (android_dir_downloads);
-#endif
+    //#ifdef QB64_ANDROID
+    //    mkdir (android_dir_downloads, 0770);
+    //    return qbs_new_txt (android_dir_downloads);
+    //#endif
     return qbs_new_txt ("./"); //current location
 #endif
 }
 
 extern void set_dynamic_info();
 
-#ifdef QB64_ANDROID
+//#ifdef QB64_ANDROID
 
-void android_get_file_asset (AAssetManager *mgr, char *filename)
+/* void android_get_file_asset (AAssetManager *mgr, char *filename)
 {
     AAsset *asset = AAssetManager_open (mgr, filename, AASSET_MODE_STREAMING);
     char buf[BUFSIZ];
@@ -44618,12 +44618,12 @@ void android_get_file_asset (AAssetManager *mgr, char *filename)
 
     fclose (out);
     AAsset_close (asset);
-}
+} */
 
 //notes:
 // * Actual entry point is in fg_runtime_android.c which has been modified to pass 'android_app' to us
 
-int main (int argc, char *argv[], struct android_app *android_state_in)
+/* int main (int argc, char *argv[], struct android_app *android_state_in)
 {
     android_state = android_state_in;
     android_vm = android_state->activity->vm;
@@ -44655,177 +44655,177 @@ int main (int argc, char *argv[], struct android_app *android_state_in)
     }
     AAssetDir_close(assetDir);
     */
-#include "../temp/assets.txt"
-    //get _DIR$(...) paths
+//#include "../temp/assets.txt"
+//get _DIR$(...) paths
+/* {
+    //upscope
+
+    jfieldID fieldId;
+    jclass envClass = env->FindClass ("android/os/Environment");
+    char **targetString;
+    jstring jstrParam;
+    char *s;
+    jstring sType;
+
+    for (int i = 1; i <= 6; i++)
     {
-        //upscope
-
-        jfieldID fieldId;
-        jclass envClass = env->FindClass ("android/os/Environment");
-        char **targetString;
-        jstring jstrParam;
-        char *s;
-        jstring sType;
-
-        for (int i = 1; i <= 6; i++)
-        {
-            if (i == 1) {
-                targetString = &android_dir_dcim;
-                fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_DCIM", "Ljava/lang/String;");
-            }
-
-            if (i == 2) {
-                targetString = &android_dir_downloads;
-                fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_DOWNLOADS", "Ljava/lang/String;");
-            }
-
-            if (i == 3) {
-                targetString = &android_dir_documents;
-                fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_DOCUMENTS", "Ljava/lang/String;");
-            }
-
-            if (i == 4) {
-                targetString = &android_dir_pictures;
-                fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_PICTURES", "Ljava/lang/String;");
-            }
-
-            if (i == 5) {
-                targetString = &android_dir_music;
-                fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_MUSIC", "Ljava/lang/String;");
-            }
-
-            if (i == 6) {
-                targetString = &android_dir_video;
-                fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_MOVIES", "Ljava/lang/String;");
-            }
-
-            //retrieve jstring representation of environment variable
-            jstrParam = (jstring) env->GetStaticObjectField (envClass, fieldId);
-            s = env->GetStringUTFChars (jstrParam, NULL);
-            LOGI ("String name of Environment.Variable: %s", s);
-            env->ReleaseStringUTFChars (jstrParam, s);
-            //use jstring representation to retrieve folder name
-            sType = jstrParam;
-            jmethodID midEnvironmentGetExternalStoragePublicDirectory = env->GetStaticMethodID (envClass,
-                    "getExternalStoragePublicDirectory", "(Ljava/lang/String;)Ljava/io/File;");
-            jobject oExternalStorageDirectory = NULL;
-            oExternalStorageDirectory = env->CallStaticObjectMethod (envClass, midEnvironmentGetExternalStoragePublicDirectory,
-                                        sType);
-            jclass cFile = env->GetObjectClass (oExternalStorageDirectory);
-            jmethodID midFileGetAbsolutePath = env->GetMethodID (cFile, "getAbsolutePath", "()Ljava/lang/String;");
-            env->DeleteLocalRef (cFile);
-            jstring extStoragePath = (jstring) env->CallObjectMethod (oExternalStorageDirectory, midFileGetAbsolutePath);
-            const char *extStoragePathString = env->GetStringUTFChars (extStoragePath, NULL);
-            LOGI ("Path: %s", extStoragePathString); // /storage/emulated/0/Download
-            *targetString = (char *) calloc (1, strlen (extStoragePathString) + 2);
-            memcpy (*targetString, extStoragePathString, strlen (extStoragePathString) );
-            (*targetString) [strlen (extStoragePathString)] = 47; //append "/"
-            env->ReleaseStringUTFChars (extStoragePath, extStoragePathString);
-            env->DeleteLocalRef (sType);
+        if (i == 1) {
+            targetString = &android_dir_dcim;
+            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_DCIM", "Ljava/lang/String;");
         }
 
-    }//downscope
-    //JavaVMAttachArgs args = { JNI_VERSION_1_6, NULL, NULL };
-    //vm->AttachCurrentThread( &env, &args );
-    //jmethodID activityConstructor =  env->GetMethodID(app->activity->clazz, "<init>", "()V");
-    //jobject object = env->NewObject(app->activity->clazz, activityConstructor);
-    //jmethodID toastID = env->GetMethodID(app->activity->clazz, "toast", "(Ljava/lang/String;)V");
-    //jstring message1 = env->NewStringUTF("This comes from jni.");
-    //env->CallVoidMethod(object, toastID, message1);
-    //vm->DetachCurrentThread();
-    //jstring jstr = env->NewStringUTF("This comes from jni.");
-    //    jmethodID messageMe = env->GetMethodID(app->activity->clazz, "toast", "(Ljava/lang/String;)V");
-    //    jobject result = env->CallObjectMethod(obj, messageMe, jstr);
-    //    const char* str = (*env)->GetStringUTFChars(env,(jstring) result, NULL); // should be released but what a heck, it's a tutorial :)
-    //    printf("%s\n", str);
-    //    return (*env)->NewStringUTF(env, str);
-    //JNIEXPORT void JNICALL Java_com_example_jnitoast_MainActivity_displayToast
-    //(JNIEnv *pEnv, jobject thiz, jobject txt, jint time)
-    //{
-    /*
-            jclass Toast = NULL;
-            jobject toast = NULL;
-            jmethodID makeText = NULL;
-            jmethodID show = NULL;
+        if (i == 2) {
+            targetString = &android_dir_downloads;
+            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_DOWNLOADS", "Ljava/lang/String;");
+        }
 
-            Toast = env->FindClass("android/widget/Toast");
-            if(NULL == Toast)
-            {
-                    LOGI("FindClass failed");
-                    return;
-            }
+        if (i == 3) {
+            targetString = &android_dir_documents;
+            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_DOCUMENTS", "Ljava/lang/String;");
+        }
 
-            makeText = env->GetStaticMethodID(Toast,"makeText", "(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;");
-            if( NULL == makeText )
-            {
-                    LOGI("FindStaticMethod failed");
-                    return;
-            }
+        if (i == 4) {
+            targetString = &android_dir_pictures;
+            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_PICTURES", "Ljava/lang/String;");
+        }
 
-            //toast = env->CallStaticObjectMethod(Toast, makeText, thiz, txt, time);
-            toast = env->CallStaticObjectMethod(Toast, makeText, thiz, txt, time);
-            if ( NULL == toast)
-            {
-                    LOGI("CALLSTATICOBJECT FAILED");
-                    return;
-            }
-    */
-    /*
-            show = env->GetMethodID(pEnv,Toast,"show","()V");
-            if ( NULL == show )
-            {
-                    LOGI("GetMethodID Failed");
-                    return;
-            }
-            env->CallVoidMethod(pEnv,toast,show);
-    */
-    /*
-    AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
-    char buf[BUFSIZ];
-    int nb_read = 0;
-    FILE* out = fopen(filename, "w");
-    while ((nb_read = AAsset_read(asset, buf, BUFSIZ)) > 0)
-    fwrite(buf, nb_read, 1, out);
-    fclose(out);
-    AAsset_close(asset);
+        if (i == 5) {
+            targetString = &android_dir_music;
+            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_MUSIC", "Ljava/lang/String;");
+        }
+
+        if (i == 6) {
+            targetString = &android_dir_video;
+            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_MOVIES", "Ljava/lang/String;");
+        }
+
+        //retrieve jstring representation of environment variable
+        jstrParam = (jstring) env->GetStaticObjectField (envClass, fieldId);
+        s = env->GetStringUTFChars (jstrParam, NULL);
+        LOGI ("String name of Environment.Variable: %s", s);
+        env->ReleaseStringUTFChars (jstrParam, s);
+        //use jstring representation to retrieve folder name
+        sType = jstrParam;
+        jmethodID midEnvironmentGetExternalStoragePublicDirectory = env->GetStaticMethodID (envClass,
+                "getExternalStoragePublicDirectory", "(Ljava/lang/String;)Ljava/io/File;");
+        jobject oExternalStorageDirectory = NULL;
+        oExternalStorageDirectory = env->CallStaticObjectMethod (envClass, midEnvironmentGetExternalStoragePublicDirectory,
+                                    sType);
+        jclass cFile = env->GetObjectClass (oExternalStorageDirectory);
+        jmethodID midFileGetAbsolutePath = env->GetMethodID (cFile, "getAbsolutePath", "()Ljava/lang/String;");
+        env->DeleteLocalRef (cFile);
+        jstring extStoragePath = (jstring) env->CallObjectMethod (oExternalStorageDirectory, midFileGetAbsolutePath);
+        const char *extStoragePathString = env->GetStringUTFChars (extStoragePath, NULL);
+        LOGI ("Path: %s", extStoragePathString); // /storage/emulated/0/Download
+        *targetString = (char *) calloc (1, strlen (extStoragePathString) + 2);
+        memcpy (*targetString, extStoragePathString, strlen (extStoragePathString) );
+        (*targetString) [strlen (extStoragePathString)] = 47; //append "/"
+        env->ReleaseStringUTFChars (extStoragePath, extStoragePathString);
+        env->DeleteLocalRef (sType);
     }
-    */
-    /*
-            // Get a handle on our calling NativeActivity class
-            jclass activityClass = env->GetObjectClass( app->activity->clazz);
-            // Get path to files dir
-            jmethodID getFilesDir = env->GetMethodID( activityClass, "getFilesDir", "()Ljava/io/File;");
-            jobject file = env->CallObjectMethod( app->activity->clazz, getFilesDir);
-            jclass fileClass = env->FindClass( "java/io/File");
-            jmethodID getAbsolutePath = env->GetMethodID( fileClass, "getAbsolutePath", "()Ljava/lang/String;");
-            jstring jpath = (jstring)env->CallObjectMethod( file, getAbsolutePath);
-            const char* app_dir = env->GetStringUTFChars( jpath, NULL);
-            // chdir in the application files directory
-            LOGI("app_dir: %s", app_dir);
-            chdir(app_dir);
-            env->ReleaseStringUTFChars( jpath, app_dir);
-            // Pre-extract assets, to avoid Android-specific file opening
-            {
-            AAssetManager* mgr = app->activity->assetManager;
-            AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
-            const char* filename = (const char*)NULL;
-            while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
-            AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
-            char buf[BUFSIZ];
-            int nb_read = 0;
-            FILE* out = fopen(filename, "w");
-            while ((nb_read = AAsset_read(asset, buf, BUFSIZ)) > 0)
-            fwrite(buf, nb_read, 1, out);
-            fclose(out);
-            AAsset_close(asset);
+
+}//downscope
+//JavaVMAttachArgs args = { JNI_VERSION_1_6, NULL, NULL };
+//vm->AttachCurrentThread( &env, &args );
+//jmethodID activityConstructor =  env->GetMethodID(app->activity->clazz, "<init>", "()V");
+//jobject object = env->NewObject(app->activity->clazz, activityConstructor);
+//jmethodID toastID = env->GetMethodID(app->activity->clazz, "toast", "(Ljava/lang/String;)V");
+//jstring message1 = env->NewStringUTF("This comes from jni.");
+//env->CallVoidMethod(object, toastID, message1);
+//vm->DetachCurrentThread();
+//jstring jstr = env->NewStringUTF("This comes from jni.");
+//    jmethodID messageMe = env->GetMethodID(app->activity->clazz, "toast", "(Ljava/lang/String;)V");
+//    jobject result = env->CallObjectMethod(obj, messageMe, jstr);
+//    const char* str = (*env)->GetStringUTFChars(env,(jstring) result, NULL); // should be released but what a heck, it's a tutorial :)
+//    printf("%s\n", str);
+//    return (*env)->NewStringUTF(env, str);
+//JNIEXPORT void JNICALL Java_com_example_jnitoast_MainActivity_displayToast
+//(JNIEnv *pEnv, jobject thiz, jobject txt, jint time)
+//{
+/*
+        jclass Toast = NULL;
+        jobject toast = NULL;
+        jmethodID makeText = NULL;
+        jmethodID show = NULL;
+
+        Toast = env->FindClass("android/widget/Toast");
+        if(NULL == Toast)
+        {
+                LOGI("FindClass failed");
+                return;
+        }
+
+        makeText = env->GetStaticMethodID(Toast,"makeText", "(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;");
+        if( NULL == makeText )
+        {
+                LOGI("FindStaticMethod failed");
+                return;
+        }
+
+        //toast = env->CallStaticObjectMethod(Toast, makeText, thiz, txt, time);
+        toast = env->CallStaticObjectMethod(Toast, makeText, thiz, txt, time);
+        if ( NULL == toast)
+        {
+                LOGI("CALLSTATICOBJECT FAILED");
+                return;
+        }
+*/
+/*
+        show = env->GetMethodID(pEnv,Toast,"show","()V");
+        if ( NULL == show )
+        {
+                LOGI("GetMethodID Failed");
+                return;
+        }
+        env->CallVoidMethod(pEnv,toast,show);
+*/
+/*
+AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
+char buf[BUFSIZ];
+int nb_read = 0;
+FILE* out = fopen(filename, "w");
+while ((nb_read = AAsset_read(asset, buf, BUFSIZ)) > 0)
+fwrite(buf, nb_read, 1, out);
+fclose(out);
+AAsset_close(asset);
+}
+*/
+/*
+        // Get a handle on our calling NativeActivity class
+        jclass activityClass = env->GetObjectClass( app->activity->clazz);
+        // Get path to files dir
+        jmethodID getFilesDir = env->GetMethodID( activityClass, "getFilesDir", "()Ljava/io/File;");
+        jobject file = env->CallObjectMethod( app->activity->clazz, getFilesDir);
+        jclass fileClass = env->FindClass( "java/io/File");
+        jmethodID getAbsolutePath = env->GetMethodID( fileClass, "getAbsolutePath", "()Ljava/lang/String;");
+        jstring jpath = (jstring)env->CallObjectMethod( file, getAbsolutePath);
+        const char* app_dir = env->GetStringUTFChars( jpath, NULL);
+        // chdir in the application files directory
+        LOGI("app_dir: %s", app_dir);
+        chdir(app_dir);
+        env->ReleaseStringUTFChars( jpath, app_dir);
+        // Pre-extract assets, to avoid Android-specific file opening
+        {
+        AAssetManager* mgr = app->activity->assetManager;
+        AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
+        const char* filename = (const char*)NULL;
+        while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+        AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
+        char buf[BUFSIZ];
+        int nb_read = 0;
+        FILE* out = fopen(filename, "w");
+        while ((nb_read = AAsset_read(asset, buf, BUFSIZ)) > 0)
+        fwrite(buf, nb_read, 1, out);
+        fclose(out);
+        AAsset_close(asset);
+        }
+        AAssetDir_close(assetDir);
             }
-            AAssetDir_close(assetDir);
-                }
-    */
-#else
+*/
+// #else */
 int main (int argc, char *argv[])
 {
-#endif
+    //#endif
 #ifdef QB64_LINUX
 #ifndef QB64_MACOSX
 #ifdef X11
@@ -44886,9 +44886,9 @@ int main (int argc, char *argv[])
     this_mouse_message_queue->queue = (mouse_message *) calloc (1,
                                       sizeof (mouse_message) * (this_mouse_message_queue->lastIndex + 1) );
 
-    if (!cloud_app) {
-        snd_init();
-    }
+    //    if (!cloud_app) {
+    snd_init();
+    //    }
 
     if (screen_hide_startup) {
         screen_hide = 1;
@@ -45003,21 +45003,15 @@ int main (int argc, char *argv[])
       STD_INPUT_HANDLE
       (DWORD)-10
 
-
-
       The standard input device. Initially, this is the console input buffer, CONIN$.
 
       STD_OUTPUT_HANDLE
       (DWORD)-11
 
-
-
       The standard output device. Initially, this is the active console screen buffer, CONOUT$.
 
       STD_ERROR_HANDLE
       (DWORD)-12
-
-
 
       The standard error device. Initially, this is the active console screen buffer, CONOUT$.
 
@@ -45052,7 +45046,7 @@ int main (int argc, char *argv[])
     qbs_set (startDir, func__cwd() );
     //switch to directory of this EXE file
     //http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe
-#ifndef QB64_ANDROID
+    //#ifndef QB64_ANDROID
 #ifdef QB64_WINDOWS
 #ifndef QB64_MICROSOFT
     static char *exepath = (char *) malloc (65536);
@@ -45094,16 +45088,16 @@ int main (int argc, char *argv[])
     }
 #endif
 #endif
-#endif
+    //#endif
     rootDir = qbs_new (0, 0);
     qbs_set (rootDir, func__cwd() );
     unknown_opcode_mess = qbs_new (0, 0);
     qbs_set (unknown_opcode_mess, qbs_new_txt_len ("Unknown Opcode (  )\0", 20) );
-#ifdef QB64_ANDROID
-    func_command_str = qbs_new (0, 0);
-    func_command_array = NULL;
-    func_command_count = 0;
-#else
+    /*#ifdef QB64_ANDROID
+        func_command_str = qbs_new (0, 0);
+        func_command_array = NULL;
+        func_command_count = 0;
+    #else*/
     i = argc;
 
     if (i > 1) {
@@ -45139,7 +45133,7 @@ int main (int argc, char *argv[])
 
     func_command_count = argc;
     func_command_array = argv;
-#endif
+    //#endif
 #ifndef NO_S_D_L
 
     //init SDL
@@ -45551,10 +45545,10 @@ int main (int argc, char *argv[])
 
 #ifdef QB64_GLUT
     glutInit (&argc, argv);
-#ifdef QB64_ANDROID
-    //Note: GLUT_ACTION_CONTINUE_EXECUTION is not supported in Android
-    glutSetOption (GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
-#endif
+    /* #ifdef QB64_ANDROID
+        //Note: GLUT_ACTION_CONTINUE_EXECUTION is not supported in Android
+        glutSetOption (GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+    #endif */
 #ifdef QB64_MACOSX
     //This is a global keydown handler for OSX, it requires assistive devices in asseccibility to be enabled
     //becuase of security concerns (QB64 will not use this)
@@ -45825,112 +45819,112 @@ main_loop:
         goto end_program;
     }
 
-    if (!cloud_app) {
-        snd_mainloop();
-    }
+    //    if (!cloud_app) {
+    snd_mainloop();
+    //    }
 
     //check for input event (qloud_next_input_index)
-    if (cloud_app) {
-        //***should be replaced with a timer based check (or removed)***
-        //static int qloud_input_frame_count=0;
-        //qloud_input_frame_count++;
-        //if (qloud_input_frame_count>8) qloud_input_frame_count=1;
-        //if (qloud_input_frame_count==1){//~8 checks per second (would be ~64 without this check)
-    qloud_input_recheck:
-        FILE *pFile;
-        long lSize;
-        char *buffer;
-        size_t result;
-        pFile = NULL;
-        static char filename[] =
-            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
-        sprintf (filename, "input_%d.txt\0", qloud_next_input_index);
-        pFile = fopen (filename, "rb");
+    /*     if (cloud_app) {
+            //***should be replaced with a timer based check (or removed)***
+            //static int qloud_input_frame_count=0;
+            //qloud_input_frame_count++;
+            //if (qloud_input_frame_count>8) qloud_input_frame_count=1;
+            //if (qloud_input_frame_count==1){//~8 checks per second (would be ~64 without this check)
+        qloud_input_recheck:
+            FILE *pFile;
+            long lSize;
+            char *buffer;
+            size_t result;
+            pFile = NULL;
+            static char filename[] =
+                "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+            sprintf (filename, "input_%d.txt\0", qloud_next_input_index);
+            pFile = fopen (filename, "rb");
 
-        if (pFile != NULL) {
-            // obtain file size:
-            fseek (pFile, 0, SEEK_END);
-            lSize = ftell (pFile);
-            rewind (pFile);
+            if (pFile != NULL) {
+                // obtain file size:
+                fseek (pFile, 0, SEEK_END);
+                lSize = ftell (pFile);
+                rewind (pFile);
 
-            if (lSize > 0) {
-                // allocate memory to contain the whole file:
-                buffer = (char *) calloc (1, sizeof (char) * lSize + 1);
+                if (lSize > 0) {
+                    // allocate memory to contain the whole file:
+                    buffer = (char *) calloc (1, sizeof (char) * lSize + 1);
 
-                if (buffer != NULL) {
-                    // copy the file into the buffer:
-                    result = fread (buffer, 1, lSize, pFile);
+                    if (buffer != NULL) {
+                        // copy the file into the buffer:
+                        result = fread (buffer, 1, lSize, pFile);
 
-                    if (result == lSize) {
-                        if (buffer[lSize - 1] == 42) { //"*" terminator
-                            int start, stop;
-                            start = 0;
-                            int bi;
-                        nextcommand:
+                        if (result == lSize) {
+                            if (buffer[lSize - 1] == 42) { //"*" terminator
+                                int start, stop;
+                                start = 0;
+                                int bi;
+                            nextcommand:
 
-                            for (bi = start; bi < lSize; bi++) {
-                                if (buffer[bi] == 0) {
-                                    goto doneall;
+                                for (bi = start; bi < lSize; bi++) {
+                                    if (buffer[bi] == 0) {
+                                        goto doneall;
+                                    }
+
+                                    if (buffer[bi] == 58) {
+                                        goto gotcolon;
+                                    }
                                 }
 
-                                if (buffer[bi] == 58) {
-                                    goto gotcolon;
+                                goto doneall;
+                            gotcolon:
+                                int code;
+                                int v1, v2;
+                                code = buffer[start];
+                                start++;
+    #ifdef QB64_GUI
+
+                                if (code == 77) { //M (mousemove)
+                                    sscanf (buffer + start, "%d,%d", &v1, &v2);
+                                    GLUT_MOTION_FUNC (v1, v2);
+                                }//M
+
+                                if (code == 76) { //L (left mouse button)
+                                    sscanf (buffer + start, "%d,%d", &v1, &v2);
+                                    GLUT_MouseButton_Down (GLUT_LEFT_BUTTON, v1, v2);
                                 }
-                            }
 
-                            goto doneall;
-                        gotcolon:
-                            int code;
-                            int v1, v2;
-                            code = buffer[start];
-                            start++;
-#ifdef QB64_GUI
+                                if (code == 108) { //l (left mouse button up)
+                                    sscanf (buffer + start, "%d,%d", &v1, &v2);
+                                    GLUT_MouseButton_Up (GLUT_LEFT_BUTTON, v1, v2);
+                                }
 
-                            if (code == 77) { //M (mousemove)
-                                sscanf (buffer + start, "%d,%d", &v1, &v2);
-                                GLUT_MOTION_FUNC (v1, v2);
-                            }//M
+                                if (code == 68) { //D (key down)
+                                    sscanf (buffer + start, "%d", &v1);
+                                    keydown_vk (v1);
+                                }//D
 
-                            if (code == 76) { //L (left mouse button)
-                                sscanf (buffer + start, "%d,%d", &v1, &v2);
-                                GLUT_MouseButton_Down (GLUT_LEFT_BUTTON, v1, v2);
-                            }
+                                if (code == 85) { //U (key up)
+                                    sscanf (buffer + start, "%d", &v1);
+                                    keyup_vk (v1);
+                                }//U
 
-                            if (code == 108) { //l (left mouse button up)
-                                sscanf (buffer + start, "%d,%d", &v1, &v2);
-                                GLUT_MouseButton_Up (GLUT_LEFT_BUTTON, v1, v2);
-                            }
+    #endif
+                                start = bi + 1;
+                                goto nextcommand;
+                            doneall:
+                                qloud_next_input_index++;
+                                free (buffer);
+                                fclose (pFile);
+                                goto qloud_input_recheck;
+                            }//* terminator
+                        }//read correct number of bytes
 
-                            if (code == 68) { //D (key down)
-                                sscanf (buffer + start, "%d", &v1);
-                                keydown_vk (v1);
-                            }//D
+                        free (buffer);
+                    }//could allocate buffer
+                }//file has content
 
-                            if (code == 85) { //U (key up)
-                                sscanf (buffer + start, "%d", &v1);
-                                keyup_vk (v1);
-                            }//U
+                fclose (pFile);
+            }//not null
 
-#endif
-                            start = bi + 1;
-                            goto nextcommand;
-                        doneall:
-                            qloud_next_input_index++;
-                            free (buffer);
-                            fclose (pFile);
-                            goto qloud_input_recheck;
-                        }//* terminator
-                    }//read correct number of bytes
-
-                    free (buffer);
-                }//could allocate buffer
-            }//file has content
-
-            fclose (pFile);
-        }//not null
-
-        //}//qloud_input_frame_count
-    }//qloud app
+            //}//qloud_input_frame_count
+        }//qloud app */
 
     update ^= 1; //toggle update
 #ifndef NO_S_D_L
@@ -46134,7 +46128,6 @@ main_loop:
                       inputedString,
                       InputMethod_GetCurrentEditingString());
 
-
                       {
                       long i;
                       for (i=0;i<stringLength;i++){
@@ -46271,20 +46264,20 @@ end_program:
     QB64_GAMEPAD_SHUTDOWN();
 #endif
 
-    if (!cloud_app) {
-        snd_un_init();
-    }
+    //    if (!cloud_app) {
+    snd_un_init();
+    //    }
 
-    if (cloud_app) {
-        FILE *f = fopen ("..\\final.txt", "w");
+    /*    if (cloud_app) {
+            FILE *f = fopen ("..\\final.txt", "w");
 
-        if (f != NULL) {
-            fprintf (f, "Program exited normally");
-            fclose (f);
-        }
+            if (f != NULL) {
+                fprintf (f, "Program exited normally");
+                fclose (f);
+            }
 
-        exit (0); //should log error
-    }
+            exit (0); //should log error
+        } */
 
     exit (exit_code);
 }
@@ -46327,21 +46320,22 @@ void display()
     BGRA_to_RGBA = 1;
 #endif
 
-    if (cloud_app) { //more converters handle the RGBA data format than BGRA which is dumped
-        BGRA_to_RGBA = 1;
-    }
+    /*    if (cloud_app) { //more converters handle the RGBA data format than BGRA which is dumped
+            BGRA_to_RGBA = 1;
+        } */
 
     if (lock_display == 1) {
         lock_display = 2;
         Sleep (0);
     }
 
-    if (cloud_app == 0) {
-        if (screen_hide) {
-            display_called = 1;
-            return;
-        }
+    //    if (cloud_app == 0) {
+    if (screen_hide) {
+        display_called = 1;
+        return;
     }
+
+    //    }
 
     if (lock_display == 0) {
         //Identify which display_frame to build
@@ -46373,17 +46367,17 @@ void display()
         display_frame[frame_i].state = DISPLAY_FRAME_STATE__BUILDING;
         display_frame[frame_i].order = display_frame_order_next++;
 
-        if (cloud_app) {
-            static double cloud_timer_value = 0;
-            static double cloud_timer_now = 0;
-            cloud_timer_now = func_timer (0.001, 1);
+        /*        if (cloud_app) {
+                    static double cloud_timer_value = 0;
+                    static double cloud_timer_now = 0;
+                    cloud_timer_now = func_timer (0.001, 1);
 
-            if (fabs (cloud_timer_value - cloud_timer_now) < 0.25) {
-                goto cloud_skip_frame;
-            }
+                    if (fabs (cloud_timer_value - cloud_timer_now) < 0.25) {
+                        goto cloud_skip_frame;
+                    }
 
-            cloud_timer_value = cloud_timer_now;
-        }
+                    cloud_timer_value = cloud_timer_now;
+                } */
 
         //validate display_page
         if (!display_page) {
@@ -46624,29 +46618,29 @@ void display()
                 show_flashing = 0;
             }
 
-            if (cloud_app) {
-                static double cloud_timer_flash;
-                cloud_timer_flash = func_timer (0.001, 1) / 2.0;
-                static int64 cloud_timer_flash_int;
-                cloud_timer_flash_int = cloud_timer_flash;
+            /*            if (cloud_app) {
+                            static double cloud_timer_flash;
+                            cloud_timer_flash = func_timer (0.001, 1) / 2.0;
+                            static int64 cloud_timer_flash_int;
+                            cloud_timer_flash_int = cloud_timer_flash;
 
-                if (cloud_timer_flash_int & 1) {
-                    show_cursor = 1;
+                            if (cloud_timer_flash_int & 1) {
+                                show_cursor = 1;
 
-                } else {
-                    show_cursor = 0;
-                }
+                            } else {
+                                show_cursor = 0;
+                            }
 
-                if (cloud_timer_flash_int & 1) {
-                    show_flashing = 1;
+                            if (cloud_timer_flash_int & 1) {
+                                show_flashing = 1;
 
-                } else {
-                    show_flashing = 0;
-                }
+                            } else {
+                                show_flashing = 0;
+                            }
 
-                //static int qloud_show_cursor=0;
-                //qloud_show_cursor++; if (qloud_show_cursor&1) show_cursor=1; else show_cursor=0;
-            }
+                            //static int qloud_show_cursor=0;
+                            //qloud_show_cursor++; if (qloud_show_cursor&1) show_cursor=1; else show_cursor=0;
+                        } */
 
             //calculate cursor position (base 0)
             cx = display_page->cursor_x - 1;
@@ -47356,9 +47350,9 @@ void display()
         display_frame[frame_i].state = DISPLAY_FRAME_STATE__READY;
         last_hardware_display_frame_order = display_frame[frame_i].order;
 
-        if (cloud_app) {
+        /* if (cloud_app) {
             if (cloud_chdir_complete) {
-#ifdef QB64_WINDOWS
+        #ifdef QB64_WINDOWS
                 /*
                   static FILE *cloud_screenshot_file_handle=NULL;
                   if (cloud_screenshot_file_handle==NULL) cloud_screenshot_file_handle=fopen("output_image.raw","w+b");
@@ -47373,36 +47367,36 @@ void display()
                   fwrite (display_frame[frame_i].bgra , w*h*4, 1, cloud_screenshot_file_handle);
                   fflush(cloud_screenshot_file_handle);
                 */
-                static HANDLE cloud_screenshot_file_handle = NULL;
+        /* static HANDLE cloud_screenshot_file_handle = NULL;
 
-                if (cloud_screenshot_file_handle == NULL)
-                    cloud_screenshot_file_handle = CreateFile ("output_image.raw", GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS,
-                                                   /*FILE_ATTRIBUTE_NORMAL*/FILE_FLAG_WRITE_THROUGH, NULL);
+        if (cloud_screenshot_file_handle == NULL)
+            cloud_screenshot_file_handle = CreateFile ("output_image.raw", GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS,
+                                           /*FILE_ATTRIBUTE_NORMAL*///FILE_FLAG_WRITE_THROUGH, NULL);
 
-                //fseek ( cloud_screenshot_file_handle , 0 , SEEK_SET );//reset file pointer to beginning of file
-                static int32 w, h, index = 0;
-                w = display_frame[frame_i].w;
-                h = display_frame[frame_i].h;
-                index++;
-                static int32 header[3];
-                header[0] = index;
-                header[1] = w;
-                header[2] = h;
-                SetFilePointer (cloud_screenshot_file_handle, 12, 0, FILE_BEGIN);
-                WriteFile (cloud_screenshot_file_handle, display_frame[frame_i].bgra, w * h * 4, NULL, NULL);
-                FlushFileBuffers (cloud_screenshot_file_handle);
-                SetFilePointer (cloud_screenshot_file_handle, 0, 0, FILE_BEGIN);
-                WriteFile (cloud_screenshot_file_handle, &header[0], 12, NULL, NULL);
-                //CloseHandle(cloud_screenshot_file_handle);
-#endif
-            }
+        //fseek ( cloud_screenshot_file_handle , 0 , SEEK_SET );//reset file pointer to beginning of file
+        /* static int32 w, h, index = 0;
+        w = display_frame[frame_i].w;
+        h = display_frame[frame_i].h;
+        index++;
+        static int32 header[3];
+        header[0] = index;
+        header[1] = w;
+        header[2] = h;
+        SetFilePointer (cloud_screenshot_file_handle, 12, 0, FILE_BEGIN);
+        WriteFile (cloud_screenshot_file_handle, display_frame[frame_i].bgra, w * h * 4, NULL, NULL);
+        FlushFileBuffers (cloud_screenshot_file_handle);
+        SetFilePointer (cloud_screenshot_file_handle, 0, 0, FILE_BEGIN);
+        WriteFile (cloud_screenshot_file_handle, &header[0], 12, NULL, NULL);
+        //CloseHandle(cloud_screenshot_file_handle);
+        #endif
         }
+        } */
 
     no_new_frame:
         ;
     display_page_invalid:
         ;
-    cloud_skip_frame:
+        //    cloud_skip_frame:
 
         //cancel frame if not built
         if (display_frame[frame_i].state == DISPLAY_FRAME_STATE__BUILDING) {
@@ -47447,8 +47441,6 @@ void display()
   SDL_UpdateRect(screen, 0, 0, 0, 0);
   break;
   case SDL_KEYDOWN:
-
-
 
   if (event.key.keysym.sym == QBVK_F1) {
   InputMethod_Reset();
@@ -48801,7 +48793,7 @@ extern "C" LRESULT qb64_os_event_windows (HWND hWnd, UINT uMsg, WPARAM wParam, L
 #ifdef QB64_LINUX
 #ifdef QB64_GUI //Cannot have X11 events without a GUI
 #ifndef QB64_MACOSX
-#ifndef QB64_ANDROID
+//#ifndef QB64_ANDROID
 
 extern "C" void qb64_os_event_linux (XEvent *event, Display *display, int *qb64_os_event_info)
 {
@@ -48907,7 +48899,7 @@ extern "C" void qb64_os_event_linux (XEvent *event, Display *display, int *qb64_
 
     return;
 }
-#endif
+//#endif
 #endif
 #endif
 #endif

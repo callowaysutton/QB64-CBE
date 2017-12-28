@@ -4,10 +4,10 @@
     #include <ApplicationServices/ApplicationServices.h>
 #endif
 
-#ifdef QB64_ANDROID
+/* #ifdef QB64_ANDROID
     #include <cstdlib>
     #include <cmath>
-#endif
+#endif */
 
 /* testing only
 #ifdef QB64_WINDOWS
@@ -92,12 +92,6 @@ ALCcontext *ctx;
 struct stat statbuf;
 */
 
-
-
-
-
-
-
 /*
 extern int32 allocated_bytes;
 extern void *calloc2(int x, int y);
@@ -118,11 +112,9 @@ void requestKeyboardOverlayImage (int32 handle)
     requestedKeyboardOverlayImage = handle;
 }
 
-
 //extern functions
 
 extern qbs *func__dir (qbs *context);
-
 
 extern int32 func__scaledwidth();
 extern int32 func__scaledheight();
@@ -141,7 +133,6 @@ extern int32 func__resize();
 extern int32 func__resizewidth();
 extern int32 func__resizeheight();
 
-
 extern int32 FontLoad (uint8 *content, int32 content_bytes, int32 default_pixel_height, int32 which_font,
                        int32 options);
 extern int32 FontRenderTextUTF32 (int i, uint32 *codepoint, int32 codepoints, int32 options,
@@ -149,14 +140,12 @@ extern int32 FontRenderTextUTF32 (int i, uint32 *codepoint, int32 codepoints, in
 extern int32 FontRenderTextASCII (int i, uint8 *codepoint, int32 codepoints, int32 options,
                                   uint8 **out_data, int32 *out_x, int32 *out_y, int32 *out_x_pre_increment, int32 *out_x_post_increment);
 
-
 extern void sub__title (qbs *title);
 
 extern void sub__glrender (int32 method);
 extern void sub__displayorder (int32 method1, int32 method2, int32 method3, int32 method4);
 
 extern int64 GetTicks();
-
 
 extern int32 func__memexists (void *blk);
 extern void sub__memfill (mem_block *dblk, ptrszint doff, ptrszint dbytes, ptrszint soff, ptrszint sbytes);
@@ -663,18 +652,6 @@ extern float string2s (qbs *str);
 extern double string2d (qbs *str);
 extern long double string2f (qbs *str);
 
-
-
-
-
-
-
-
-
-
-
-
-
 //shared global variables
 extern int32 sleep_break;
 extern uint64 mem_lock_id;
@@ -753,8 +730,6 @@ qbs *g_tmp_str;
 qbs *g_swap_str;
 qbs *pass_str;
 ptrszint data_offset = 0;
-
-
 
 //inline functions
 inline void swap_8 (void *a, void *b)
@@ -1281,7 +1256,6 @@ inline uint16 varseg_dblock_check (uint8 *off)
     #include "../temp/global.txt"
 #endif
 
-
 extern int32 ScreenResize;
 extern int32 ScreenResizeScale;
 
@@ -1329,20 +1303,14 @@ int32 run_from_line = 0;
 
 void sub__icon (int32 i, int32 i2, int32 passed);
 
-
 void sub__display();
 void sub__autodisplay();
 int32 func__autodisplay();
-
-
-
-
 
 int32 func__errorline()
 {
     return ercl;
 }
-
 
 int32 func__inclerrorline()
 {
@@ -1420,10 +1388,10 @@ void sub_chain (qbs *f)
         return;
     }
 
-    if (cloud_app) {
+    /* if (cloud_app) {
         error (262);
         return;
-    }
+    } */
 
 #ifdef QB64_WINDOWS
 
@@ -1439,7 +1407,6 @@ void sub_chain (qbs *f)
     if (str2 == NULL) {
         str2 = qbs_new (0, 0);
     }
-
 
     static int32 i, i2, x;
     static qbs *strz = NULL;
@@ -1611,9 +1578,6 @@ extensions_ready:
     memcpy (thisexe_path->chr, path_data, i2);
     thisexe_path->chr[i2] = 92; //"\"
 
-
-
-
     //1. create & open a temporary file to pass information to the chained program
     double TD;
     int32 TL, FF;
@@ -1777,33 +1741,6 @@ run_failed:
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //note: index 0 is unused
 int32 device_last = 0; //last used device
 int32 device_max = 1000; //number of allocated indexes
@@ -1882,8 +1819,6 @@ void commitDeviceEvent (device_struct *device)
     device->queued_events++;
 }
 
-
-
 int32 func__devices()
 {
     return device_last;
@@ -1904,7 +1839,6 @@ qbs *func__device (int32 i, int32 passed)
 
     return qbs_new_txt (devices[i].name);
 }
-
 
 int32 func__deviceinput (int32 i, int32 passed)
 {
@@ -2108,7 +2042,6 @@ int32 func__lastwheel (int32 di, int32 passed)
     return d->lastwheel;
 }
 
-
 onstrig_struct *onstrig = (onstrig_struct *) calloc (65536,
                           sizeof (onstrig_struct) ); //note: up to 256 controllers with up to 256 buttons each supported
 int32 onstrig_inprogress = 0;
@@ -2240,7 +2173,6 @@ void sub_strig (int32 i, int32 controller, int32 option, int32 passed)
         }
     }//i
 }
-
 
 onkey_struct *onkey = (onkey_struct *) calloc (32, sizeof (onkey_struct) );
 int32 onkey_inprogress = 0;
@@ -2459,7 +2391,6 @@ void sub_timer (int32 i, int32 option, int32 passed)
     }
 }
 
-
 #ifdef QB64_WINDOWS
 void TIMERTHREAD_WINDOWS (void *unused)
 {
@@ -2662,8 +2593,6 @@ onkey_recheck:
 
 }
 
-
-
 extern int64 display_lock_request;
 extern int64 display_lock_confirmed;
 extern int64 display_lock_released;
@@ -2732,7 +2661,6 @@ void division_by_zero_handler (int ignore)
 //    error(256);//assume stack overflow? (the most likely cause)
 //}
 
-
 #ifdef QB64_WINDOWS
 void QBMAIN_WINDOWS (void *unused)
 {
@@ -2749,18 +2677,12 @@ void *QBMAIN_LINUX (void *unused)
 void QBMAIN (void *unused)
 {
 
-
-
-
-
-
     /*
         lame_t lame = lame_init();
         lame_set_in_samplerate(lame, 44100);
         //lame_set_VBR(lame, vbr_default);
         lame_init_params(lame);
     */
-
 
     /*
     ///OPENAL
@@ -2799,7 +2721,6 @@ void QBMAIN (void *unused)
 
     //qbs_print(qbs_str((int32)ALC_FREQUENCY),1);
 
-
     //uint8 *buf;
     buf=(unsigned char*)malloc(4096);
     //fill with crap!
@@ -2815,7 +2736,6 @@ void QBMAIN (void *unused)
     alSourcePlay(source);
     if(alGetError() != AL_NO_ERROR) exit(444);
     */
-
 
 #ifdef QB64_WINDOWS
     static uint8 controlfp_set = 0;
@@ -2838,11 +2758,6 @@ void QBMAIN (void *unused)
     sigaction (SIGFPE, &sig_act, NULL);
 #endif
 
-
-
-
-
-
     /*
     ptrszint z;
     z=(ptrszint)&dummyfunc;
@@ -2854,10 +2769,6 @@ void QBMAIN (void *unused)
     int32 tmp_fileno;
     qbs *tqbs;
     uint32 qbs_tmp_base = qbs_tmp_list_nexti;
-
-
-
-
 
     static mem_lock *sf_mem_lock = NULL;
 
