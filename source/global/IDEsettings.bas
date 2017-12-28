@@ -399,7 +399,6 @@ IF LoadedIDESettings = 0 THEN
     IF result = 0 THEN WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMakeScript$", "programs\android\start_android.bat"
     IF result = 0 THEN WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMakeScript$", "programs\android\start_android.bat"
 
-
     GOTO SkipCheckConfigFileExists
     CheckConfigFileExists:
     IF _FILEEXISTS(ConfigFile$) = 0 THEN

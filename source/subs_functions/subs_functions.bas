@@ -81,7 +81,6 @@ id.n = "_MEMFILL": id.subfunc = 2: id.callname = "sub_stub": regid
 clearid
 id.n = "_CONTINUE": id.subfunc = 2: id.callname = "sub_stub": regid
 
-
 clearid
 id.n = "_RESIZE"
 id.subfunc = 2
@@ -125,7 +124,6 @@ id.subfunc = 1
 id.callname = "func__scaledheight"
 id.ret = LONGTYPE - ISPOINTER
 regid
-
 
 clearid
 id.n = "_GLRENDER"
@@ -181,8 +179,6 @@ id.ret = ISUDT + (1) 'the _MEM type is the first TYPE defined
 id.NoCloud = 1
 regid
 '---special case---
-
-
 
 clearid
 id.n = "_MEMFREE"
@@ -264,7 +260,6 @@ id.callname = "func__screenhide"
 id.ret = LONGTYPE - ISPOINTER
 id.NoCloud = 1
 regid
-
 
 clearid
 id.n = "_CONSOLE"
@@ -359,8 +354,6 @@ id.specialformat = "[(?[,?])]{ON|OFF|STOP}"
 'In previous versions of BASIC, the statement STRIG ON enables testing of the joystick triggers; STRIG OFF disables joystick trigger testing. QuickBASIC ignores STRIG ON and STRIG OFF statements--the statements are provided for compatibility with earlier versions.
 regid
 
-
-
 clearid
 id.n = "_DEVICES": id.Dependency=DEPENDENCY_DEVICEINPUT
 id.subfunc = 1
@@ -449,7 +442,6 @@ id.ret = SINGLETYPE - ISPOINTER
 id.specialformat = "[?]"
 regid
 
-
 clearid
 id.n = "_WHEEL": id.Dependency=DEPENDENCY_DEVICEINPUT
 id.subfunc = 1
@@ -459,15 +451,6 @@ id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.ret = SINGLETYPE - ISPOINTER
 id.specialformat = "[?]"
 regid
-
-
-
-
-
-
-
-
-
 
 clearid
 id.n = "KEY"
@@ -620,10 +603,6 @@ id.specialformat = "[?,?,?,?]"
 id.ret = LONGTYPE - ISPOINTER
 id.NoCloud = 1
 regid
-
-
-
-
 
 clearid
 id.n = "LOCK"
@@ -779,7 +758,6 @@ id.ret = LONGTYPE - ISPOINTER
 id.NoCloud = 1
 regid
 
-
 clearid
 id.n = "ENVIRON"
 id.musthave = "$"
@@ -813,7 +791,6 @@ id.subfunc = 1
 id.callname = "func__inclerrorline"
 id.ret = LONGTYPE - ISPOINTER
 regid
-
 
 clearid
 id.n = "_DISPLAY"
@@ -1345,7 +1322,6 @@ id.arg = MKL$(ULONGTYPE - ISPOINTER)
 id.ret = LONGTYPE - ISPOINTER
 regid
 
-
 clearid
 id.n = "DRAW"
 id.subfunc = 2
@@ -1458,7 +1434,6 @@ id.args = 1
 id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "[?]"
 regid
-
 
 clearid
 id.n = "_MOUSEPIPEOPEN"
@@ -1614,7 +1589,6 @@ id.subfunc = 1
 id.callname = "func__commandcount"
 id.ret = LONGTYPE - ISPOINTER
 regid
-
 
 'QB64 AUDIO
 
@@ -1791,7 +1765,6 @@ id.specialformat = "?,[?][,[?][,[?][,[?]]]]"
 id.NoCloud = 1
 regid
 
-
 clearid
 id.n = "_SNDVOL": id.Dependency = DEPENDENCY_AUDIO_OUT
 id.subfunc = 2
@@ -1885,7 +1858,6 @@ id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.ret = LONGTYPE - ISPOINTER
 regid
 
-
 clearid
 id.n = "SCREEN"
 id.subfunc = 1
@@ -1905,7 +1877,6 @@ id.arg = MKL$(SINGLETYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.ret = SINGLETYPE - ISPOINTER
 regid
 
-
 clearid
 id.n = "POINT"
 id.subfunc = 1
@@ -1915,7 +1886,6 @@ id.arg = MKL$(SINGLETYPE - ISPOINTER) + MKL$(SINGLETYPE - ISPOINTER)
 id.specialformat = "?[,?]"
 id.ret = DOUBLETYPE - ISPOINTER
 regid
-
 
 clearid
 id.n = "TAB"
@@ -1934,7 +1904,6 @@ id.args = 1
 id.arg = MKL$(LONGTYPE - ISPOINTER)
 id.ret = STRINGTYPE - ISPOINTER
 regid
-
 
 clearid
 id.n = "WAIT"
@@ -2081,8 +2050,6 @@ id.arg = MKL$(-1)
 id.ret = INTEGERTYPE - ISPOINTER
 regid
 
-
-
 clearid
 id.n = "TIME"
 id.musthave = "$"
@@ -2100,8 +2067,6 @@ id.subfunc = 1
 id.callname = "func_time"
 id.ret = STRINGTYPE - ISPOINTER
 regid
-
-
 
 clearid
 id.n = "DATE"
@@ -2127,7 +2092,6 @@ id.subfunc = 1
 id.callname = "func_csrlin"
 id.ret = LONGTYPE - ISPOINTER
 regid
-
 
 clearid
 id.n = "PAINT"
@@ -2735,7 +2699,6 @@ id.args = 3
 id.arg = MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER) + MKL$(LONGTYPE - ISPOINTER)
 id.specialformat = "[{#|LPRINT}][?][,?]" 'new!
 regid
-
 
 clearid
 id.n = "SCREEN"

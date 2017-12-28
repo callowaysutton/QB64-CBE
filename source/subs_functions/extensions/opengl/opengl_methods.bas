@@ -63,7 +63,6 @@ NEXT
 readchunk$ = a$: last_character$ = "": a$ = ""
 END FUNCTION
 
-
 SUB gl_scan_header
 
 IF GL_KIT THEN hk = FREEFILE: OPEN "internal\c\parts\core\gl_header_for_parsing\temp\gl_kit.bas" FOR OUTPUT AS #hk
@@ -121,7 +120,6 @@ DO UNTIL EOF(h)
             got_define:
         END IF '#define
 
-
         IF RIGHT$(a$, 1) = ";" THEN
             a2$ = readchunk(a$, l$): IF a2$ <> "WINGDIAPI" GOTO discard
             ret_type$ = readchunk(a$, l$)
@@ -176,7 +174,6 @@ DO UNTIL EOF(h)
 
             hc$ = hc$ + proc_name$ + "("
             hd$ = hd$ + "call_" + proc_name$ + "("
-
 
             GL_COMMANDS(c).args = 0
             GL_COMMANDS(c).arg = ""
@@ -252,13 +249,10 @@ DO UNTIL EOF(h)
                 hc$ = hc$ + "(" + var_type_backup$ + ")" + letter$
                 hd$ = hd$ + ctyp$ + " " + letter$
 
-
-
                 IF l$ <> ")" THEN hc$ = hc$ + ",": hd$ = hd$ + ","
 
             LOOP UNTIL l$ = ")"
             no_arguments:
-
 
             hd$ = hd$ + "){"
             hc$ = hc$ + ");"
@@ -270,22 +264,14 @@ DO UNTIL EOF(h)
                 GL_COMMANDS(c).callname = "call_" + proc_name$
             END IF
 
-
             IF proc_name$ = "glGetString" THEN
                 GL_COMMANDS(c).ret = STRINGTYPE
                 GL_COMMANDS(c).callname = "(  char*  )" + RTRIM$(GL_COMMANDS(c).callname)
             END IF
 
-
-
-
         END IF
 
     END IF
-
-
-
-
 
     discard:
 LOOP
@@ -319,12 +305,10 @@ END IF
 
 IF GL_KIT THEN CLOSE #hk
 
-
 fh = FREEFILE
 OPEN "internal\c\parts\core\gl_header_for_parsing\temp\gl_helper_code.h" FOR OUTPUT AS #fh
 PRINT #fh, GL_HELPER_CODE
 CLOSE #fh
-
 
 END SUB
 
@@ -360,7 +344,6 @@ FOR d = 1 TO GL_DEFINES_LAST
     'add to hash table
     HashAdd constcname(i), HASHFLAG_CONSTANT, i
 NEXT
-
 
 'add subs/functions
 FOR c = 1 TO GL_COMMANDS_LAST

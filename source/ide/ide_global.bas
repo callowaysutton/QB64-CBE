@@ -11,7 +11,6 @@ DIM SHARED IDEBuildModeChanged
 DIM SHARED IdeInfo AS STRING
 DIM SHARED IdeContextHelpSF AS _BYTE
 
-
 DIM SHARED IdeSystem AS LONG
 '1=Entering text into the main IDE window
 '2=Entering text into the quick search bar

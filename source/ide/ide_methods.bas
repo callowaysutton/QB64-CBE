@@ -378,7 +378,6 @@ FUNCTION ide2 (ignore)
 
         redraweverything2:
 
-
         menubar$ = "   "
         MenuLocations = ""
         FOR i = 1 TO menus - 1
@@ -389,19 +388,15 @@ FUNCTION ide2 (ignore)
         MenuLocations = MenuLocations + MKI$(LEN(menubar$))
         menubar$ = menubar$ + menu$(i, 0) + "  "
 
-
         SCREEN , , 3, 0
         VIEW PRINT 1 TO idewy + idesubwindow
         'VIEW PRINT 1 TO _HEIGHT(0)
-
-
 
         LOCATE , , , IDENormalCursorStart, IDENormalCursorEnd
 
         'static background
         COLOR 0, 7: LOCATE 1, 1: PRINT menubar$;
         COLOR 7, 1: idebox 1, 2, idewx, idewy - 5
-
 
         COLOR 7, 1: idebox 1, idewy - 4, idewx, 5
         'edit corners
@@ -418,7 +413,6 @@ FUNCTION ide2 (ignore)
         q = idevbar(idewx, idewy - 3, 3, 1, 1)
         q = idevbar(idewx, 3, idewy - 8, 1, 1)
         q = idehbar(2, idewy - 5, idewx - 2, 1, 1)
-
 
         DEF SEG = 0
         ideshowtext
@@ -516,16 +510,6 @@ FUNCTION ide2 (ignore)
         END IF 'no restore
 
         skipload:
-
-
-
-
-
-
-
-
-
-
 
     END IF 'idelaunched
 
@@ -701,34 +685,6 @@ FUNCTION ide2 (ignore)
     END IF 'skipdisplay
 
     idefocusline = 0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     'main loop
     DO
@@ -930,7 +886,6 @@ FUNCTION ide2 (ignore)
                     ELSE
                         a$ = MID$(c$, 2, LEN(c$) - 5)
 
-
                         l = CVL(RIGHT$(c$, 4)): IF l <> 0 THEN idefocusline = l
 
                         x = 1
@@ -972,9 +927,6 @@ FUNCTION ide2 (ignore)
             ideshowtext
 
             IF idehelp THEN
-
-
-
 
                 Help_ShowText
 
@@ -1060,7 +1012,6 @@ FUNCTION ide2 (ignore)
             END IF
 
             LOCATE , , 1
-
 
             PCOPY 3, 0
 
@@ -1192,8 +1143,6 @@ FUNCTION ide2 (ignore)
                 ideundopos = p2
                 IF ideundobase = 0 THEN ideundobase = ideundopos
 
-
-
                 'set undo flag once
                 IF ideundoflag = 0 THEN
                     ideundoflag = 1
@@ -1222,7 +1171,6 @@ FUNCTION ide2 (ignore)
             idecompiledline = 1
             EXIT FUNCTION
         END IF 'idechangemade
-
 
         change = 0
         waitforinput:
@@ -1583,7 +1531,6 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-
         'Scroll bar code goes here
         STATIC Help_Scrollbar, Help_Scrollbar_Method
         '1=arrow less, 2=arrow more, 3=dragging 'bit', 4=clicking in space
@@ -1641,8 +1588,6 @@ FUNCTION ide2 (ignore)
                         END IF
 
                     END IF
-
-
 
                     IF Help_Scrollbar_Method = 4 THEN
                         IF Help_Scrollbar = 1 THEN
@@ -1706,15 +1651,11 @@ FUNCTION ide2 (ignore)
                     '    END IF
                     'END IF
 
-
                     IF mCLICK THEN mCLICK = 0
                 END IF
 
             END IF 'system=3
         END IF 'idehelp
-
-
-
 
         'IdeSystem specific code goes here
 
@@ -1963,7 +1904,6 @@ FUNCTION ide2 (ignore)
             IF mCLICK OR K$ = CHR$(27) THEN
                 IF (mY = idewy AND mX = idewx - 2) OR K$ = CHR$(27) THEN 'close help
 
-
                     'IF idesubwindow THEN PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt: GOTO ideloop
                     'idesubwindow = idewy \ 2: idewy = idewy - idesubwindow
 
@@ -1976,7 +1916,6 @@ FUNCTION ide2 (ignore)
 
                 END IF
             END IF
-
 
             IF mCLICK THEN
                 IF mY = idewy THEN
@@ -2020,7 +1959,6 @@ FUNCTION ide2 (ignore)
                     '    END IF
                     'NEXT
 
-
                 END IF
             END IF
 
@@ -2063,7 +2001,6 @@ FUNCTION ide2 (ignore)
                 IF clip$ <> "" THEN _CLIPBOARD$ = clip$
                 GOTO keep_select
             END IF
-
 
             IF mX >= Help_wx1 AND mY >= Help_wy1 AND mX <= Help_wx2 AND mY <= Help_wy2 THEN
                 IF mCLICK THEN
@@ -2361,8 +2298,6 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-
-
         IF KB = KEY_F1 THEN
             contextualhelp:
             IdeContextHelpSF = 0
@@ -2415,9 +2350,7 @@ FUNCTION ide2 (ignore)
                         IF lnk$ = "C" THEN GOTO ideloop
                     END IF
 
-
                     OpenHelpLnk:
-
 
                     Help_Back(Help_Back_Pos).sx = Help_sx 'update position
                     Help_Back(Help_Back_Pos).sy = Help_sy
@@ -2426,14 +2359,12 @@ FUNCTION ide2 (ignore)
 
                     top = UBOUND(back$)
 
-
                     IF Back$(Help_Back_Pos) = lnk$ THEN Help_Back_Pos = Help_Back_Pos - 1: GOTO usenextentry2
                     IF Help_Back_Pos < top THEN
                         IF Back$(Help_Back_Pos + 1) = lnk$ THEN
                             GOTO usenextentry2
                         END IF
                     END IF
-
 
                     top = top + 1
                     REDIM _PRESERVE Back(top) AS STRING
@@ -2559,8 +2490,6 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-
-
         IF KALT AND KB = KEY_LEFT THEN
             bmkremoved = 0
             bmkremove:
@@ -2623,7 +2552,6 @@ FUNCTION ide2 (ignore)
             '***RESERVED***
             GOTO specialchar
         END IF
-
 
         IF KALT AND KB >= 48 AND KB <= 57 THEN GOTO specialchar ' Steve Edit on 07-04-2014 to add support for ALT-numkey combos to produce ASCII codes
 
@@ -2955,12 +2883,6 @@ FUNCTION ide2 (ignore)
             END IF
         END IF
 
-
-
-
-
-
-
         IF KCONTROL AND UCASE$(K$) = "A" THEN 'select all
             idemselectall:
             ideselect = 1: ideselectx1 = 1: ideselecty1 = 1
@@ -3096,7 +3018,6 @@ FUNCTION ide2 (ignore)
 
         END IF
 
-
         IF KCONTROL AND UCASE$(K$) = "Y" THEN 'redo (CTRL+Y)
             idemredo:
             IF ideundopos THEN
@@ -3155,7 +3076,6 @@ FUNCTION ide2 (ignore)
             GOTO specialchar
         END IF
 
-
         IF ((KSHIFT AND KB = KEY_DELETE) OR (KCONTROL AND UCASE$(K$) = "X")) AND ideselect = 1 THEN 'cut to clipboard
             idemcut:
             idechangemade = 1
@@ -3171,7 +3091,6 @@ FUNCTION ide2 (ignore)
                 ideselect = 0
             END IF
         END IF
-
 
         IF (KSHIFT AND KB = KEY_INSERT) OR (KCONTROL AND UCASE$(K$) = "V") THEN 'paste from clipboard
             idempaste:
@@ -3466,13 +3385,6 @@ FUNCTION ide2 (ignore)
         nolastlinedel = 0
         IF sy1 <> sy2 AND idecx = 1 AND idecy > sy1 THEN sy2 = sy2 - 1: nolastlinedel = 1 'ignore last line of multi-line select?
 
-
-
-
-
-
-
-
         FOR y = sy2 TO sy1 STEP -1
             IF sy1 = sy2 AND nolastlinedel = 0 THEN 'single line select
                 a$ = idegetline(y)
@@ -3482,13 +3394,10 @@ FUNCTION ide2 (ignore)
                 idesetline y, a2$
             ELSE 'multiline select
 
-
                 IF iden = 1 AND y = 1 THEN idesetline y, "" ELSE idedelline y
-
 
             END IF
         NEXT
-
 
         idecx = sx1: IF sy1 <> sy2 OR nolastlinedel = 1 THEN idecx = 1
         idecy = sy1
@@ -3709,14 +3618,6 @@ FUNCTION ide2 (ignore)
             END IF
             GOTO specialchar
         END IF
-
-
-
-
-
-
-
-
 
         'patch#1
         IF LEN(K$) <> 1 THEN GOTO specialchar
@@ -4131,8 +4032,6 @@ FUNCTION ide2 (ignore)
                     PRINT MID$(m$, x, 1);
                 NEXT
 
-
-
             END IF
 
         NEXT
@@ -4459,7 +4358,6 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-
             IF RIGHT$(menu$(m, s), 19) = "#Swap Mouse Buttons" THEN
                 PCOPY 2, 0
                 MouseButtonSwapped = NOT MouseButtonSwapped
@@ -4583,11 +4481,6 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-
-
-
-
-
             IF menu$(m, s) = "#Go to line...  Ctrl+G" THEN
                 PCOPY 2, 0
                 retval = idegotobox
@@ -4610,7 +4503,6 @@ FUNCTION ide2 (ignore)
                 PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
                 GOTO ideloop
             END IF
-
 
             IF menu$(m, s) = "ASCII c#hart" THEN
                 PCOPY 2, 0
@@ -4689,7 +4581,6 @@ FUNCTION ide2 (ignore)
                 END IF
                 GOTO ideloop
             END IF
-
 
             IF menu$(m, s) = "#Math" THEN
                 Mathbox
@@ -5038,7 +4929,6 @@ FUNCTION ide2 (ignore)
                 GOTO idemredo
             END IF
 
-
             IF menu$(m, s) = "Select #All  Ctrl+A" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
                 GOTO idemselectall
@@ -5158,7 +5048,6 @@ FUNCTION ide2 (ignore)
                 END IF
             NEXT
 
-
             IF menu$(m, s) = "#Recent..." THEN
                 PCOPY 2, 0
                 ideshowrecentbox:
@@ -5246,7 +5135,6 @@ FUNCTION ide2 (ignore)
                 PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt: GOTO ideloop
             END IF
 
-
             IF menu$(m, s) = "Save #As..." THEN
                 PCOPY 2, 0
                 IF ideprogname = "" THEN
@@ -5266,11 +5154,9 @@ FUNCTION ide2 (ignore)
                 PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt: GOTO ideloop
             END IF
 
-
             SCREEN , , 0, 0
             CLS: PRINT "MENU ITEM [" + menu$(m, s) + "] NOT IMPLEMENTED!": END
         END IF
-
 
         _LIMIT 100
 
@@ -5420,7 +5306,6 @@ SUB ideboxshadow (x, y, w, h)
             END IF
         NEXT
     END IF
-
 
 END SUB
 
@@ -5700,7 +5585,6 @@ FUNCTION idechange$
 
         END IF 'change all
 
-
         IF (focus = 6 AND info <> 0) OR K$ = CHR$(13) THEN
             idefindcasesens = o(3).sel
             idefindwholeword = o(4).sel
@@ -5711,15 +5595,11 @@ FUNCTION idechange$
             EXIT FUNCTION
         END IF
 
-
         'end of custom controls
-
-
 
         mousedown = 0
         mouseup = 0
     LOOP
-
 
 END FUNCTION
 
@@ -5959,7 +5839,6 @@ FUNCTION idechangeit$
         mouseup = 0
     LOOP
 
-
 END FUNCTION
 
 SUB idedelline (i)
@@ -6184,7 +6063,6 @@ END SUB
 
 SUB ideerrormessage (mess$)
 
-
     '-------- generic dialog box header --------
     PCOPY 3, 0
     PCOPY 0, 2
@@ -6295,7 +6173,6 @@ SUB ideerrormessage (mess$)
         mousedown = 0
         mouseup = 0
     LOOP
-
 
 END SUB
 
@@ -6413,11 +6290,7 @@ FUNCTION idefileexists$
         mouseup = 0
     LOOP
 
-
 END FUNCTION
-
-
-
 
 FUNCTION idefind$
 
@@ -6483,8 +6356,6 @@ FUNCTION idefind$
     END IF
     o(i).v1 = LEN(a2$)
 
-
-
     i = i + 1
     o(i).typ = 4 'check box
     o(i).y = 5
@@ -6515,7 +6386,6 @@ FUNCTION idefind$
     '-------- end of generic init --------
 
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -6630,8 +6500,6 @@ FUNCTION idefind$
         END IF
         'end of custom controls
 
-
-
         mousedown = 0
         mouseup = 0
     LOOP
@@ -6695,7 +6563,6 @@ SUB idefindagain
     ELSE
         x = INSTR(x1, l$, s$)
     END IF
-
 
     IF x THEN
         IF idefindwholeword THEN
@@ -6797,7 +6664,6 @@ FUNCTION idehbar (x, y, h, i2, n2)
     'LOCATE y, x2: PRINT chr$(219);
     'END IF
 
-
     'h is size in characters (inc. arrows)
 
     'draw background & arrows
@@ -6867,7 +6733,6 @@ FUNCTION idehbar (x, y, h, i2, n2)
         EXIT FUNCTION
     END IF
 
-
 END FUNCTION
 
 FUNCTION idehlen (a$)
@@ -6912,7 +6777,6 @@ SUB ideinsline (i, text$)
 END SUB
 
 SUB idenewsf (sf AS STRING)
-
 
     '-------- generic dialog box header --------
     PCOPY 0, 2
@@ -6967,7 +6831,6 @@ SUB idenewsf (sf AS STRING)
     '-------- end of generic init --------
 
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -7067,8 +6930,6 @@ SUB idenewsf (sf AS STRING)
         mousedown = 0
         mouseup = 0
     LOOP
-
-
 
 END SUB
 
@@ -7276,7 +7137,6 @@ FUNCTION ideopen$
         PRINT a$;
         '-------- end of custom display changes --------
 
-
         'update visual page and cursor position
         PCOPY 1, 0
         IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
@@ -7322,15 +7182,6 @@ FUNCTION ideopen$
             END IF
         NEXT
         '-------- end of generic input response --------
-
-
-
-
-
-
-
-
-
 
         'specific post controls
         IF focus <> PrevFocus THEN
@@ -7976,7 +7827,6 @@ FUNCTION idesavenow$
         PCOPY 1, 0
         IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
 
-
         '-------- read input --------
         change = 0
         DO
@@ -8567,7 +8417,6 @@ SUB ideshowtext
                                 LOCATE y + 3, x: PRINT CHR$(a);
                             END IF
 
-
                         END IF
                         x2 = x2 + 1
                     NEXT
@@ -8827,7 +8676,6 @@ FUNCTION idesubs$
     END IF
     o(i).nam = idenewtxt("Program Items")
 
-
     i = i + 1
     o(i).typ = 3
     o(i).y = idewy + idesubwindow - 6
@@ -8842,7 +8690,6 @@ FUNCTION idesubs$
         o(i).nam = idenewtxt("#Sorted A-Z")
         o(i).sel = SortedSubsFlag
     END IF
-
 
     '-------- end of init --------
 
@@ -9000,7 +8847,6 @@ FUNCTION idesubs$
 
 END FUNCTION
 
-
 FUNCTION idelanguagebox
 
     '-------- generic dialog box header --------
@@ -9040,10 +8886,6 @@ FUNCTION idelanguagebox
     o(i).y = idewy + idesubwindow - 6
     o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
     o(i).dft = 1
-
-
-
-
 
     '-------- end of init --------
 
@@ -9140,13 +8982,10 @@ FUNCTION idelanguagebox
             EXIT FUNCTION
         END IF
 
-
         'end of custom controls
         mousedown = 0
         mouseup = 0
     LOOP
-
-
 
 END FUNCTION
 
@@ -9383,7 +9222,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
             END IF
         END IF 'mb
 
-
         IF focusoffset = 0 THEN
             IF mw THEN
                 'move to top or bottom
@@ -9584,7 +9422,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                         'COLOR 0, 7
                         x2 = idehlen(a3$) + 4
                         IF mx >= x AND mx < x + x2 THEN info = n2: focus = f + n2 - 1
-
 
                         x = x + x2
                         a3$ = ""
@@ -10022,11 +9859,6 @@ SUB initmouse
     _MOUSESHOW
 END SUB
 
-
-
-
-
-
 FUNCTION idelayoutbox
 
     '-------- generic dialog box header --------
@@ -10084,7 +9916,6 @@ FUNCTION idelayoutbox
     '-------- end of generic init --------
 
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -10222,11 +10053,6 @@ FUNCTION idelayoutbox
     LOOP
 END FUNCTION
 
-
-
-
-
-
 FUNCTION idebackupbox
 
     '-------- generic dialog box header --------
@@ -10270,7 +10096,6 @@ FUNCTION idebackupbox
     '-------- end of generic init --------
 
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -10362,8 +10187,6 @@ FUNCTION idebackupbox
         END IF
         idetxt(o(1).txt) = a$
 
-
-
         IF K$ = CHR$(27) OR (focus = 3 AND info <> 0) THEN EXIT FUNCTION
 
         IF K$ = CHR$(13) OR (focus = 2 AND info <> 0) THEN
@@ -10391,9 +10214,6 @@ FUNCTION idebackupbox
         mouseup = 0
     LOOP
 END FUNCTION
-
-
-
 
 FUNCTION idemodifycommandbox
     '-------- generic dialog box header --------
@@ -10438,7 +10258,6 @@ FUNCTION idemodifycommandbox
     '-------- end of generic init --------
 
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -10574,7 +10393,6 @@ FUNCTION idegotobox
 
     DO 'main loop
 
-
         '-------- generic display dialog box & objects --------
         idedrawpar p
         f = 1: cx = 0: cy = 0
@@ -10685,10 +10503,6 @@ FUNCTION idegotobox
     LOOP
 END FUNCTION
 
-
-
-
-
 FUNCTION ideadvancedbox
 
     '-------- generic dialog box header --------
@@ -10741,7 +10555,6 @@ FUNCTION ideadvancedbox
     '-------- end of generic init --------
 
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -10850,21 +10663,8 @@ FUNCTION ideadvancedbox
 
             '...
 
-
             EXIT FUNCTION
         END IF
-
-
-
-
-
-
-
-
-
-
-
-
 
         'end of custom controls
 
@@ -10872,12 +10672,6 @@ FUNCTION ideadvancedbox
         mouseup = 0
     LOOP
 END FUNCTION
-
-
-
-
-
-
 
 SUB idemessagebox (titlestr$, messagestr$)
 
@@ -10931,7 +10725,6 @@ SUB idemessagebox (titlestr$, messagestr$)
     '-------- end of generic init --------
 
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -11011,8 +10804,6 @@ SUB idemessagebox (titlestr$, messagestr$)
         mouseup = 0
     LOOP
 END SUB
-
-
 
 FUNCTION ideyesnobox$ (titlestr$, messagestr$) 'returns "Y" or "N"
     '-------- generic dialog box header --------
@@ -11134,8 +10925,6 @@ FUNCTION ideyesnobox$ (titlestr$, messagestr$) 'returns "Y" or "N"
 
 END FUNCTION 'yes/no box
 
-
-
 FUNCTION ideandroidbox
 
     '-------- generic dialog box header --------
@@ -11170,7 +10959,6 @@ FUNCTION ideandroidbox
     'o(i).txt = idenewtxt(a2$)
     'o(i).v1 = LEN(a2$)
 
-
     'a2$ = IdeAndroidMakeScript
     'IF a2$ = "" THEN a2$ = "programs\android\make_android.bat"
     'i = i + 1
@@ -11192,7 +10980,6 @@ FUNCTION ideandroidbox
     '-------- end of generic init --------
 
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -11314,10 +11101,6 @@ FUNCTION ideandroidbox
     LOOP
 END FUNCTION
 
-
-
-
-
 FUNCTION idedisplaybox
 
     '-------- generic dialog box header --------
@@ -11408,7 +11191,6 @@ FUNCTION idedisplaybox
     '-------- end of generic init --------
 
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -11532,8 +11314,6 @@ FUNCTION idedisplaybox
         END IF
         idetxt(o(6).txt) = a$
 
-
-
         IF K$ = CHR$(27) OR (focus = 8 AND info <> 0) THEN EXIT FUNCTION
         IF K$ = CHR$(13) OR (focus = 7 AND info <> 0) THEN
 
@@ -11554,7 +11334,6 @@ FUNCTION idedisplaybox
                     x = 1
                 END IF
             END IF
-
 
             v$ = idetxt(o(5).txt): IF v$ <> idecustomfontfile$ THEN x = 1
 
@@ -11577,7 +11356,6 @@ FUNCTION idedisplaybox
             IF v% > 999 THEN v% = 999
             IF v% <> idewx THEN idedisplaybox = 1
             idewx = v%
-
 
             v$ = idetxt(o(2).txt): IF v$ = "" THEN v$ = "0"
             v% = VAL(v$)
@@ -11605,7 +11383,6 @@ FUNCTION idedisplaybox
             IF v% > 99 THEN v% = 99
             idecustomfontheight = v%
 
-
             WriteConfigSetting "'[IDE DISPLAY SETTINGS]", "IDE_Width", STR$(idewx)
             WriteConfigSetting "'[IDE DISPLAY SETTINGS]", "IDE_Height", STR$(idewy)
             IF idecustomfont THEN
@@ -11620,7 +11397,6 @@ FUNCTION idedisplaybox
             END IF
             WriteConfigSetting "'[IDE DISPLAY SETTINGS]", "IDE_CustomFont$", idecustomfontfile$
             WriteConfigSetting "'[IDE DISPLAY SETTINGS]", "IDE_CustomFontSize", STR$(idecustomfontheight)
-
 
             EXIT FUNCTION
         END IF
@@ -12381,7 +12157,6 @@ FUNCTION idechoosecolorsbox
     RETURN
 END FUNCTION
 
-
 FUNCTION idecolorpicker$ (editing)
     '-------- generic dialog box header --------
     PCOPY 0, 2
@@ -12845,7 +12620,6 @@ FUNCTION CountItems (SearchString$, Item$)
     CountItems = Total
 END FUNCTION
 
-
 SUB iderestrict417 (p417)
     x = 0
     IF p417 AND 4 THEN x = x + 1
@@ -12853,23 +12627,12 @@ SUB iderestrict417 (p417)
     IF x > 1 THEN p417 = p417 AND 243
 END SUB
 
-
-
-
-
-
-
-
-
-
 FUNCTION CTRL2
     IF MacOSX THEN
         IF _KEYDOWN(100309) THEN CTRL2 = 1
         IF _KEYDOWN(100310) THEN CTRL2 = 1
     END IF
 END FUNCTION
-
-
 
 SUB GetInput
     STATIC ASCvalue$
@@ -12954,9 +12717,6 @@ SUB GetInput
         IF mB2 = 0 AND mOB2 <> 0 THEN mRELEASE2 = -1: EXIT SUB
     LOOP
 END SUB
-
-
-
 
 SUB Help_ShowText
 
@@ -13065,7 +12825,6 @@ SUB Help_ShowText
 
 END SUB
 
-
 FUNCTION idesearchedbox$
 
     '-------- generic dialog box header --------
@@ -13081,11 +12840,6 @@ FUNCTION idesearchedbox$
     '-------- end of generic dialog box header --------
 
     '-------- init --------
-
-
-
-
-
 
     ln = 0
     l$ = ""
@@ -13237,10 +12991,7 @@ FUNCTION idesearchedbox$
         mouseup = 0
     LOOP
 
-
-
 END FUNCTION
-
 
 SUB IdeImportBookmarks (f2$)
     IdeBmkN = 0
@@ -13301,11 +13052,6 @@ FUNCTION iderecentbox$
     '-------- end of generic dialog box header --------
 
     '-------- init --------
-
-
-
-
-
 
     l$ = ""
     fh = FREEFILE
@@ -13438,11 +13184,7 @@ FUNCTION iderecentbox$
         mouseup = 0
     LOOP
 
-
-
 END FUNCTION
-
-
 
 SUB IdeMakeFileMenu
     m = 1: i = 0
@@ -13969,7 +13711,6 @@ SUB ideASCIIbox
 
 END FUNCTION
 
-
 FUNCTION idef1box$ (lnks$, lnks)
 
     '-------- generic dialog box header --------
@@ -13985,7 +13726,6 @@ FUNCTION idef1box$ (lnks$, lnks)
     '-------- end of generic dialog box header --------
 
     '-------- init --------
-
 
     '72,19
     i = 0
@@ -14093,8 +13833,6 @@ FUNCTION idef1box$ (lnks$, lnks)
         mouseup = 0
     LOOP
 
-
-
 END FUNCTION
 
 SUB Mathbox
@@ -14135,7 +13873,6 @@ SUB Mathbox
     '-------- end of generic init --------
 
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -14214,7 +13951,6 @@ SUB Mathbox
         mouseup = 0
     LOOP
 
-
     temp$ = messagestr$ 'Make a back up of our user return
     titlestr$ = "(H)ex/(D)ec  (U)n(C)omment  (ESC)ape/(R)edo"
     ev$ = Evaluate_Expression$(messagestr$)
@@ -14238,11 +13974,7 @@ SUB Mathbox
     FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
     '-------- end of generic init --------
 
-
-
-
     DO 'main loop
-
 
         '-------- generic display dialog box & objects --------
         idedrawpar p
@@ -14691,4 +14423,3 @@ FUNCTION removesymbol2$ (varname$)
 END FUNCTION
 
 '$INCLUDE:'wiki\wiki_methods.bas'
-

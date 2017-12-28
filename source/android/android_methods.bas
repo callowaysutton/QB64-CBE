@@ -88,7 +88,6 @@ END IF
 CreateAndroidProject_FindFile$ = a$
 END FUNCTION
 
-
 FUNCTION CreateAndroidProject_GetNdkPath$
 CreateAndroidProject_Message "Locating NDK in filesystem (this could take a while the first time)"
 thisFile$ = CreateAndroidProject_FindFile$("ndk-build")
@@ -187,8 +186,6 @@ SUB CreateAndroidProject_AddFile (code AS STRING, file AS STRING)
 'android_get_file_asset(mgr, "subfolder/subfolderfile.txt");
 code = code + "android_get_file_asset(mgr," + CHR$(34) + CreateAndroidProject_PathReference$(file) + CHR$(34) + ");" + CHR$(13) + CHR$(10)
 END SUB
-
-
 
 SUB CreateAndroidProject (projectName2 AS STRING)
 
@@ -343,7 +340,6 @@ CreateAndroidProject_ReplaceInFile projectFolder + "\app\src\main\res\values\str
 'END IF
 'IF basPath$ = "" THEN basPath$ = "."
 
-
 'to prevent misunderstanding files will first be moved to an isolation folder
 'this isolation folder will be destroyed after work is completed
 
@@ -355,7 +351,6 @@ DO WHILE _DIREXISTS(projectFolder + "\app\src\main\assets") 'just by waiting thi
 LOOP
 MKDIR projectFolder + "\app\src\main\assets" 'may fail if assets folder is open/locked and this folder MUST be empty before continuing
 
-
 dirCode$ = ""
 fileCode$ = ""
 
@@ -364,10 +359,7 @@ CreateAndroidProject_Message "Adding $INSTALLFOLDER(s)"
 FOR f = 1 TO AryLastStr(installFolder())
     p$ = installFolder(f)
 
-
-
     'IF idemode THEN basPath$ = idepath$ + pathsep$ ELSE basPath$ = getfilepath$(sourcefile$)
-
 
     'IF LEN(basPath$) > 0 THEN
     '    IF RIGHT$(basPath$, 1) = "/" OR RIGHT$(basPath$, 1) = "\" THEN basPath$ = LEFT$(basPath$, LEN(basPath$) - 1)
@@ -448,9 +440,6 @@ FOR f = 1 TO AryLastStr(installFolder())
     SHELL _HIDE "cmd /c xcopy /e " + projectFolder + "\temp_assets " + CHR$(34) + destPath$ + CHR$(34)
 
 NEXT
-
-
-
 
 CreateAndroidProject_Message "Adding $INSTALLFILES"
 
@@ -547,5 +536,4 @@ CLOSE #1
 CreateAndroidProject_Message "Android project generation complete"
 
 END SUB
-
 

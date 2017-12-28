@@ -106,7 +106,6 @@ FOR i = 1 TO LEN(t$)
 
     c = ASC(t$, i)
 
-
     IF Help_BG_Col = 0 AND Help_LockWrap = 0 THEN
 
         'addtxt handles all wrapping issues
@@ -179,7 +178,6 @@ IF Help_NewLineIndent THEN
     Help_AddTxt SPACE$(Help_NewLineIndent), Help_Col, 0
 END IF
 
-
 END SUB
 
 SUB Help_PreView
@@ -211,15 +209,12 @@ FOR i = 1 TO LEN(Help_Txt$) STEP 4
 NEXT
 END SUB
 
-
 FUNCTION Help_Col 'helps to calculate the default color
 col = Help_Col_Normal
 IF Help_Italic THEN col = Help_Col_Italic
 IF Help_Bold THEN col = Help_Col_Bold 'Note: Bold overrides italic
 Help_Col = col
 END FUNCTION
-
-
 
 SUB WikiParse (a$)
 'PRINT "Parsing...": _DISPLAY
@@ -391,7 +386,6 @@ DO WHILE i <= n
         GOTO Special
     END IF
 
-
     'External links
     IF c = 91 THEN '"["
         IF c$(6) = "[http:" AND elink = 0 THEN
@@ -489,8 +483,6 @@ DO WHILE i <= n
         GOTO Special
     END IF
 
-
-
     IF c$(4) = " == " THEN
         i = i + 3
         Help_Underline = 1
@@ -510,7 +502,6 @@ DO WHILE i <= n
         Help_Underline = 1
         GOTO Special
     END IF
-
 
     IF c$(3) = "'''" THEN
         i = i + 2
@@ -600,14 +591,11 @@ DO WHILE i <= n
         GOTO Special
     END IF
 
-
     IF c$(4) = "----" THEN
         i = i + 3
         Help_AddTxt STRING$(100, 196), 8, 0
         GOTO Special
     END IF
-
-
 
     IF c$ = CHR$(10) THEN
         Help_NewLineIndent = 0
@@ -645,7 +633,6 @@ Help_Txt$ = LEFT$(Help_Txt$, Help_Txt_Len) + CHR$(13) 'chr13 stops reads past en
 'CLOSE #1
 
 'PRINT "Finished parsing!": _DISPLAY
-
 
 IF Help_PageLoaded$ = "Keyword Reference - Alphabetical" THEN
 
@@ -703,7 +690,6 @@ IF Help_PageLoaded$ = "Keyword Reference - Alphabetical" THEN
                     a2$ = LEFT$(a2$, INSTR(a2$, "...") - 1)
                 END IF
 
-
                 skip = 0
                 IF UCASE$(LEFT$(a2$, 3)) <> "_GL" THEN
                     FOR ci = 1 TO LEN(a2$)
@@ -756,9 +742,5 @@ IF Help_PageLoaded$ = "Keyword Reference - Alphabetical" THEN
     CLOSE #fh
 
 END IF
-
-
-
-
 
 END SUB

@@ -53,7 +53,6 @@ TYPE VKEY_TYPE
     locked AS LONG
     dpad AS VKEY_DPAD
 
-
     subImage AS LONG
 
     image AS LONG

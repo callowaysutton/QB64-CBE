@@ -522,9 +522,6 @@ FOR QB__fi = 1 TO LEN(format)
             IF __QB_DATETIME(QB__handle).months = 12 THEN QB__value = "dec"
         END IF
 
-
-
-
         QB__n = QB__n + 1: IF QB__i = QB__n THEN
             QB__s = "{january}"
             QB__smartCase = 1
@@ -578,7 +575,6 @@ FOR QB__fi = 1 TO LEN(format)
         QB__n = QB__n + 1: IF QB__i = QB__n THEN QB__s = "zzz": QB__minDigits = 3: QB__value = QB_STR_long(__QB_DATETIME(QB__handle).milliseconds)
         QB__n = QB__n + 1: IF QB__i = QB__n THEN QB__s = "z": QB__minDigits = 1: QB__value = QB_STR_long(__QB_DATETIME(QB__handle).milliseconds)
 
-
         IF QB__s <> "" THEN
 
             IF QB__smartCase THEN
@@ -610,7 +606,6 @@ QB_DATETIME_format$ = QB__out
 END FUNCTION
 
 '########################################
-
 
 '#################### STRING: Methods ####################
 
@@ -674,7 +669,6 @@ QB_STR_long$ = LTRIM$(STR$(value))
 END FUNCTION
 
 '##################################################
-
 
 '#################### HANDLE: Methods ####################
 
@@ -742,7 +736,6 @@ __QB_HANDLE_handler(context).lastFreedListIndex = QB__index
 END SUB
 
 '##################################################
-
 
 '#################### EACH: Methods ####################
 
@@ -826,10 +819,7 @@ END FUNCTION
 
 '##################################################
 
-
 '#################### Key Value Pair Dictionary Look-Ups: Methods ####################
-
-
 
 FUNCTION QB_NODE_newValueWithLabel& (label AS STRING, value AS STRING) 'assume str_str
 DIM QB__handle AS LONG
@@ -840,7 +830,6 @@ __QB_NODE(QB__handle).valueFormat = QB_NODE_FORMAT_STR
 __QB_NODE(QB__handle).value = QB_STR_new(value)
 QB_NODE_newValueWithLabel& = QB__handle
 END FUNCTION
-
 
 FUNCTION QB_NODE_newValueWithLabel_long& (label AS STRING, value AS LONG) 'assume str_long
 DIM QB__handle AS LONG
@@ -915,7 +904,6 @@ END IF
 IF QB_DEBUG THEN PRINT "Created node type"; nodeType
 QB_NODE_new& = QB__handle
 END FUNCTION
-
 
 FUNCTION QB_NODE_newDictionary&
 QB_NODE_newDictionary& = QB_NODE_new(QB_NODE_TYPE_DICTIONARY, 0)
@@ -1231,7 +1219,6 @@ IF __QB_NODE(parent).type AND (QB_NODE_TYPE_DICTIONARY + QB_NODE_TYPE_HASHSET) T
 END IF 'DICTIONARY
 END FUNCTION
 
-
 SUB QB_NODE_assign (parent AS LONG, child AS LONG)
 $CHECKING:OFF
 IF __QB_NODE_validateHandle(child, QB_NODE_TYPE_VALUE + QB_NODE_TYPE_HASHSET + QB_NODE_TYPE_LIST + QB_NODE_TYPE_DICTIONARY) = -1 THEN EXIT FUNCTION
@@ -1362,13 +1349,6 @@ IF __QB_NODE(parent).type AND (QB_NODE_TYPE_DICTIONARY + QB_NODE_TYPE_HASHSET) T
     __QB_NODE_append QB__hashList, QB__ref
     __QB_NODE(child).hashReference = QB__ref
 END IF 'dictionary
-
-
-
-
-
-
-
 
 END SUB 'assign
 
@@ -1556,8 +1536,6 @@ END SUB
 
 '##################################################
 
-
-
 SUB __QB_NODESET_addChildren (QB__parent AS LONG, QB__selOut AS LONG)
 DIM QB__child AS LONG
 DIM QB__newSel AS LONG
@@ -1587,8 +1565,6 @@ DO WHILE QB__child
     QB__child = __QB_NODE(QB__child).next
 LOOP
 END SUB
-
-
 
 SUB __QB_NODE_debugInfo (QB__i AS LONG)
 PRINT "-------- __QB_NODE_debugInfo:"; QB__i; "--------"
@@ -1622,7 +1598,6 @@ PRINT "----------------"
 END SUB
 
 '##################################################
-
 
 '#################### JSON: Private Methods ####################
 
@@ -1823,7 +1798,6 @@ DO WHILE QB__i
     END IF
 LOOP
 END SUB
-
 
 FUNCTION __QB_JSON_deserialize (QB__json AS STRING, QB__index AS LONG, QB__parent AS LONG)
 'returns the first node created

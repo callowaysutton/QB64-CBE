@@ -1,6 +1,5 @@
 DEFSNG A-Z
 
-
 SUB VkResetMenu 'clears internal keys and rebuilds primary menu
 
 VkRemoveInternal
@@ -29,7 +28,6 @@ ELSE
     VK(i2).role = "HIDE"
     VK(i2).w = VkNewKeySize
 END IF
-
 
 c = c + 1
 i2 = VkNew
@@ -95,7 +93,6 @@ VK(i2).locks = 1
 
 END SUB
 
-
 SUB VkSelectKey (page)
 
 VkDefaultSelectKeyPage = page
@@ -125,7 +122,6 @@ p = page - 1
 IF p < 1 THEN p = 1
 VK(i2).state = p
 
-
 'a = -1000
 
 DIM range(100, 1 TO 2) AS LONG
@@ -141,9 +137,6 @@ r = r + 1: range(r, 1) = -1003: range(r, 2) = range(r, 1) 'Set: Arrow Pad
 r = r + 1: range(r, 1) = -1004: range(r, 2) = range(r, 1) 'Set: WASD Pad
 r = r + 1: range(r, 1) = -1005: range(r, 2) = range(r, 1) 'Set: Ins-Home-PageUp Del-End-PageDown
 r = r + 1: range(r, 1) = -1006: range(r, 2) = range(r, 1) 'Set: Num Pad
-
-
-
 
 'D-Pad
 r = r + 1: range(r, 1) = 1000: range(r, 2) = 1004 'D-Pad
@@ -177,15 +170,12 @@ r = r + 1: range(r, 1) = 10: range(r, 2) = 12
 r = r + 1: range(r, 1) = 14: range(r, 2) = 26
 'r = r + 1: range(r, 1) = 28: range(r, 2) = 31-4
 
-
-
 ranges = r
 a = range(1, 1)
 
 FOR cpage = 1 TO page
     FOR y = 0 TO -3 STEP -1
         FOR x = 1 TO 7
-
 
             IF cpage = page THEN
                 i2 = VkNew
@@ -212,15 +202,12 @@ FOR cpage = 1 TO page
                     VK(i2).event.keydown = a
                 END IF
 
-
-
             ELSE
 
                 label$ = "?"
                 code = 63
                 lockIsTemporary = 0
                 locks = 0
-
 
                 'key sets
                 IF a = -1000 THEN label$ = "F1-F12": code = a
@@ -230,8 +217,6 @@ FOR cpage = 1 TO page
                 IF a = -1004 THEN label$ = "WASD Pad": code = a
                 IF a = -1005 THEN label$ = "Ins-Home-PageUp Del-End-PageDown": code = a
                 IF a = -1006 THEN label$ = "Num Pad": code = a
-
-
 
                 n = 1000 - 1
 
@@ -252,7 +237,6 @@ FOR cpage = 1 TO page
                 n = n + 1: IF a = n THEN label$ = "End": code = VK_KEY_END
                 n = n + 1: IF a = n THEN label$ = "Page Up": code = VK_KEY_PAGE_UP
                 n = n + 1: IF a = n THEN label$ = "Page Down": code = VK_KEY_PAGE_DOWN
-
 
                 n = n + 1: IF a = n THEN label$ = "F1": code = VK_KEY_F1
                 n = n + 1: IF a = n THEN label$ = "F2": code = VK_KEY_F2
@@ -332,8 +316,6 @@ FOR cpage = 1 TO page
                 'SCREEN 2
                 'PRINT n-1
 
-
-
                 'CONST KEY_KP0& = 100256
                 'CONST KEY_KP1& = 100257
                 'CONST KEY_KP2& = 100258
@@ -371,7 +353,6 @@ FOR cpage = 1 TO page
                     IF LEN(text2$) > LEN(text$) THEN size = LEN(text2$) ELSE size = LEN(text$)
                 END IF
 
-
                 IF size > 5 THEN
                     x = x + (size - 5) \ 5 + 1
                     IF cpage = page THEN VK(i2).w = VkDefaultWidth + ((size - 5) \ 5 + 1) * VkDefaultWidth
@@ -408,11 +389,7 @@ FOR cpage = 1 TO page
 NEXT
 END SUB
 
-
-
-
 SUB VkPress (i)
-
 
 role$ = VK(i).role
 
@@ -481,7 +458,6 @@ IF role$ = "DELK" THEN
     END IF
     EXIT SUB
 END IF
-
 
 IF role$ = "DSET" THEN
     i2 = VkSelectedKey
@@ -572,7 +548,6 @@ IF role$ = "EDIT" THEN
         VK(i2).internal = 1
         VK(i2).role = "DALL"
         VK(i2).w = VkNewKeySize
-
 
     END IF
     VkReDraw = 1
@@ -803,8 +778,6 @@ IF role$ = "SIZE" THEN
     EXIT SUB
 END IF 'SIZE
 
-
-
 IF role$ = "ABC." THEN
     IF VK(i).locked = 1 THEN
         VkResetMenu
@@ -843,7 +816,6 @@ IF role$ = "ABC." THEN
     EXIT SUB
 END IF 'ABC.
 
-
 IF role$ = "TYPE" THEN
     IF VK(i).locked = 1 THEN
         VkResetMenu
@@ -881,8 +853,6 @@ IF role$ = "TYPE" THEN
     VkReDraw = 1
     EXIT SUB
 END IF 'TYPE
-
-
 
 'IF role$ = "IMOD" THEN
 '    IF VK(i).locked = 1 THEN
@@ -969,9 +939,7 @@ IF VK(i).role = "USER" THEN
     EXIT SUB
 END IF
 
-
 IF VK(i).role = "VALU" THEN
-
 
     i3 = VkByRole("ROOT")
 
@@ -985,7 +953,6 @@ IF VK(i).role = "VALU" THEN
         VK(i2).h = CINT(VkUnitStepY / 2)
         VK(i2).event.keydown = -2 'a "keySet"
     END IF
-
 
     IF VK(i).event.keydown = -1004 THEN 'WASD Pad
         json$ = "{\qkeys\q:[{\qtype\q:\qkey\q,\qoffsetX\q:0,\qoffsetY\q:0,\qwidth\q:6,\qheight\q:6,\qlabel\q:\qa\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_LCASE_A\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:12,\qoffsetY\q:0,\qwidth\q:6,\qheight\q:6,\qlabel\q:\qd\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_LCASE_D\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:6,\qoffsetY\q:6,\qwidth\q:6,\qheight\q:6,\qlabel\q:\qw\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_LCASE_W\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:6,\qoffsetY\q:0,\qwidth\q:6,\qheight\q:6,\qlabel\q:\qs\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_LCASE_S\q}}}]}"
@@ -1004,8 +971,6 @@ IF VK(i).role = "VALU" THEN
         EXIT SUB
     END IF
 
-
-
     IF VK(i).event.keydown = -1003 THEN 'Arrow Pad
         json$ = "{\qkeys\q:[{\qtype\q:\qkey\q,\qoffsetX\q:12,\qoffsetY\q:0,\qwidth\q:6,\qheight\q:6,\qlabel\q:\q\u2192\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_RIGHT\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:0,\qoffsetY\q:0,\qwidth\q:6,\qheight\q:6,\qlabel\q:\q\u2190\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_LEFT\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:6,\qoffsetY\q:0,\qwidth\q:6,\qheight\q:6,\qlabel\q:\q\u2193\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_DOWN\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:6,\qoffsetY\q:6,\qwidth\q:6,\qheight\q:6,\qlabel\q:\q\u2191\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_UP\q}}}]}"
         keyset = QB_NODESET_deserialize(VkGetQuotedString(json$), "json")
@@ -1022,7 +987,6 @@ IF VK(i).role = "VALU" THEN
         VkSelectedKey = i2
         EXIT SUB
     END IF
-
 
     'Ins-Home-PageUp Del-End-PageDown
     IF VK(i).event.keydown = -1005 THEN 'Ins-Home-PageUp Del-End-PageDown
@@ -1059,10 +1023,6 @@ IF VK(i).role = "VALU" THEN
         EXIT SUB
     END IF
 
-
-
-
-
     IF VK(i).event.keydown = -1002 THEN 'Game Controller
         json$ = "{\qkeys\q:[{\qtype\q:\qkey\q,\qoffsetX\q:70,\qoffsetY\q:18,\qwidth\q:20,\qheight\q:6,\qlabel\q:\qR\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_UCASE_R\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:0,\qoffsetY\q:18,\qwidth\q:20,\qheight\q:6,\qlabel\q:\qL\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_UCASE_L\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:75,\qoffsetY\q:0,\qwidth\q:10,\qheight\q:6,\qlabel\q:\qB\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_UCASE_B\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:80,\qoffsetY\q:6,\qwidth\q:10,\qheight\q:6,\qlabel\q:\qA\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_UCASE_A\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:75,\qoffsetY\q:12,\qwidth\q:10,\qheight\q:6,\qlabel\q:\qX\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_UCASE_X\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:70,\qoffsetY\q:6,\qwidth\q:10,\qheight\q:6,\qlabel\q:\qY\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_UCASE_Y\q}}},{\qtype\q:\qjoystick\q,\qoffsetX\q:6,\qoffsetY\q:6,\qwidth\q:6,\qheight\q:6,\qlabel\q:\qVirtual Joystick\q,\qevents\q:{\qup\q:{\qkeyCode\q:\qKEY_UP\q},\qdown\q:{\qkeyCode\q:\qKEY_DOWN\q},\qleft\q:{\qkeyCode\q:\qKEY_LEFT\q},\qright\q:{\qkeyCode\q:\qKEY_RIGHT\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:33,\qoffsetY\q:6,\qwidth\q:10,\qheight\q:6,\qlabel\q:\qSpace\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_SPACE\q}}},{\qtype\q:\qkey\q,\qoffsetX\q:48,\qoffsetY\q:6,\qwidth\q:10,\qheight\q:6,\qlabel\q:\qEnter\q,\qlocks\q:false,\qlockIsTemporary\q:false,\qevents\q:{\qkeydown\q:{\qkeyCode\q:\qKEY_ENTER\q}}}]}"
         keyset = QB_NODESET_deserialize(VkGetQuotedString(json$), "json")
@@ -1079,7 +1039,6 @@ IF VK(i).role = "VALU" THEN
         VkSelectedKey = i2
         EXIT SUB
     END IF
-
 
     IF VK(i).event.keydown = -1001 THEN 'Full KB
         'no shifted characters:
@@ -1127,8 +1086,6 @@ IF VK(i).role = "VALU" THEN
         VK(i2).x = VK(i3).x + VkDefaultWidth * 0 + 1
         VK(i2).y = VK(i3).y - VkDefaultWidth * 1
     END IF
-
-
 
     '    hasShiftedEvent AS LONG
     '    shiftedEvent AS VKEY_EVENT 'eg. when shifted or caps lock is on
@@ -1244,7 +1201,6 @@ IF VK(i).internal = 0 THEN
     rt = VkByRole("ROOT")
     IF VK(rt).locked = 0 THEN 'not in edit mode
 
-
         keydownvalue = VK(i).event.keydown
         IF VK(i).hasShiftedEvent THEN
             IF VkShiftInEffect THEN keydownvalue = VK(i).shiftedEvent.keydown
@@ -1295,11 +1251,6 @@ ELSE
     VK(i).held = 1
 END IF
 
-
-
-
-
-
 END SUB
 
 SUB VkKeyUp (i)
@@ -1309,12 +1260,10 @@ IF VK(i).internal = 0 THEN
     rt = VkByRole("ROOT")
     IF VK(rt).locked = 0 THEN 'not in edit mode
 
-
         keydownvalue = VK(i).event.keydown
         IF VK(i).hasShiftedEvent THEN
             IF VkShiftInEffect THEN keydownvalue = VK(i).shiftedEvent.keydown
         END IF
-
 
         IF keydownvalue <> 0 THEN
             IF VK(i).locks <> 0 OR VK(i).lockIsTemporary <> 0 THEN
@@ -1381,7 +1330,6 @@ borderSelectedCol& = _RGBA32(255, 255, 255, 192)
 bgCol& = _RGBA32(96, 96, 96, 128)
 bgHighlightCol& = _RGBA32(128, 128, 128, 128)
 
-
 'for customization:
 InternalTextCol& = _RGBA32(255, 255, 255, 255)
 InternalBorderCol& = _RGBA32(255, 255, 255, 192)
@@ -1441,10 +1389,8 @@ IF VkReset = 1 THEN
 
     h = CINT(VkUnitStepY * VkUnitSize * 0.5)
 
-
     'VkFont = _LOADFONT("c:\windows\fonts\lucon.ttf", CINT(h))
     'VkFontSmall = _LOADFONT("c:\windows\fonts\lucon.ttf", CINT(h * 0.5))
-
 
     'generic textures
 
@@ -1526,7 +1472,6 @@ IF reDraw THEN
                         cBgHighlight& = InternalBgHighlightCol&
                     END IF
 
-
                     IF VK(i).event.keydown = -1 AND VK(i).internal = 0 THEN 'D-PAD
 
                         're-calculate dimensions
@@ -1607,9 +1552,6 @@ IF reDraw THEN
 
                         GOTO special_key
                     END IF
-
-
-
 
                     'standard key
                     create = 0
@@ -1699,12 +1641,8 @@ IF reDraw THEN
                                             IF text2$ <> "" THEN _PRINTSTRING (ox, oy + ch), text2$
                                             _CONTROLCHR ON
 
-
-
                                         END IF 'cw <> 0 AND ch <> 0
                                     END IF 'text$<>""
-
-
 
                                     '    _FONT font
                                     '    cw = _PRINTWIDTH(text$)
@@ -1714,14 +1652,8 @@ IF reDraw THEN
                                     '    END IF
                                     '    ch = _FONTHEIGHT
 
-
-
-
                                     '    '                    GOTO 1
                                     '    IF cw = 0 OR ch = 0 THEN GOTO 1
-
-
-
 
                                     '    ci = _NEWIMAGE(cw, ch * lines, 32)
                                     '    _DEST ci
@@ -1732,8 +1664,6 @@ IF reDraw THEN
                                     '    _PRINTSTRING (0, 0), text$
                                     '    _PRINTSTRING (0, ch), text2$
                                     '    _CONTROLCHR ON
-
-
 
                                     'IF VK(i).held THEN
                                     '    cBg& = cBgHighlight&
@@ -1749,7 +1679,6 @@ IF reDraw THEN
                                     '_PUTIMAGE (x1, y2 + 1)-(x1, y1), borderTex, VkBackbuffer
                                     '_PUTIMAGE (x2, y2 + 1)-(x2, y1), borderTex, VkBackbuffer
                                     '_PUTIMAGE (x1 + 1, y1)-(x2 - 1, y1), borderTex, VkBackbuffer
-
 
                                     ''LINE (x1, y1)-(x2, y2), borderCol&, B
                                     ''                _BLEND
@@ -1787,7 +1716,6 @@ IF reDraw THEN
                             shifted = 1
                         END IF
                     END IF
-
 
                     IF VkHide = 0 OR VK(i).internal <> 0 THEN
                         IF shifted THEN
@@ -1838,23 +1766,16 @@ IF reDraw THEN
                     '        text$ = LEFT$(text$, INSTR(text$, " ") - 1)
                     '    END IF
 
-
                     '    font = VkFont
-
-
-
 
                     '    IF lines = 2 OR LEN(text$) > 1 THEN
                     '        font = VkFontSmall
                     '    END IF
 
-
-
                     '    STATIC dummy32
                     '    IF dummy32 = 0 THEN
                     '        dummy32 = _NEWIMAGE(1, 1, 32)
                     '    END IF
-
 
                     '    olddest = _DEST
                     '    _DEST dummy32
@@ -1866,14 +1787,8 @@ IF reDraw THEN
                     '    END IF
                     '    ch = _FONTHEIGHT
 
-
-
-
                     '    '                    GOTO 1
                     '    IF cw = 0 OR ch = 0 THEN GOTO 1
-
-
-
 
                     '    ci = _NEWIMAGE(cw, ch * lines, 32)
                     '    _DEST ci
@@ -1910,10 +1825,6 @@ IF reDraw THEN
         NEXT
     NEXT
 
-
-
-
-
     '_PUTIMAGE (mx, my)-(mx + 100, my + 100), borderTex, VkBackbuffer
 
     '_PUTIMAGE , VkBackbuffer, VkOverlay
@@ -1924,7 +1835,6 @@ IF reDraw THEN
     _BLEND VkBackbuffer
 
 END IF 'reDraw
-
 
 'key repeat
 timeNow! = TIMER
@@ -2152,9 +2062,6 @@ end if
                     VkUpdateDPAD VkI, dpadx, dpady
                     'convert dpad value relative to 1/0
 
-
-
-
                 ELSE
                     'prevent off-screen drag
                     IF nx < 0 THEN nx = 0
@@ -2208,8 +2115,6 @@ end if
 
 LOOP UNTIL mEvent = 0
 
-
-
 '_DISPLAY
 '_LIMIT 30
 'k$ = inkey$
@@ -2224,10 +2129,6 @@ if VkExiting=2 then
 end if
 
 END SUB
-
-
-
-
 
 FUNCTION VkColTex& (col&)
 i& = _NEWIMAGE(1, 1, 32)
@@ -2310,7 +2211,6 @@ VkReDraw = 1
 VK(i).shiftedLabel = label$
 VK(i).reDraw = 1
 END SUB
-
 
 SUB VkAddKeyName (keyName AS STRING, keyCode AS LONG)
 value = QB_NODE_new(QB_NODE_TYPE_VALUE, 0)
@@ -2556,7 +2456,6 @@ ELSE
     VkGetKeyCode& = VAL(keyName)
 END IF
 END FUNCTION
-
 
 SUB VkSaveKeys (parentNode AS LONG, parentKey AS LONG)
 FOR i = 1 TO VkLast
