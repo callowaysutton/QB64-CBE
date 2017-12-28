@@ -29,10 +29,6 @@ REDIM SHARED PL(0) AS INTEGER 'Priority Level
 DIM SHARED QuickReturn AS INTEGER
 Set_OrderOfOperations 'This will also make certain our directories are valid, and if not make them.
 
-'DIM SHARED VirtualKeyboardState
-'DIM SHARED DesiredVirtualKeyboardState
-'DIM SHARED RecompileAttemptsForVirtualKeyboardState
-
 REDIM EveryCaseSet(100), SelectCaseCounter AS _UNSIGNED LONG
 DIM ExecLevel(255), ExecCounter AS INTEGER
 REDIM SHARED UserDefine(1, 100) AS STRING '0 element is the name, 1 element is the string value
@@ -629,7 +625,6 @@ TYPE idstruct
     sfid AS LONG 'id number of variable's parent sub/function
     sfarg AS INTEGER 'argument/parameter # within call (1=first)
 
-'    NoCloud AS INTEGER
 END TYPE
 
 DIM SHARED id AS idstruct
@@ -695,13 +690,9 @@ DIM SHARED arraydesc AS INTEGER
 DIM SHARED qberrorhappened AS INTEGER
 DIM SHARED qberrorcode AS INTEGER
 DIM SHARED qberrorline AS INTEGER
-'COMMON SHARED defineaz() AS STRING
-'COMMON SHARED defineextaz() AS STRING
 
 DIM SHARED sourcefile AS STRING 'the full path and filename
 DIM SHARED file AS STRING 'name of the file (without .bas or path)
-
-'COMMON SHARED separgs() AS STRING
 
 DIM SHARED constequation AS INTEGER
 DIM SHARED DynamicMode AS INTEGER
@@ -712,14 +703,11 @@ DIM SHARED currentid AS LONG 'is the index of the last ID accessed
 DIM SHARED linenumber AS LONG
 DIM SHARED wholeline AS STRING
 DIM SHARED linefragment AS STRING
-'COMMON SHARED bitmask() AS _INTEGER64
-'COMMON SHARED bitmaskinv() AS _INTEGER64
 
 DIM SHARED arrayprocessinghappened AS INTEGER
 DIM SHARED stringprocessinghappened AS INTEGER
 DIM SHARED cleanupstringprocessingcall AS STRING
 DIM SHARED recompile AS INTEGER 'forces recompilation
-'COMMON SHARED cmemlist() AS INTEGER
 DIM SHARED optionbase AS INTEGER
 
 DIM SHARED addmetastatic AS INTEGER
@@ -739,15 +727,10 @@ DIM SHARED dimshared AS INTEGER
 
 'Allows passing of known elements to recompilation
 DIM SHARED sflistn AS INTEGER
-'COMMON SHARED sfidlist() AS LONG
-'COMMON SHARED sfarglist() AS INTEGER
-'COMMON SHARED sfelelist() AS INTEGER
 DIM SHARED glinkid AS LONG
 DIM SHARED glinkarg AS INTEGER
 DIM SHARED typname2typsize AS LONG
 DIM SHARED uniquenumbern AS LONG
-
-'CLEAR , , 16384
 
 DIM SHARED bitmask(1 TO 56) AS _INTEGER64
 DIM SHARED bitmaskinv(1 TO 56) AS _INTEGER64
@@ -1093,14 +1076,6 @@ RecompileAttemptsForVirtualKeyboardState = 0
 
 recompile:
 
-'For installing Android assets
-'REDIM SHARED installFiles(0) AS STRING
-'REDIM SHARED installFilesSourceLocation(0) AS STRING
-'REDIM SHARED installFilesIn(0) AS STRING
-'REDIM SHARED installFolder(0) AS STRING
-'REDIM SHARED installFolderSourceLocation(0) AS STRING
-'REDIM SHARED installFolderIn(0) AS STRING
-
 'move desired state into active state
 VirtualKeyboardState = DesiredVirtualKeyboardState
 
@@ -1316,94 +1291,71 @@ SelectCaseCounter = 0
 ExecCounter = 0
 UserDefineCount = 6
 
-''create a type for storing memory blocks
-''UDT
-''names
-'DIM SHARED lasttype AS LONG
-'DIM SHARED udtxname(1000) AS STRING * 256
-'DIM SHARED udtxcname(1000) AS STRING * 256
-'DIM SHARED udtxsize(1000) AS LONG
-'DIM SHARED udtxbytealign(1000) AS INTEGER 'first element MUST be on a byte alignment & size is a multiple of 8
-'DIM SHARED udtxnext(1000) AS LONG
-''elements
-'DIM SHARED lasttypeelement AS LONG
-'DIM SHARED udtename(1000) AS STRING * 256
-'DIM SHARED udtecname(1000) AS STRING * 256
-'DIM SHARED udtebytealign(1000) AS INTEGER
-'DIM SHARED udtesize(1000) AS LONG
-'DIM SHARED udtetype(1000) AS LONG
-'DIM SHARED udtetypesize(1000) AS LONG
-'DIM SHARED udtearrayelements(1000) AS LONG
-'DIM SHARED udtenext(1000) AS LONG
-
 'import _MEM type
 ptrsz = OS_BITS \ 8
 
-'IF Cloud = 0 THEN
-    lasttype = lasttype + 1: i = lasttype
-    udtxname(i) = "_MEM"
-    udtxcname(i) = "_MEM"
-    udtxsize(i) = ((ptrsz) * 5 + (4) * 1 + (8) * 1) * 8
-    udtxbytealign(i) = 1
-    lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
-    udtename(i2) = "OFFSET"
-    udtecname(i2) = "OFFSET"
-    udtebytealign(i2) = 1
-    udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
-    udtetypesize(i2) = 0 'tsize
-    udtxnext(i) = i2
-    i3 = i2
-    lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
-    udtename(i2) = "SIZE"
-    udtecname(i2) = "SIZE"
-    udtebytealign(i2) = 1
-    udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
-    udtetypesize(i2) = 0 'tsize
-    udtenext(i3) = i2
-    i3 = i2
-    lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
-    udtename(i2) = "$_LOCK_ID"
-    udtecname(i2) = "$_LOCK_ID"
-    udtebytealign(i2) = 1
-    udtetype(i2) = INTEGER64TYPE: udtesize(i2) = 64
-    udtetypesize(i2) = 0 'tsize
-    udtenext(i3) = i2
-    i3 = i2
-    lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
-    udtename(i2) = "$_LOCK_OFFSET"
-    udtecname(i2) = "$_LOCK_OFFSET"
-    udtebytealign(i2) = 1
-    udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
-    udtetypesize(i2) = 0 'tsize
-    udtenext(i3) = i2
-    i3 = i2
-    lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
-    udtename(i2) = "TYPE"
-    udtecname(i2) = "TYPE"
-    udtebytealign(i2) = 1
-    udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
-    udtetypesize(i2) = 0 'tsize
-    udtenext(i3) = i2
-    i3 = i2
-    lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
-    udtename(i2) = "ELEMENTSIZE"
-    udtecname(i2) = "ELEMENTSIZE"
-    udtebytealign(i2) = 1
-    udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
-    udtetypesize(i2) = 0 'tsize
-    udtenext(i3) = i2
-    udtenext(i2) = 0
-    i3 = i2
-    lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
-    udtename(i2) = "IMAGE"
-    udtecname(i2) = "IMAGE"
-    udtebytealign(i2) = 1
-    udtetype(i2) = LONGTYPE: udtesize(i2) = 32
-    udtetypesize(i2) = 0 'tsize
-    udtenext(i3) = i2
-    udtenext(i2) = 0
-
-'END IF 'cloud = 0
+lasttype = lasttype + 1: i = lasttype
+udtxname(i) = "_MEM"
+udtxcname(i) = "_MEM"
+udtxsize(i) = ((ptrsz) * 5 + (4) * 1 + (8) * 1) * 8
+udtxbytealign(i) = 1
+lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
+udtename(i2) = "OFFSET"
+udtecname(i2) = "OFFSET"
+udtebytealign(i2) = 1
+udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
+udtetypesize(i2) = 0 'tsize
+udtxnext(i) = i2
+i3 = i2
+lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
+udtename(i2) = "SIZE"
+udtecname(i2) = "SIZE"
+udtebytealign(i2) = 1
+udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
+udtetypesize(i2) = 0 'tsize
+udtenext(i3) = i2
+i3 = i2
+lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
+udtename(i2) = "$_LOCK_ID"
+udtecname(i2) = "$_LOCK_ID"
+udtebytealign(i2) = 1
+udtetype(i2) = INTEGER64TYPE: udtesize(i2) = 64
+udtetypesize(i2) = 0 'tsize
+udtenext(i3) = i2
+i3 = i2
+lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
+udtename(i2) = "$_LOCK_OFFSET"
+udtecname(i2) = "$_LOCK_OFFSET"
+udtebytealign(i2) = 1
+udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
+udtetypesize(i2) = 0 'tsize
+udtenext(i3) = i2
+i3 = i2
+lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
+udtename(i2) = "TYPE"
+udtecname(i2) = "TYPE"
+udtebytealign(i2) = 1
+udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
+udtetypesize(i2) = 0 'tsize
+udtenext(i3) = i2
+i3 = i2
+lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
+udtename(i2) = "ELEMENTSIZE"
+udtecname(i2) = "ELEMENTSIZE"
+udtebytealign(i2) = 1
+udtetype(i2) = OFFSETTYPE: udtesize(i2) = ptrsz * 8
+udtetypesize(i2) = 0 'tsize
+udtenext(i3) = i2
+udtenext(i2) = 0
+i3 = i2
+lasttypeelement = lasttypeelement + 1: i2 = lasttypeelement
+udtename(i2) = "IMAGE"
+udtecname(i2) = "IMAGE"
+udtebytealign(i2) = 1
+udtetype(i2) = LONGTYPE: udtesize(i2) = 32
+udtetypesize(i2) = 0 'tsize
+udtenext(i3) = i2
+udtenext(i2) = 0
 
 'begin compilation
 FOR closeall = 1 TO 255: CLOSE closeall: NEXT
@@ -1431,7 +1383,6 @@ END IF
 reginternal
 
 OPEN tmpdir$ + "global.txt" FOR OUTPUT AS #18
-'IF Cloud THEN PRINT #18, "int32 cloud_app=1;" ELSE PRINT #18, "int32 cloud_app=0;"
 
 IF iderecompile THEN
     iderecompile = 0
@@ -2147,11 +2098,8 @@ DO
                             END IF
 
                             IF pending THEN
-                                'l$ = l$ + sp2 + ","
                                 GOTO constdefpendingpp
                             END IF
-
-                            'layoutdone = 1: IF LEN(layout$) THEN layout$ = layout$ + sp + l$ ELSE layout$ = l$
 
                             GOTO finishedlinepp
                         END IF
@@ -2173,7 +2121,6 @@ DO
                         'declare library
                         IF firstelement$ = "DECLARE" THEN
                             IF secondelement$ = "LIBRARY" OR secondelement$ = "DYNAMIC" OR secondelement$ = "CUSTOMTYPE" OR secondelement$ = "STATIC" THEN
-'                                IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
                                 declaringlibrary = 1
                                 indirectlibrary = 0
                                 IF secondelement$ = "CUSTOMTYPE" OR secondelement$ = "DYNAMIC" THEN indirectlibrary = 1
@@ -2834,11 +2781,7 @@ DO
             GOTO finishednonexec 'we don't check for anything inside lines that we've marked for skipping
         END IF
 
-        '$INSTALLFILES [src_relative_to_bas_path_like_include]  [IN dst_relative_to_application_root]
-        '$INSTALLFOLDER  [src_relative_to_bas_path_like_include]  [IN dst_relative_to_application_root]
         metacommand$ = ""
-        'IF INSTR(a3u$, "$INSTALLFILES ") = 1 THEN metacommand$ = "$INSTALLFILES"
-        'IF INSTR(a3u$, "$INSTALLFOLDER ") = 1 THEN metacommand$ = "$INSTALLFOLDER"
         metacommandHint$ = "Expected " + CHR$(34) + "source-location" + CHR$(34) + " [IN " + CHR$(34) + "dest-location" + CHR$(34) + "]"
         IF metacommand$ <> "" THEN
             sourceContent$ = ""
@@ -2886,8 +2829,6 @@ DO
             IF LEN(a3string$) THEN a$ = metacommandHint$: GOTO errmes
             IF i3start <> 0 THEN a$ = metacommandHint$: GOTO errmes
             IF i3step = 0 OR i3step = 2 THEN a$ = metacommandHint$: GOTO errmes
-            'PRINT sourceContent$
-            'PRINT destLocation$
 
             sourceLocation$ = ""
             IF inclevel = 0 THEN
@@ -2897,40 +2838,11 @@ DO
             END IF
             sourceLocation$ = p$
 
-            'IF metacommand$ = "$INSTALLFILES" THEN
-            '    AryAddStr installFiles(), sourceContent$
-            '    AryAddStr installFilesSourceLocation(), sourceLocation$
-            '    AryAddStr installFilesIn(), destLocation$
-            'ELSE
-            '    AryAddStr installFolder(), sourceContent$
-            '    AryAddStr installFolderSourceLocation(), sourceLocation$
-            '    AryAddStr installFolderIn(), destLocation$
-            'END IF
-
-            'IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = l$
             GOTO finishednonexec
         END IF
 
-        'IF a3u$ = "$RESIZE:SMOOTH" THEN
-        '    IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
-        '    layout$ = "$RESIZE:SMOOTH"
-        '    Resize = 1: Resize_Scale = 2
-        '    GOTO finishednonexec
-        'END IF
-
-        IF a3u$ = "$VIRTUALKEYBOARD:ON" THEN
-            layout$ = "$VIRTUALKEYBOARD:ON"
-            GOTO finishednonexec
-        END IF
-
-        IF a3u$ = "$VIRTUALKEYBOARD:OFF" THEN
-            layout$ = "$VIRTUALKEYBOARD:OFF"
-            GOTO finishednonexec
-        END IF
-
         IF a3u$ = "$CHECKING:OFF" THEN
-'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$CHECKING:OFF"
             NoChecks = 1
             GOTO finishednonexec
@@ -2943,7 +2855,6 @@ DO
         END IF
 
         IF a3u$ = "$CONSOLE" THEN
-'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$CONSOLE"
             Console = 1
             GOTO finishednonexec
@@ -2961,34 +2872,32 @@ DO
             ScreenHide = 1
             GOTO finishednonexec
         END IF
+
         IF a3u$ = "$SCREENSHOW" THEN
-'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$SCREENSHOW"
             ScreenHide = 0
             GOTO finishednonexec
         END IF
 
         IF a3u$ = "$RESIZE:OFF" THEN
-'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$RESIZE:OFF"
             Resize = 0: Resize_Scale = 0
             GOTO finishednonexec
         END IF
+
         IF a3u$ = "$RESIZE:ON" THEN
-'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$RESIZE:ON"
             Resize = 1: Resize_Scale = 0
             GOTO finishednonexec
         END IF
 
         IF a3u$ = "$RESIZE:STRETCH" THEN
-'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$RESIZE:STRETCH"
             Resize = 1: Resize_Scale = 1
             GOTO finishednonexec
         END IF
+
         IF a3u$ = "$RESIZE:SMOOTH" THEN
-'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             layout$ = "$RESIZE:SMOOTH"
             Resize = 1: Resize_Scale = 2
             GOTO finishednonexec
@@ -7910,7 +7819,6 @@ DO
                 END IF
             ELSE
                 'assume it's a string containing a filename to execute
-'                IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
                 e$ = evaluatetotyp(e$, ISSTRING)
                 IF Error_Happened THEN GOTO errmes
                 PRINT #12, "sub_run(" + e$ + ");"
@@ -8204,7 +8112,6 @@ DO
     '(_MEM) _MEMPUT _MEMGET
     IF n >= 1 THEN
         IF firstelement$ = "_MEMGET" THEN
-'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             'get expressions
             e$ = ""
             B = 0
@@ -8234,23 +8141,15 @@ DO
             IF (typ AND ISUDT) = 0 OR (typ AND 511) <> 1 THEN a$ = "Expected _MEM type": GOTO errmes
             blkoffs$ = evaluatetotyp(e$, -6)
 
-            '            IF typ AND ISREFERENCE THEN e$ = refer(e$, typ, 0)
-
-            'PRINT #12, blkoffs$ '???
-
             e$ = fixoperationorder$(offs$): IF Error_Happened THEN GOTO errmes
             l$ = l$ + sp2 + "," + sp + tlayout$
             e$ = evaluatetotyp(e$, OFFSETTYPE - ISPOINTER): IF Error_Happened THEN GOTO errmes
             offs$ = e$
-            'PRINT #12, e$ '???
 
             e$ = fixoperationorder$(var$): IF Error_Happened THEN GOTO errmes
             l$ = l$ + sp2 + "," + sp + tlayout$
             varsize$ = evaluatetotyp(e$, -5): IF Error_Happened THEN GOTO errmes
             varoffs$ = evaluatetotyp(e$, -6): IF Error_Happened THEN GOTO errmes
-
-            'PRINT #12, varoffs$ '???
-            'PRINT #12, varsize$ '???
 
             'what do we do next
             'need to know offset of variable and its size
@@ -8299,7 +8198,6 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "_MEMPUT" THEN
-'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             'get expressions
             typ$ = ""
             e$ = ""
@@ -8432,7 +8330,6 @@ DO
 
     IF n >= 1 THEN
         IF firstelement$ = "_MEMFILL" THEN
-'            IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
             'get expressions
             typ$ = ""
             e$ = ""
@@ -8772,10 +8669,6 @@ DO
                     END IF
                 END IF
 
-'                IF id.NoCloud THEN
-'                    IF Cloud THEN a$ = "Feature not supported on QLOUD": GOTO errmes '***NOCLOUD***
-'                END IF
-
                 'generate error on driect _GL call
                 IF firstelement$ = "_GL" THEN a$ = "Cannot call SUB _GL directly": GOTO errmes
 
@@ -8795,9 +8688,6 @@ DO
                         END IF
                     NEXT
                 END IF
-
-                'IF findid(firstelement$) THEN
-                'IF id.subfunc = 2 THEN
 
                 IF firstelement$ = "CLOSE" OR firstelement$ = "RESET" THEN
                     IF firstelement$ = "RESET" THEN
@@ -9057,14 +8947,6 @@ DO
                             IF (t AND ISPOINTER) THEN t = t - ISPOINTER
                             IF (t AND ISINCONVENTIONALMEMORY) THEN t = t - ISINCONVENTIONALMEMORY
                             IF (t AND ISREFERENCE) THEN t = t - ISREFERENCE
-
-                            'IF (t AND ISOFFSETINBITS) THEN
-                            'numvar = numvar + 1
-                            'consider storing the bit offset in unused bits of t
-                            'PRINT #12, "qbs_input_variabletypes[" + str2(numvar) + "]=" + str2(t) + ";"
-                            'PRINT #12, "qbs_input_variableoffsets[" + str2(numvar) + "]=" + refer(ref$, typ, 1) + ";"
-                            'GOTO gotinputvar
-                            'END IF
 
                             'assume it is a regular variable
                             numvar = numvar + 1
@@ -9448,28 +9330,7 @@ DO
 
                             IF alphanumeric(ASC(x2$)) THEN convertspacing = 1
 
-                            IF x2$ = "LPRINT" THEN
-
-                                'x2$="LPRINT"
-                                'x$=CHR$(0)
-                                'x3$=[sp] from WIDTH[sp]
-                                'therefore...
-                                's=1
-                                'an=0
-                                'convertspacing=1
-
-                                'if debug=1 then
-                                'print #9,"LPRINT:"
-                                'print #9,s
-                                'print #9,an
-                                'print #9,l$
-                                'print #9,x2$
-                                'end if
-
-                            END IF
-
                             IF (an = 1 OR addedlayout = 1) AND alphanumeric(ASC(x2$)) <> 0 THEN
-
                                 s = 1 'force space
                                 x2$ = x2$ + sp2
                                 GOTO customlaychar
@@ -10535,9 +10396,6 @@ FOR r = 1 TO nLabels
 NEXT
 IF Debug THEN PRINT #9, "Finished check!"
 
-'if targettyp=-4 or targettyp=-5 then '? -> byte_element(offset,element size in bytes)
-' IF (sourcetyp AND ISREFERENCE) = 0 THEN a$ = "Expected variable name/array element": GOTO errmes
-
 'create include files for COMMON arrays
 
 CLOSE #12
@@ -10913,88 +10771,6 @@ FOR x = 1 TO commonarraylistn
 
         CLOSE #12
 
-        'if chaincommonarray then
-        'l2$=tlayout$
-        'x=chaincommonarray
-        '
-        ''chain???.txt
-        'open tmpdir$ + "chain" + str2$(x) + ".txt" for append as #22
-        'if lof(22) then close #22: goto chaindone 'only add this once
-        ''***assume non-var-len-string array***
-        'print #22,"int32val=3;" 'non-var-len-element array
-        'print #22,"sub_put(FF,NULL,byte_element((uint64)&int32val,4,"+NewByteElement$+"),0);"
-        't=id.arraytype
-        ''***check for UDT size if necessary***
-        ''***check for string length if necessary***
-        'bits=t and 511
-        'print #22,"int64val="+str2$(bits)+";" 'size in bits
-        'print #22,"sub_put(FF,NULL,byte_element((uint64)&int64val,8,"+NewByteElement$+"),0);"
-        'print #22,"int32val="+str2$(id.arrayelements)+";" 'number of elements
-        'print #22,"sub_put(FF,NULL,byte_element((uint64)&int32val,4,"+NewByteElement$+"),0);"
-        'e$=rtrim$(id.n)
-        'if (t and ISUDT)=0 then e$=e$+typevalue2symbol$(t)
-        'n$=e$
-        'for x2=1 to id.arrayelements
-        ''simulate calls to lbound/ubound
-        'e$="LBOUND"+sp+"("+sp+n$+sp+","+sp+str2$(x2)+sp+")"
-        'e$=evaluatetotyp(fixoperationorder$(e$),64)
-        'print #22,"int64val="+e$+";"'LBOUND
-        'print #22,"sub_put(FF,NULL,byte_element((uint64)&int64val,8,"+NewByteElement$+"),0);"
-        'e$="UBOUND"+sp+"("+sp+n$+sp+","+sp+str2$(x2)+sp+")"
-        'e$=evaluatetotyp(fixoperationorder$(e$),64)
-        'print #22,"int64val="+e$+";"'LBOUND
-        'print #22,"sub_put(FF,NULL,byte_element((uint64)&int64val,8,"+NewByteElement$+"),0);"
-        'next
-        ''add array data
-        'e$=evaluatetotyp(fixoperationorder$(n$+sp+"("+sp+")"),-4)
-        'print #22,"sub_put(FF,NULL,"+e$+",0);"
-        'close #22
-        '
-        ''inpchain???.txt
-        'open tmpdir$ + "chain" + str2$(x) + ".txt" for append as #22
-        'print #22,"if (int32val==1){" 'common declaration of an array
-        'print #22,"sub_get(FF,NULL,byte_element((uint64)&int32val,4,"+NewByteElement$+"),0);"
-        'print #22,"if (int32val==3){" 'fixed-length-element array
-        '
-        'print #22,"sub_get(FF,NULL,byte_element((uint64)&int64val,8,"+NewByteElement$+"),0);"
-        ''***assume size correct and continue***
-        '
-        ''get number of elements
-        'print #22,"sub_get(FF,NULL,byte_element((uint64)&int32val,4,"+NewByteElement$+"),0);"
-        '
-        ''call dim2 and tell it to redim an array
-        '
-        ''*********this should happen BEFORE the array (above) is actually dimensioned,
-        ''*********where the common() declaration is
-        '
-        ''****although, if you never reference the array.............
-        ''****ARGH! you can access an undimmed array just like in a sub/function
-        '
-        '
-        '
-        '
-        'print #22,"}"
-        'print #22,"}"
-        'close #22
-        '
-        'chaindone:
-        'tlayout$=l2$
-        'end if 'chaincommonarray
-
-        'OPEN tmpdir$ + "chain.txt" FOR APPEND AS #22
-        ''include directive
-        'print #22, "#include " + CHR$(34) + "chain" + str2$(x) + ".txt" + CHR$(34)
-        'close #22
-        ''create/clear include file
-        'open tmpdir$ + "chain" + str2$(x) + ".txt" for output as #22:close #22
-        '
-        'OPEN tmpdir$ + "inpchain.txt" FOR APPEND AS #22
-        ''include directive
-        'print #22, "#include " + CHR$(34) + "inpchain" + str2$(x) + ".txt" + CHR$(34)
-        'close #22
-        ''create/clear include file
-        'open tmpdir$ + "inpchain" + str2$(x) + ".txt" for output as #22:close #22
-
     END IF 'id.arrayelements=-1
 
 NEXT
@@ -11123,7 +10899,6 @@ x = INSTR(ver$, "."): IF x THEN ASC(ver$, x) = 95 'change "." to "_"
 libs$ = ""
 
 IF DEPENDENCY(DEPENDENCY_GL) THEN
-'    IF Cloud THEN a$ = "GL not supported on QLOUD": GOTO errmes '***NOCLOUD***
     defines$ = defines$ + defines_header$ + "DEPENDENCY_GL"
 END IF
 
@@ -11274,11 +11049,6 @@ END IF
 IF DEPENDENCY(DEPENDENCY_AUDIO_OUT) THEN
     IF mac THEN defines$ = defines$ + " -framework AudioUnit -framework AudioToolbox "
 END IF
-
-'IF MakeAndroid THEN
-
-'    GOTO Skip_Build
-'END IF
 
 IF os$ = "WIN" THEN
 
@@ -12700,7 +12470,6 @@ FUNCTION arrayreference$ (indexes$, typ)
 
     r$ = idnumber$ + sp3 + r$
     arrayreference$ = r$
-    'PRINT "arrayreference returning:" + r$
 
 END FUNCTION
 
@@ -13004,10 +12773,6 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                 END IF
                 n$ = scope2$ + "ARRAY_" + n$
 
-                'nume = allocarray(n$, elements$, bytes)
-                'IF arraydesc THEN goto dim2exitfunc 'id already exists!
-                'clearid
-
                 IF f = 1 THEN
 
                     IF LEN(elements$) = 1 AND ASC(elements$) = 63 THEN '"?"
@@ -13103,10 +12868,6 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                 LOOP
             END IF
             n$ = scope2$ + "ARRAY_" + n$
-
-            'nume = allocarray(n$, elements$, -2147483647) '-2147483647=STRING
-            'IF arraydesc THEN goto dim2exitfunc 'id already exists!
-            'clearid
 
             IF f = 1 THEN
 
@@ -13209,10 +12970,6 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             END IF
             n$ = scope2$ + "ARRAY_" + n$
 
-            'nume = allocarray(n$, elements$, -bits) 'passing a negative element size signifies bits not bytes
-            'IF arraydesc THEN goto dim2exitfunc 'id already exists!
-            'clearid
-
             IF f = 1 THEN
 
                 IF LEN(elements$) = 1 AND ASC(elements$) = 63 THEN '"?"
@@ -13299,10 +13056,6 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
 
             END IF
             n$ = scope2$ + "ARRAY_" + n$
-
-            'nume = allocarray(n$, elements$, 1)
-            'IF arraydesc THEN goto dim2exitfunc
-            'clearid
 
             IF f = 1 THEN
 
@@ -13545,10 +13298,6 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             END IF
             n$ = scope2$ + "ARRAY_" + n$
 
-            'nume = allocarray(n$, elements$, 4)
-            'IF arraydesc THEN goto dim2exitfunc
-            'clearid
-
             IF f = 1 THEN
 
                 IF LEN(elements$) = 1 AND ASC(elements$) = 63 THEN '"?"
@@ -13628,10 +13377,6 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                 LOOP
             END IF
             n$ = scope2$ + "ARRAY_" + n$
-
-            'nume = allocarray(n$, elements$, 8)
-            'IF arraydesc THEN goto dim2exitfunc
-            'clearid
 
             IF f = 1 THEN
 
@@ -13713,10 +13458,6 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             END IF
             n$ = scope2$ + "ARRAY_" + n$
 
-            'nume = allocarray(n$, elements$, 4)
-            'IF arraydesc THEN goto dim2exitfunc
-            'clearid
-
             IF f = 1 THEN
 
                 IF LEN(elements$) = 1 AND ASC(elements$) = 63 THEN '"?"
@@ -13795,10 +13536,6 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
             END IF
             n$ = scope2$ + "ARRAY_" + n$
 
-            'nume = allocarray(n$, elements$, 8)
-            'IF arraydesc THEN goto dim2exitfunc
-            'clearid
-
             IF f = 1 THEN
 
                 IF LEN(elements$) = 1 AND ASC(elements$) = 63 THEN '"?"
@@ -13876,10 +13613,6 @@ FUNCTION dim2 (varname$, typ2$, method, elements$)
                 LOOP
             END IF
             n$ = scope2$ + "ARRAY_" + n$
-
-            'nume = allocarray(n$, elements$, 32)
-            'IF arraydesc THEN goto dim2exitfunc
-            'clearid
 
             IF f = 1 THEN
 
@@ -13963,8 +13696,6 @@ FUNCTION udtreference$ (o$, a$, typ AS LONG)
     '     ^udt of the element, not of the id
 
     obak$ = o$
-
-    'PRINT "called udtreference!"
 
     r$ = str2$(currentid) + sp3
 
@@ -14069,14 +13800,11 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
     DIM evaledblock(1000) AS INTEGER
     DIM blocktype(1000) AS LONG
     'typ IS A RETURN VALUE
-    '''DIM cli(15) AS INTEGER
     a$ = a2$
     typ = -1
 
     IF Debug THEN PRINT #9, "evaluating:[" + a2$ + "]"
     IF a2$ = "" THEN Give_Error "Syntax error": EXIT FUNCTION
-
-    '''cl$ = classify(a$)
 
     blockn = 0
     n = numelements(a$)
@@ -14090,8 +13818,6 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
         IF Debug THEN PRINT #9, "#*#*#* reevaluating:" + l$, i
 
         IF i <> n THEN nextl$ = getelement(a$, i + 1) ELSE nextl$ = ""
-
-        '''getclass cl$, i, cli()
 
         IF b = 0 THEN 'don't evaluate anything within brackets
 
@@ -14140,7 +13866,6 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
 
                                         'UDT
                                         IF typ2 AND ISUDT THEN
-                                            'print "arrayref returned:"+c$
                                             getid arrayid
                                             IF Error_Happened THEN EXIT FUNCTION
                                             o$ = RIGHT$(c$, LEN(c$) - INSTR(c$, sp3))
@@ -14152,7 +13877,6 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                                                 s = s \ 8
                                             END IF
                                             o$ = "(" + o$ + ")*" + str2$(s)
-                                            'print "calling evaludt with o$:"+o$
                                             GOTO evaludt
                                         END IF
 
@@ -14208,7 +13932,6 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                                 i4 = n
                                 gotudt:
                                 IF i4 < i3 THEN e$ = "" ELSE e$ = getelements$(a$, i3, i4)
-                                'PRINT "UDTREFERENCE:";l$; e$
                                 e$ = udtreference(o$, e$, typ2)
                                 IF Error_Happened THEN EXIT FUNCTION
                                 i = i4
@@ -14216,8 +13939,6 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                                 block(blockn) = e$
                                 evaledblock(blockn) = 2
                                 blocktype(blockn) = typ2
-                                'is the following next necessary?
-                                'IF (typ2 AND ISSTRING) THEN stringprocessinghappened = 1
                                 GOTO evaled
                             END IF
                         END IF
@@ -14417,60 +14138,6 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
                     GOTO evaledblock
                 END IF
 
-                'number?
-                'fc = ASC(LEFT$(block(i), 1))
-                'IF fc = 45 OR (fc >= 48 AND fc <= 57) THEN '- or 0-9
-                ''it's a number
-                ''check for an extension, if none, assume integer
-                'blocktype(i) = INTEGER64TYPE - ISPOINTER
-                'tblock$ = " " + block(i)
-                'IF RIGHT$(tblock$, 2) = "##" THEN blocktype(i) = FLOATTYPE - ISPOINTER: block(i) = LEFT$(block(i), LEN(block$(i)) - 2): GOTO evfltnum
-                'IF RIGHT$(tblock$, 1) = "#" THEN blocktype(i) = DOUBLETYPE - ISPOINTER: block(i) = LEFT$(block(i), LEN(block$(i)) - 1): GOTO evfltnum
-                'IF RIGHT$(tblock$, 1) = "!" THEN blocktype(i) = SINGLETYPE - ISPOINTER: block(i) = LEFT$(block(i), LEN(block$(i)) - 1): GOTO evfltnum
-                '
-                ''C++ 32bit unsigned to signed 64bit
-                'IF INSTR(block(i),".")=0 THEN
-                '
-                'negated=0
-                'if left$(block(i),1)="-" then block(i)=right$(block(i),len(block(i))-1):negated=1
-                '
-                'if left$(block(i),2)="0x" then 'hex
-                'if len(block(i))=10 then
-                'if block(i)>="0x80000000" and block(i)<="0xFFFFFFFF" then block(i)="(int64)"+block(i): goto evnum
-                'end if
-                'if len(block(i))>10 then block(i)=block(i)+"ll": goto evnum
-                'goto evnum
-                'end if
-                '
-                'if left$(block(i),1)="0" then 'octal
-                'if len(block(i))=12 then
-                'if block(i)>="020000000000" and block(i)<="037777777777" then block(i)="(int64)"+block(i): goto evnum
-                'if block(i)>"037777777777" then block(i)=block(i)+"ll": goto evnum
-                'end if
-                'if len(block(i))>12 then block(i)=block(i)+"ll": goto evnum
-                'goto evnum
-                'end if
-                '
-                ''decimal
-                'if len(block(i))=10 then
-                'if block(i)>="2147483648" and block(i)<="4294967295" then block(i)="(int64)"+block(i): goto evnum
-                'if block(i)>"4294967295" then block(i)=block(i)+"ll": goto evnum
-                'end if
-                'if len(block(i))>10 then block(i)=block(i)+"ll"
-                '
-                'evnum:
-                '
-                'if negated=1 then block(i)="-"+block(i)
-                '
-                'END IF
-                '
-                'evfltnum:
-                '
-                'block(i) = " " + block(i)+" "
-                'evaledblock(i) = 1
-                'GOTO evaledblock
-                'END IF
-
                 'a typed string in ""
                 IF LEFT$(block(i), 1) = CHR$(34) THEN
                     IF RIGHT$(block(i), 1) <> CHR$(34) THEN
@@ -14600,13 +14267,6 @@ FUNCTION evaluate$ (a2$, typ AS LONG)
 
                 oldtyp = typ
                 newtyp = blocktype(i + 1)
-
-                'IF block(i - 1) = "6" THEN
-                'PRINT o$
-                'PRINT oldtyp AND ISFLOAT
-                'PRINT blocktype(i - 1) AND ISFLOAT
-                'END
-                'END IF
 
                 'numeric->string is illegal!
                 IF (typ AND ISSTRING) = 0 AND (newtyp AND ISSTRING) <> 0 THEN
@@ -14917,10 +14577,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
 
     skipargnumchk:
 
-'    IF id2.NoCloud THEN
-'        IF Cloud THEN Give_Error "Feature not supported on QLOUD" '***NOCLOUD***
-'    END IF
-
     r$ = RTRIM$(id2.callname) + "("
 
     IF id2.args <> 0 THEN
@@ -15022,11 +14678,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                         GOTO evalfuncspecial
                     END IF
                 END IF
-
-                'PRINT #12, "n$="; n$
-                'PRINT #12, "curarg="; curarg
-                'PRINT #12, "e$="; e$
-                'PRINT #12, "r$="; r$
 
                 '*special case*
                 IF n$ = "_MEMGET" THEN
@@ -15903,16 +15554,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                                     GOTO dontevaluate
                                 END IF 'similar
 
-                                'IF sourcetyp2 = targettyp2 THEN
-                                'IF arr THEN
-                                'IF (sourcetyp2 AND ISOFFSETINBITS) THEN Give_Error "Cannot pass BIT array offsets yet": EXIT FUNCTION
-                                'e$ = "(&(" + refer(e$, sourcetyp, 0) + "))"
-                                'ELSE
-                                'e$ = refer(e$, sourcetyp, 1)
-                                'END IF
-                                'GOTO dontevaluate
-                                'END IF
-
                             END IF 'source is a reference
 
                         ELSE 'string
@@ -15934,15 +15575,6 @@ FUNCTION evaluatefunc$ (a2$, args AS LONG, typ AS LONG)
                 END IF 'pointer
 
                 'note: Target is not a pointer...
-
-                'IF (targettyp AND ISSTRING) = 0 THEN
-                'IF (sourcetyp AND ISREFERENCE) THEN
-                'targettyp2 = targettyp: sourcetyp2 = sourcetyp - ISREFERENCE
-                'IF (sourcetyp2 AND ISINCONVENTIONALMEMORY) THEN sourcetyp2 = sourcetyp2 - ISINCONVENTIONALMEMORY
-                'IF sourcetyp2 = targettyp2 THEN e$ = refer(e$, sourcetyp, 1): GOTO dontevaluate
-                'END IF
-                'END IF
-                'END IF
 
                 'String-numeric mismatch?
                 IF targettyp AND ISSTRING THEN
@@ -16334,9 +15966,6 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 t1 = udtetype(E)
             END IF
             dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
-            'evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
-            'IF targettyp = -5 THEN evaluatetotyp$ = bytes$
-            'IF targettyp = -6 THEN evaluatetotyp$ = dst$
 
             t = Type2MemTypeValue(t1)
             evaluatetotyp$ = "(ptrszint)" + dst$ + "," + bytes$ + "," + str2(t) + "," + bytes$ + ",sf_mem_lock"
@@ -16369,9 +15998,6 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                     bytes$ = str2(id.tsize)
                     e$ = refer(e$, sourcetyp, 0)
                     IF Error_Happened THEN EXIT FUNCTION
-                    'evaluatetotyp$ = "byte_element((uint64)" + e$ + "->chr," + bytes$ + "," + NewByteElement$ + ")"
-                    'IF targettyp = -5 THEN evaluatetotyp$ = bytes$
-                    'IF targettyp = -6 THEN evaluatetotyp$ = e$ + "->chr"
 
                     t = Type2MemTypeValue(sourcetyp)
                     evaluatetotyp$ = "(ptrszint)" + e$ + "->chr," + bytes$ + "," + str2(t) + "," + bytes$ + "," + lk$
@@ -16388,9 +16014,6 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             IF Error_Happened THEN EXIT FUNCTION
             e$ = "(&(" + e$ + "))"
             bytes$ = str2((sourcetyp AND 511) \ 8)
-            'evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + bytes$ + "," + NewByteElement$ + ")"
-            'IF targettyp = -5 THEN evaluatetotyp$ = bytes$
-            'IF targettyp = -6 THEN evaluatetotyp$ = e$
 
             t = Type2MemTypeValue(sourcetyp)
             evaluatetotyp$ = "(ptrszint)" + e$ + "," + bytes$ + "," + str2(t) + "," + bytes$ + "," + lk$
@@ -16410,10 +16033,6 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
                 Give_Error "_MEMELEMENT cannot reference variable-length strings": EXIT FUNCTION
             END IF
 
-            'evaluatetotyp$ = "byte_element((uint64)" + e$ + "->chr," + bytes$ + "," + NewByteElement$ + ")"
-            'IF targettyp = -5 THEN evaluatetotyp$ = bytes$
-            'IF targettyp = -6 THEN evaluatetotyp$ = e$ + "->chr"
-
             t = Type2MemTypeValue(sourcetyp)
             evaluatetotyp$ = "(ptrszint)" + e$ + "->chr," + bytes$ + "," + str2(t) + "," + bytes$ + ",sf_mem_lock"
 
@@ -16424,9 +16043,6 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
         e$ = refer(e$, sourcetyp, 1) 'get the variable's formal name
         IF Error_Happened THEN EXIT FUNCTION
         size = (sourcetyp AND 511) \ 8 'calculate its size in bytes
-        'evaluatetotyp$ = "byte_element((uint64)" + e$ + "," + str2(size) + "," + NewByteElement$ + ")"
-        'IF targettyp = -5 THEN evaluatetotyp$ = str2(size)
-        'IF targettyp = -6 THEN evaluatetotyp$ = e$
 
         t = Type2MemTypeValue(sourcetyp)
         evaluatetotyp$ = "(ptrszint)" + e$ + "," + str2(size) + "," + str2(t) + "," + str2(size) + ",sf_mem_lock"
@@ -16458,8 +16074,6 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             bytes$ = variablesize$(-1) + "-(" + o$ + ")"
             IF Error_Happened THEN EXIT FUNCTION
             dst$ = "(((char*)" + scope$ + n$ + ")+(" + o$ + "))"
-
-            'evaluatetotyp$ = "byte_element((uint64)" + dst$ + "," + bytes$ + "," + NewByteElement$ + ")"
 
             'note: myudt.myelement results in a size of 1 because it is a continuous run of no consistent granularity
             IF E <> 0 THEN size = 1 ELSE size = udtxsize(u) \ 8
@@ -16543,7 +16157,6 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
 
     IF targettyp = -2 THEN '? -> byte_element(offset,max possible bytes)
         method2useall:
-        ' print "CI: eval2typ detected target type of -2 for ["+a2$+"] evaluated as ["+e$+"]":sleep 1
 
         IF (sourcetyp AND ISREFERENCE) = 0 THEN Give_Error "Expected variable name/array element": EXIT FUNCTION
         IF (sourcetyp AND ISOFFSETINBITS) THEN Give_Error "Variable/element cannot be BIT aligned": EXIT FUNCTION
@@ -16595,7 +16208,6 @@ FUNCTION evaluatetotyp$ (a2$, targettyp AS LONG)
             e$ = refer(e$, sourcetyp, 0)
             IF Error_Happened THEN EXIT FUNCTION
             e$ = "(&(" + e$ + "))"
-            '           print "CI: array: e$["+e$+"], bytes$["+bytes$+"]":sleep 1
             'calculate size of elements
             IF sourcetyp AND ISSTRING THEN
                 bytes = tsize
@@ -18678,9 +18290,6 @@ FUNCTION lineformat$ (a$)
                                 adddata:
                                 IF prepass = 0 THEN
                                     IF p1 THEN
-                                        'FOR i2 = p1 TO p2
-                                        '    DATA_add ASC(ca$, i2)
-                                        'NEXT
                                         x$ = x$ + MID$(ca$, p1, p2 - p1 + 1)
                                     END IF
                                     'assume closing "
@@ -18897,7 +18506,6 @@ FUNCTION lineformat$ (a$)
             END IF
 
             IF MID$(c$, x, 8) = "$INCLUDE" THEN
-'                IF Cloud THEN Give_Error "Feature not supported on QLOUD": EXIT FUNCTION
                 'note: INCLUDE adds the file AFTER the line it is on has been processed
                 'note: No other metacommands can follow the INCLUDE metacommand!
                 'skip spaces until :
@@ -19111,8 +18719,6 @@ FUNCTION refer$ (a2$, typ AS LONG, method AS LONG)
             EXIT FUNCTION
         END IF
 
-        'print "UDTSUBSTRING[idX|u|e|o]:"+a$
-
         u = VAL(a$)
         i = INSTR(a$, sp3): a$ = RIGHT$(a$, LEN(a$) - i): E = VAL(a$)
         i = INSTR(a$, sp3): o$ = RIGHT$(a$, LEN(a$) - i)
@@ -19133,7 +18739,6 @@ FUNCTION refer$ (a2$, typ AS LONG, method AS LONG)
             r$ = "*" + "(" + t$ + "*)" + o2$
         END IF
 
-        'print "REFER:"+r$+","+str2$(typ)
         refer$ = r$
         EXIT FUNCTION
     END IF
@@ -19162,8 +18767,6 @@ FUNCTION refer$ (a2$, typ AS LONG, method AS LONG)
         END IF
 
         IF (typ AND ISOFFSETINBITS) THEN
-            'IF (typ AND ISUNSIGNED) THEN r$ = "getubits_" ELSE r$ = "getbits_"
-            'r$ = r$ + str2(typ AND 511) + "("
             IF (typ AND ISUNSIGNED) THEN r$ = "getubits" ELSE r$ = "getbits"
             r$ = r$ + "(" + str2(typ AND 511) + ","
             r$ = r$ + "(uint8*)(" + n$ + "[0])" + ","
@@ -19492,28 +19095,6 @@ SUB reginternal
     '$INCLUDE:'subs_functions\subs_functions.bas'
     reginternalsubfunc = 0
 END SUB
-
-'this sub is faulty atm!
-'sub replacelement (a$, i, newe$)
-''note: performs no action for out of range values of i
-'e=1
-'s=1
-'do
-'x=instr(s,a$,sp)
-'if x then
-'if e=i then
-'a1$=left$(a$,s-1): a2$=right$(a$,len(a$)-x+1)
-'a$=a1$+sp+newe$+a2$ 'note: a2 includes spacer
-'exit sub
-'end if
-'s=x+1
-'e=e+1
-'end if
-'loop until x=0
-'if e=i then
-'a$=left$(a$,s-1)+sp+newe$
-'end if
-'end sub
 
 SUB removeelements (a$, first, last, keepindexing)
     a2$ = ""
@@ -20218,11 +19799,6 @@ FUNCTION seperateargs (a$, ca$, pass&)
     NEXT
     separgslayout(x) = separgslayout(i) 'set final layout
 
-    'x = x - 1
-    'PRINT "total arguments:"; x
-    'PRINT "pass omit (0/1):"; omit
-    'PRINT "pass&="; pass&
-
 END FUNCTION
 
 SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
@@ -20255,11 +19831,9 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
         i = INSTR(a$, sp3): o$ = RIGHT$(a$, LEN(a$) - i)
         n$ = "UDT_" + RTRIM$(id.n): IF id.t = 0 THEN n$ = "ARRAY_" + n$ + "[0]"
 
-'        IF Cloud = 0 THEN
-            IF E <> 0 AND u = 1 THEN 'Setting _MEM type elements is not allowed!
-                Give_Error "Cannot set read-only element of _MEM TYPE": EXIT SUB
-            END IF
-'        END IF
+        IF E <> 0 AND u = 1 THEN 'Setting _MEM type elements is not allowed!
+            Give_Error "Cannot set read-only element of _MEM TYPE": EXIT SUB
+        END IF
 
         IF E = 0 THEN
             'use u and u's size
@@ -20302,8 +19876,6 @@ SUB setrefer (a2$, typ2 AS LONG, e2$, method AS LONG)
             siz$ = str2$(udtxsize(u) \ 8)
 
             PRINT #12, "memcpy(" + dst$ + "," + src$ + "," + siz$ + ");"
-
-            'print "setFULLUDTrefer!"
 
             tlayout$ = tl$
             EXIT SUB
@@ -20930,26 +20502,6 @@ FUNCTION validlabel (LABEL2$)
 END FUNCTION
 
 SUB xend
-
-    '1. locate bottomline,1
-    'PRINT #12, "display_page->cursor_y=print_holding_cursor=0; qbg_cursor_x=1; qbg_cursor_y=qbg_height_in_characters;"
-
-    '2. print a message in the screen's width
-    'PRINT #12, "if (qbg_width_in_characters==80){"
-    'PRINT #12, "qbs_print(qbs_new_txt(" + CHR$(34) + "Press any key to continue" + SPACE$(80 - 25) + CHR$(34) + "),0);"
-    'PRINT #12, "}else{"
-    'PRINT #12, "qbs_print(qbs_new_txt(" + CHR$(34) + "Press any key to continue" + SPACE$(40 - 25) + CHR$(34) + "),0);"
-    'PRINT #12, "}"
-
-    '3. wait for a key to be pressed
-    'PRINT #12, "do{"
-    'PRINT #12, "SDL_Delay(0);"
-    'PRINT #12, "if (stop_program) end();"
-    'PRINT #12, "}while(qbs_cleanup(qbs_tmp_base,qbs_equal(qbs_inkey(),
-    '            qbs_new_txt(" + CHR$(34) + CHR$(34) + "))));"
-    '4. quit
-    'PRINT #12, "close_program=1;"
-    'PRINT #12, "end();"
     PRINT #12, "sub_end();"
 END SUB
 
@@ -22373,33 +21925,6 @@ SUB PATH_SLASH_CORRECT (a$)
         NEXT
     END IF
 END SUB
-
-'SUB UseAndroid (Yes)
-
-'    STATIC inline_DATA_backup
-'    STATIC inline_DATA_backup_set
-'    IF inline_DATA_backup_set = 0 THEN
-'        inline_DATA_backup_set = 1
-'        inline_DATA_backup = inline_DATA
-'    END IF
-
-'    IF Yes THEN
-'        IF MakeAndroid = 0 THEN
-'            MakeAndroid = 1
-'            inline_DATA = 1
-'            idechangemade = 1
-'            IDEBuildModeChanged = 1
-'        END IF
-'    ELSE
-'        IF MakeAndroid THEN
-'            MakeAndroid = 0
-'            inline_DATA = inline_DATA_backup
-'            idechangemade = 1
-'            IDEBuildModeChanged = 1
-'        END IF
-'    END IF
-
-'END SUB
 
 'Steve Subs/Functins for _MATH support with CONST
 FUNCTION Evaluate_Expression$ (e$)
