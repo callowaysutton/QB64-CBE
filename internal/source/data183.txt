@@ -1,14 +1,16 @@
-int32 *_SUB_GETINPUT_LONG_K=NULL;
-if(_SUB_GETINPUT_LONG_K==NULL){
-_SUB_GETINPUT_LONG_K=(int32*)mem_static_malloc(4);
-*_SUB_GETINPUT_LONG_K=0;
+int32 *_SUB_SORT_LONG_I=NULL;
+if(_SUB_SORT_LONG_I==NULL){
+_SUB_SORT_LONG_I=(int32*)mem_static_malloc(4);
+*_SUB_SORT_LONG_I=0;
 }
-byte_element_struct *byte_element_5412=NULL;
-if (!byte_element_5412){
-if ((mem_static_pointer+=12)<mem_static_limit) byte_element_5412=(byte_element_struct*)(mem_static_pointer-12); else byte_element_5412=(byte_element_struct*)mem_static_malloc(12);
-}
-int32 *_SUB_GETINPUT_LONG_RELEASE=NULL;
-if(_SUB_GETINPUT_LONG_RELEASE==NULL){
-_SUB_GETINPUT_LONG_RELEASE=(int32*)mem_static_malloc(4);
-*_SUB_GETINPUT_LONG_RELEASE=0;
+int64 fornext_value22472;
+int64 fornext_finalvalue22472;
+int64 fornext_step22472;
+uint8 fornext_step_negative22472;
+qbs *_SUB_SORT_STRING_X=NULL;
+if (!_SUB_SORT_STRING_X)_SUB_SORT_STRING_X=qbs_new(0,0);
+int32 *_SUB_SORT_LONG_J=NULL;
+if(_SUB_SORT_LONG_J==NULL){
+_SUB_SORT_LONG_J=(int32*)mem_static_malloc(4);
+*_SUB_SORT_LONG_J=0;
 }

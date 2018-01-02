@@ -1,6 +1,4 @@
-if(oldstr5523){
-if(oldstr5523->fixed)qbs_set(oldstr5523,_SUB_IDEADDRECENT_STRING_F2);
-qbs_free(_SUB_IDEADDRECENT_STRING_F2);
+if(oldstr22523){
+if(oldstr22523->fixed)qbs_set(oldstr22523,_FUNC_REMOVESYMBOL2_STRING_VARNAME);
+qbs_free(_FUNC_REMOVESYMBOL2_STRING_VARNAME);
 }
-qbs_free(_SUB_IDEADDRECENT_STRING_F);
-qbs_free(_SUB_IDEADDRECENT_STRING_A);

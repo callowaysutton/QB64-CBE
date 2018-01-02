@@ -1,0 +1,4 @@
+if(oldstr20615){
+if(oldstr20615->fixed)qbs_set(oldstr20615,_SUB_ARYADDSTR_STRING_VALUE);
+qbs_free(_SUB_ARYADDSTR_STRING_VALUE);
+}

@@ -249,9 +249,11 @@ FUNCTION ide2 (ignore)
         ideeditmenuID = m
         IdeMakeEditMenu
 
-        m = m + 1: i = 0
+        m = m + 1: i = 0: ViewMenuID = m
         menu$(m, i) = "View": i = i + 1
         menu$(m, i) = "#SUBs...  F2": i = i + 1
+        menu$(m, i) = "#Line numbers  " + CHR$(16): i = i + 1
+
         menusize(m) = i - 1
 
         m = m + 1: i = 0
@@ -277,7 +279,7 @@ FUNCTION ide2 (ignore)
         menu$(m, i) = "-": i = i + 1
 
         RunMenuSaveExeWithSource = i
-        menu$(m, i) = "Save EXE in the source #folder": i = i + 1
+        menu$(m, i) = "Output EXE to source #folder": i = i + 1
         IF SaveExeWithSource THEN
             menu$(RunMenuID, RunMenuSaveExeWithSource) = CHR$(7) + menu$(RunMenuID, RunMenuSaveExeWithSource)
         END IF
@@ -290,12 +292,7 @@ FUNCTION ide2 (ignore)
             menu$(m, i) = "Make E#XE Only  F11": i = i + 1
         END IF
 
-        'IF IdeAndroidMenu = 0 THEN menusize(m) = i - 1
-        menu$(m, i) = "-": i = i + 1
-        '    menu$(m, i) = "Start #Android Project": i = i + 1
-        '    menu$(m, i) = "Make Android #Project Only": i = i + 1
-'        menu$(m, i) = "Make #Android Project": i = i + 1
-'        IF IdeAndroidMenu THEN menusize(m) = i - 1
+        menusize(m) = i - 1
 
         m = m + 1: i = 0: OptionsMenuID = m
         menu$(m, i) = "Options": i = i + 1
@@ -325,9 +322,6 @@ FUNCTION ide2 (ignore)
             menu$(OptionsMenuID, OptionsMenuShowErrorsImmediately) = CHR$(7) + menu$(OptionsMenuID, OptionsMenuShowErrorsImmediately)
         END IF
 
-        menu$(m, i) = "-": i = i + 1
-'        menu$(m, i) = "#Google Android...": i = i + 1
-
         menusize(m) = i - 1
 
         m = m + 1: i = 0
@@ -350,6 +344,22 @@ FUNCTION ide2 (ignore)
         'Hidden contextual menu (ID is retrieved for later use; allows expansion of the original menu system above):
         m = m + 1
         idecontextualmenuID = m
+
+        'View Menu sub menu for Line Numbers options
+        m = m + 1: i = 0
+        menu$(m, i) = "ViewMenuShowLineNumbersSubMenu": i = i + 1
+        ViewMenuShowLineNumbersSubMenuID = m
+        IF ShowLineNumbers THEN menu$(m, i) = "#Hide line numbers" ELSE menu$(m, i) = "#Show line numbers"
+        i = i + 1
+        menu$(m, i) = "#Background color": IF ShowLineNumbersUseBG THEN menu$(m, i) = CHR$(7) + menu$(m, i)
+        ViewMenuShowBGID = i
+        IF ShowLineNumbers = 0 THEN menu$(m, i) = "~" + menu$(m, i)
+        i = i + 1
+        menu$(m, i) = "Sho#w separator": IF ShowLineNumbersSeparator THEN menu$(m, i) = CHR$(7) + menu$(m, i)
+        ViewMenuShowSeparatorID = i
+        IF ShowLineNumbers = 0 THEN menu$(m, i) = "~" + menu$(m, i)
+        i = i + 1
+menusize(m) = i - 1
 
         IF os$ = "WIN" THEN
             idepathsep$ = "\"
@@ -656,9 +666,6 @@ FUNCTION ide2 (ignore)
                 showexecreated = 0
                 LOCATE idewy - 3, 2
 
-                'IF MakeAndroid THEN
-                '    PRINT "Project [programs\android\" + file$ + "] created";
-                'ELSE
                     IF os$ = "LNX" THEN
                         PRINT "Executable file created";
                     ELSE
@@ -689,6 +696,7 @@ FUNCTION ide2 (ignore)
     'main loop
     DO
         ideloop:
+        IF ShowLineNumbers THEN maxLineNumberLength = LEN(STR$(iden)) + 1 ELSE maxLineNumberLength = 0
         idecontextualmenu = 0
         idedeltxt 'removes temporary strings (typically created by guibox commands) by setting an index to 0
         IF idesubwindow <> 0 THEN _RESIZE OFF ELSE _RESIZE ON
@@ -1159,11 +1167,6 @@ FUNCTION ide2 (ignore)
             END IF
             IDEBuildModeChanged = 0
 
-'            IF MakeAndroid THEN
-'                'Cleanup excess files in temp folder
-'                SHELL _HIDE "cmd /c del /q " + tmpdir$ + "ret*.txt " + tmpdir$ + "data*.txt " + tmpdir$ + "free*.txt"
-'            END IF
-
             idecompiling = 1
             ide2 = 2
             idecompiledline$ = idegetline(1)
@@ -1358,7 +1361,7 @@ FUNCTION ide2 (ignore)
                         GOTO specialchar
                     END IF
 
-                    '3- Link to the output folder when "Save EXE in the source folder" is checked:
+                    '3- Link to the output folder when "Output EXE to source #folder" is checked:
                     IF INSTR(_OS$, "WIN") THEN
                         SHELL _DONTWAIT "explorer /select," + QuotedFilename$(path.exe$ + file$ + extension$)
                     ELSEIF INSTR(_OS$, "MAC") THEN
@@ -1372,21 +1375,18 @@ FUNCTION ide2 (ignore)
         END IF
 
         IF KB = KEY_F5 AND KCTRL THEN 'run detached
-            'UseAndroid 0
             idemdetached:
             iderunmode = 1
             GOTO idemrunspecial
         END IF
 
         IF KB = KEY_F11 THEN 'make exe only
-            'UseAndroid 0
             idemexe:
             iderunmode = 2
             GOTO idemrunspecial
         END IF
 
         IF KB = KEY_F5 THEN 'Note: F5 or SHIFT+F5 accepted
-            'UseAndroid 0
             idemrun:
             iderunmode = 0 'standard run
             idemrunspecial:
@@ -1635,21 +1635,6 @@ FUNCTION ide2 (ignore)
                             END IF
                         END IF
                     END IF
-
-                    'IF mB AND idemouseselect = 2 THEN
-                    '    'move vbar scroller (idecy) to appropriate position
-                    '    IF iden > 1 THEN
-                    '        IF mY <= 4 THEN idecy = 1
-                    '        IF mY >= idewy - 7 THEN idecy = iden
-                    '        IF mY > 4 AND mY < idewy - 7 THEN
-                    '            y = mY
-                    '            p! = y - 3 - 2 + .5
-                    '            p! = p! / ((idewy - 8) - 4)
-                    '            i = p! * (iden - 1) + 1
-                    '            idecy = i
-                    '        END IF
-                    '    END IF
-                    'END IF
 
                     IF mCLICK THEN mCLICK = 0
                 END IF
@@ -1904,9 +1889,6 @@ FUNCTION ide2 (ignore)
             IF mCLICK OR K$ = CHR$(27) THEN
                 IF (mY = idewy AND mX = idewx - 2) OR K$ = CHR$(27) THEN 'close help
 
-                    'IF idesubwindow THEN PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt: GOTO ideloop
-                    'idesubwindow = idewy \ 2: idewy = idewy - idesubwindow
-
                     idewy = idewy + idesubwindow
                     idehelp = 0
                     idesubwindow = 0
@@ -1943,21 +1925,6 @@ FUNCTION ide2 (ignore)
                         END IF
                         sx = sx + 1
                     NEXT
-
-                    'LOCATE idewy, 2
-                    'FOR x = Back_Str_Pos TO Back_Str_Pos + idewx - 5
-                    '    i = CVL(MID$(Back_Str_I$, (x - 1) * 4 + 1, 4))
-                    '    a = ASC(Back_Str$, x)
-                    '    IF a THEN
-                    '        COLOR 0, 7
-                    '        IF i < Help_Back_Pos THEN COLOR 9, 7
-                    '        IF i > Help_Back_Pos THEN COLOR 9, 7
-                    '        PRINT CHR$(a);
-                    '    ELSE
-                    '        COLOR 7, 0
-                    '        PRINT chr$(196);
-                    '    END IF
-                    'NEXT
 
                 END IF
             END IF
@@ -2569,7 +2536,7 @@ FUNCTION ide2 (ignore)
                 ideselecty1 = wholeword.selecty1
                 idecy = wholeword.idecy
             END IF
-            newposition = mX - 1 + idesx - 1
+            newposition = (mX - 1 + idesx - 1) - maxLineNumberLength
             a$ = idegetline$(idecy)
             IF newposition > LEN(a$) THEN idecx = newposition: GOTO DoneWholeWord
             IF newposition = 1 THEN ideselectx1 = 1: GOTO DoneWholeWord
@@ -2595,11 +2562,11 @@ FUNCTION ide2 (ignore)
         END IF
 
         IF mCLICK THEN
-            IF mX > 1 AND mX < idewx AND mY > 2 AND mY < (idewy - 5) THEN 'inside text box
+            IF mX > 1 + maxLineNumberLength AND mX < idewx AND mY > 2 AND mY < (idewy - 5) THEN 'inside text box
                 IF old.mX = mX AND old.mY = mY THEN
                     IF TIMER - last.TBclick# > .5 THEN GOTO regularTextBox_click
                     'Double-click on text box: attempt to select "word" clicked
-                    idecx = mX - 1 + idesx - 1
+                    idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
                     idecy = mY - 2 + idesy - 1
                     IF idecy > iden THEN
                         GOTO regularTextBox_click
@@ -2690,13 +2657,33 @@ FUNCTION ide2 (ignore)
                     regularTextBox_click:
                     old.mX = mX: old.mY = mY: last.TBclick# = TIMER
                     ideselect = 1
-                    idecx = mX - 1 + idesx - 1
+                    idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
                     idecy = mY - 2 + idesy - 1
                     IF idecy > iden THEN idecy = iden
-                    ideselect = 1: ideselectx1 = idecx: ideselecty1 = idecy
+                    ideselect = 1
+                    IF (NOT KSHIFT) THEN ideselectx1 = idecx: ideselecty1 = idecy
                     idemouseselect = 1
                     wholeword.select = 0
                 END IF
+            ELSEIF mX > 1 AND mx =< 1 + maxLineNumberLength AND mY > 2 AND mY < (idewy - 5) AND ShowLineNumbers THEN
+                'line numbers are visible and been clicked
+                ideselect = 1
+                idecy = mY - 2 + idesy - 1
+                IF idecy < iden THEN
+                    IF (NOT KSHIFT) THEN ideselectx1 = 1: ideselecty1 = idecy
+                    idecy = idecy + 1
+                    idecx = 1
+                ELSEIF idecy = iden THEN
+                    a$ = idegetline$(idecy)
+                    IF (NOT KSHIFT) THEN ideselectx1 = 1: ideselecty1 = idecy
+                    idecx = LEN(a$) + 1
+                ELSEIF idecy > iden THEN
+                    idecy = iden
+                    ideselect = 0
+                    idecx = 1
+                END IF
+                wholeword.select = 0
+                idemouseselect = 0                
             END IF
         END IF
 
@@ -2704,9 +2691,9 @@ FUNCTION ide2 (ignore)
 
         IF mCLICK2 THEN 'Second mouse button pressed.
             invokecontextualmenu:
-            IF mX > 1 AND mX < idewx AND mY > 2 AND mY < (idewy - 5) THEN 'inside text box
+            IF mX > 1 + maxLineNumberLength AND mX < idewx AND mY > 2 AND mY < (idewy - 5) THEN 'inside text box
                 IF ideselect = 0 THEN 'Right click only positions the cursor if no selection is active
-                    idecx = mX - 1 + idesx - 1
+                    idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
                     idecy = mY - 2 + idesy - 1
                     IF idecy > iden THEN idecy = iden
                 ELSE 'A selection is reported but it may be that the user only clicked the screen. Let's check:
@@ -2721,14 +2708,14 @@ FUNCTION ide2 (ignore)
                         IF a2$ = "" THEN
                             'Told ya.
                             ideselect = 0
-                            idecx = mX - 1 + idesx - 1
+                            idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
                             idecy = mY - 2 + idesy - 1
                             IF idecy > iden THEN idecy = iden
                         ELSE
                             'Ok, there is a selection. But we'll override it if the click was outside it
-                            IF mX - 1 + idesx - 1 < sx1 OR mX - 1 + idesx - 1 > sx2 THEN
+                            IF (mX - 1 + idesx - 1) - maxLineNumberLength < sx1 OR (mX - 1 + idesx - 1)  - maxLineNumberLength > sx2 THEN
                                 ideselect = 0
-                                idecx = mX - 1 + idesx - 1
+                                idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
                                 idecy = mY - 2 + idesy - 1
                                 IF idecy > iden THEN idecy = iden
                                 ideshowtext
@@ -2736,7 +2723,7 @@ FUNCTION ide2 (ignore)
                             END IF
                             IF mY - 2 + idesy - 1 < idecy OR mY - 2 + idesy - 1 > idecy THEN
                                 ideselect = 0
-                                idecx = mX - 1 + idesx - 1
+                                idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
                                 idecy = mY - 2 + idesy - 1
                                 IF idecy > iden THEN idecy = iden
                                 ideshowtext
@@ -2750,7 +2737,7 @@ FUNCTION ide2 (ignore)
                         IF sy1 > sy2 THEN SWAP sy1, sy2
                         IF mY - 2 + idesy - 1 < sy1 OR mY - 2 + idesy - 1 > sy2 THEN
                             ideselect = 0
-                            idecx = mX - 1 + idesx - 1
+                            idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
                             idecy = mY - 2 + idesy - 1
                             IF idecy > iden THEN idecy = iden
                             ideshowtext
@@ -2860,9 +2847,10 @@ FUNCTION ide2 (ignore)
         END IF
 
         IF mB AND idemouseselect <= 1 THEN
-            IF mX > 1 AND mX < idewx AND mY > 2 AND mY < idewy - 5 THEN 'inside text box
+            IF mX > 1 + maxLineNumberLength AND mX < idewx AND mY > 2 AND mY < idewy - 5 THEN 'inside text box
                 IF idemouseselect = 1 THEN
-                    idecx = mX - 1 + idesx - 1
+                    idecx = (mX - 1 + idesx - 1) - maxLineNumberLength
+                    IF idecx < 1 THEN idecx = 1
                     idecy = mY - 2 + idesy - 1
                     IF idecy > iden THEN idecy = iden
                 END IF
@@ -2870,18 +2858,18 @@ FUNCTION ide2 (ignore)
         END IF
 
         IF mB THEN
-            IF mX = 1 OR mX = idewx OR mY <= 2 OR mY >= idewy - 5 THEN 'off text window area
+            IF ((mX = 1 AND ShowLineNumbers = 0) OR (mX <= 1 + maxLineNumberLength AND ShowLineNumbers)) OR mX = idewx OR mY <= 2 OR mY >= idewy - 5 THEN 'off text window area
                 IF idemouseselect = 1 THEN
 
                     'scroll window
                     IF mY >= idewy - 5 THEN idecy = idecy + 1: IF idecy > iden THEN idecy = iden
                     IF mY <= 2 THEN idecy = idecy - 1: IF idecy < 1 THEN idecy = 1
-                    IF mX = 1 THEN idecx = idecx - 1: IF idecx < 1 THEN idecx = 1
+                    IF ((mX = 1 AND ShowLineNumbers = 0) OR (mX <= 1 + maxLineNumberLength AND ShowLineNumbers)) THEN idecx = idecx - 1: IF idecx < 1 THEN idecx = 1
                     IF mX = idewx THEN idecx = idecx + 1
                     idewait
                 END IF
             END IF
-        END IF
+END IF
 
         IF KCONTROL AND UCASE$(K$) = "A" THEN 'select all
             idemselectall:
@@ -3849,7 +3837,7 @@ FUNCTION ide2 (ignore)
 
             GetInput
             IF oldmx <> mX OR oldmy <> mY THEN
-                IF mY = 1 AND idecontextualmenu = 0 THEN 'Check if we're hovering on menu bar
+                IF mY = 1 AND idecontextualmenu <> 1 THEN 'Check if we're hovering on menu bar
                     lastm = m
                     FOR i = 1 TO menus
                         x = CVI(MID$(MenuLocations, i * 2 - 1, 2))
@@ -3962,8 +3950,13 @@ FUNCTION ide2 (ignore)
     IF IdeSystem = 2 THEN IdeSystem = 1: GOSUB UpdateSearchBar
     PCOPY 0, 2
     SCREEN , , 1, 0
+    updateMenuPanel%% = 0
+    parentMenuR = r
     r = 1
+    parentMenu = 0
+    parentMenuSetup%% = 0
     IF idecontextualmenu = 1 THEN idectxmenuX = mX: idectxmenuY = mY: m = idecontextualmenuID
+    IF idecontextualmenu = 2 THEN idectxmenuX = xx + w + 3: idectxmenuY = yy + r: parentMenu = m: m = ViewMenuShowLineNumbersSubMenuID
     IdeMakeEditMenu
     oldmy = mY: oldmx = mX
     DO
@@ -3975,6 +3968,14 @@ FUNCTION ide2 (ignore)
                 IF i = menus - 1 THEN x = idewx - LEN(menu$(menus, 0)) - 1
             NEXT: xx = x
             LOCATE 1, xx - 1: COLOR 7, 0: PRINT " " + menu$(m, 0) + " "
+        ELSE
+            IF parentMenu > 0 AND parentMenuSetup%% = 0 THEN
+                parentMenuSetup%% = -1
+                backToParent.x1 = xx - 1
+                backToParent.x2 = xx + w
+                backToParent.y1 = 3
+                backToParent.y2 = backToParent.y1 + menusize(parentMenu)
+            END IF
         END IF
         COLOR 0, 7
         'calculate menu width
@@ -3989,7 +3990,7 @@ FUNCTION ide2 (ignore)
             IF l > w THEN w = l
         NEXT
         yy = 2
-        IF idecontextualmenu = 1 THEN
+        IF idecontextualmenu > 0 THEN
             actual.idewy = idewy
             IF idesubwindow <> 0 THEN
                 actual.idewy = idewy + idesubwindow
@@ -4011,7 +4012,7 @@ FUNCTION ide2 (ignore)
             ELSEIF LEFT$(m$, 1) = "~" THEN
                 m$ = RIGHT$(m$, LEN(m$) - 1) 'Remove the tilde before printing
                 IF r = i THEN LOCATE i + yy, xx - 1: COLOR 7, 0: PRINT SPACE$(w + 2);
-                LOCATE i + yy, xx
+                IF LEFT$(m$, 1) = CHR$(7) THEN LOCATE i + yy, xx - 1 ELSE LOCATE i + yy, xx
                 h = -1: x = INSTR(m$, "#"): IF x THEN h = x: m$ = LEFT$(m$, x - 1) + RIGHT$(m$, LEN(m$) - x)
                 x = INSTR(m$, "  "): IF x THEN m1$ = LEFT$(m$, x - 1): m2$ = RIGHT$(m$, LEN(m$) - x - 1): m$ = m1$ + SPACE$(w - LEN(m1$) - LEN(m2$)) + m2$
                 FOR x = 1 TO LEN(m$)
@@ -4037,7 +4038,9 @@ FUNCTION ide2 (ignore)
         NEXT
 
         PCOPY 1, 0
-
+        
+        IF updateMenuPanel%% THEN GOTO menuChoiceMade
+        
         change = 0
         DO
             mousedown = 0: mouseup = 0
@@ -4090,7 +4093,7 @@ FUNCTION ide2 (ignore)
             GOTO ideloop
         END IF
 
-        IF mCLICK2 AND idecontextualmenu THEN 'A new right click in the text area repositions the contextual menu
+        IF mCLICK2 AND idecontextualmenu = 1 THEN 'A new right click in the text area repositions the contextual menu
             IF mX > 1 AND mX < idewx AND mY > 2 AND mY < (idewy - 5) THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO invokecontextualmenu
@@ -4111,12 +4114,34 @@ FUNCTION ide2 (ignore)
                 END IF
             END IF
 
-            IF mX < xx - 2 OR mX >= xx - 2 + w + 4 OR mY > yy + menusize(m) + 1 OR (mY < yy AND idecontextualmenu) THEN
+            IF parentMenu > 0 AND _
+                mX >= backToParent.x1 AND mX =< backToParent.x2 AND _
+                mY >= backToParent.y1 AND mY =< backToParent.y2 THEN
+                m = parentMenu
+                r = parentMenuR
+                parentMenu = 0
+                idecontextualmenu = 0
+                PCOPY 3, 2
+                _CONTINUE
+            END IF
+
+            IF mX < xx - 2 OR mX >= xx - 2 + w + 4 OR mY > yy + menusize(m) + 1 OR (mY < yy AND idecontextualmenu = 1) THEN
                 PCOPY 3, 0: SCREEN , , 3, 0
                 GOTO ideloop
             END IF
         END IF
         IF NOT mouseup AND NOT mousedown THEN 'Check if we're hovering on menu options
+            IF parentMenu > 0 AND oldmy <> mY AND oldmx <> mX AND _
+                mX >= backToParent.x1 AND mX =< backToParent.x2 AND _
+                mY >= backToParent.y1 AND mY =< backToParent.y2 THEN
+                m = parentMenu
+                r = parentMenuR
+                parentMenu = 0
+                idecontextualmenu = 0
+                PCOPY 3, 2
+                _CONTINUE
+            END IF
+
             IF oldmy <> mY THEN
                 IF mX >= xx - 2 AND mX < xx - 2 + w + 4 THEN
                     IF mY > yy AND mY <= menusize(m) + yy THEN
@@ -4132,7 +4157,7 @@ FUNCTION ide2 (ignore)
             END IF
             IF oldmx <> mX THEN
                 checkmenubarhover:
-                IF mY = 1 AND idecontextualmenu = 0 THEN 'Check if we're hovering on menu bar
+                IF mY = 1 AND idecontextualmenu <> 1 THEN 'Check if we're hovering on menu bar
                     lastm = m
                     FOR i = 1 TO menus
                         x = CVI(MID$(MenuLocations, i * 2 - 1, 2))
@@ -4140,6 +4165,7 @@ FUNCTION ide2 (ignore)
                         IF mX >= x AND mX < x2 THEN
                             m = i
                             r = 1
+                            IF idecontextualmenu > 1 THEN idecontextualmenu = 0: PCOPY 3, 2
                             EXIT FOR
                         END IF
                     NEXT
@@ -4152,7 +4178,6 @@ FUNCTION ide2 (ignore)
 
             'top row
             IF mY = 1 THEN
-                idecontextualmenu = 0
                 lastm = m
                 x = 3
                 FOR i = 1 TO menus
@@ -4161,6 +4186,7 @@ FUNCTION ide2 (ignore)
                         m = i
                         r = 1
                         IF lastm = m AND mousedown = 1 THEN PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: GOTO ideloop
+                        idecontextualmenu = 0
                         EXIT FOR
                     END IF
                     x = x + x2
@@ -4178,8 +4204,32 @@ FUNCTION ide2 (ignore)
 
         END IF 'mb
 
-        IF KB = KEY_LEFT AND idecontextualmenu = 0 THEN m = m - 1: r = 1
-        IF KB = KEY_RIGHT AND idecontextualmenu = 0 THEN m = m + 1: r = 1
+        IF KB = KEY_LEFT AND idecontextualmenu = 0 THEN
+            m = m - 1: r = 1
+        ELSEIF KB = KEY_LEFT AND idecontextualmenu > 1 THEN
+            idecontextualmenu = 0
+            PCOPY 3, 2
+            m = parentMenu
+            r = parentMenuR
+            parentMenu = 0
+        END IF
+        IF KB = KEY_RIGHT AND idecontextualmenu = 0 THEN
+            IF RIGHT$(menu$(m, r), 1) = CHR$(16) THEN
+                SELECT CASE LEFT$(menu$(m, r), LEN(menu$(m, r)) - 3)
+                    CASE "#Line numbers"
+                        idecontextualmenu = 2
+                        GOTO showmenu
+                END SELECT
+            ELSE
+                m = m + 1: r = 1
+            END IF
+        ELSEIF KB = KEY_RIGHT AND idecontextualmenu > 1 THEN
+            idecontextualmenu = 0
+            PCOPY 3, 2
+            m = parentMenu + 1
+            r = 1
+        END IF
+        
         IF m < 1 THEN m = menus
         IF m > menus AND idecontextualmenu = 0 THEN m = 1
         IF KB = KEY_ESC THEN
@@ -4212,13 +4262,14 @@ FUNCTION ide2 (ignore)
                 x = INSTR(menu$(m, r2), "#")
                 IF x THEN
                     a$ = UCASE$(MID$(menu$(m, r2), x + 1, 1))
-                    IF K$ = a$ THEN s = r2: EXIT FOR
+                    IF K$ = a$ THEN s = r2: updateMenuPanel%% = -1: EXIT FOR
                 END IF
             NEXT
+            IF updateMenuPanel%% THEN r = r2: _CONTINUE
         END IF
 
         IF s THEN
-
+            menuChoiceMade:
             IF KALT THEN idehl = 1 ELSE idehl = 0 'set idehl, a shared variable used by various dialogue boxes
 
             IF menu$(m, s) = "Comment (add ')  Ctrl+R" THEN
@@ -4291,25 +4342,12 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF LEFT$(menu$(m, s), 16) = "~Decrease indent" OR menu$(m, s) = "~Increase indent  TAB" THEN
-                PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
-                GOTO ideloop
-            END IF
-
             IF menu$(m, s) = "#Language..." THEN
                 PCOPY 2, 0
                 retval = idelanguagebox
                 PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
                 GOTO ideloop
             END IF
-
-'            IF menu$(m, s) = "#Google Android..." THEN
-'                PCOPY 2, 0
-'                retval = ideandroidbox
-'                'retval is ignored
-'                PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
-'                GOTO ideloop
-'            END IF
 
             IF menu$(m, s) = "#Display..." THEN
                 PCOPY 2, 0
@@ -4401,15 +4439,15 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
-            IF RIGHT$(menu$(m, s), 30) = "Save EXE in the source #folder" THEN
+            IF RIGHT$(menu$(m, s), 28) = "Output EXE to source #folder" THEN
                 PCOPY 2, 0
                 SaveExeWithSource = NOT SaveExeWithSource
                 IF SaveExeWithSource THEN
                     WriteConfigSetting "'[GENERAL SETTINGS]", "SaveExeWithSource", "TRUE"
-                    menu$(RunMenuID, RunMenuSaveExeWithSource) = CHR$(7) + "Save EXE in the source #folder"
+                    menu$(RunMenuID, RunMenuSaveExeWithSource) = CHR$(7) + "Output EXE to source #folder"
                 ELSE
                     WriteConfigSetting "'[GENERAL SETTINGS]", "SaveExeWithSource", "FALSE"
-                    menu$(RunMenuID, RunMenuSaveExeWithSource) = "Save EXE in the source #folder"
+                    menu$(RunMenuID, RunMenuSaveExeWithSource) = "Output EXE to source #folder"
                 END IF
                 PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
                 GOTO ideloop
@@ -4711,6 +4749,66 @@ FUNCTION ide2 (ignore)
                 GOTO ideloop
             END IF
 
+            IF menu$(m, s) = "#Line numbers  " + CHR$(16) THEN
+                idecontextualmenu = 2
+                GOTO showmenu
+            END IF
+
+            IF menu$(m, s) = "#Show line numbers" THEN
+                PCOPY 2, 0
+                ShowLineNumbers = -1
+                WriteConfigSetting "'[GENERAL SETTINGS]", "ShowLineNumbers", "TRUE"
+                menu$(m, s) = "#Hide line numbers"
+                menu$(m, ViewMenuShowBGID) = MID$(menu$(m, ViewMenuShowBGID), 2)
+                menu$(m, ViewMenuShowSeparatorID) = MID$(menu$(m, ViewMenuShowSeparatorID), 2)
+
+                PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
+                GOTO ideloop
+            END IF
+
+            IF menu$(m, s) = "#Hide line numbers" THEN
+                PCOPY 2, 0
+                ShowLineNumbers = 0
+                WriteConfigSetting "'[GENERAL SETTINGS]", "ShowLineNumbers", "FALSE"
+                menu$(m, s) = "#Show line numbers"
+                menu$(m, ViewMenuShowBGID) = "~" + menu$(m, ViewMenuShowBGID)
+                menu$(m, ViewMenuShowSeparatorID) = "~" + menu$(m, ViewMenuShowSeparatorID)
+                PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
+                GOTO ideloop
+            END IF
+
+            IF RIGHT$(menu$(m, s), 17) = "#Background color" THEN
+                IF LEFT$(menu$(m, s), 1) <> "~" THEN
+                    PCOPY 2, 0
+                    ShowLineNumbersUseBG = NOT ShowLineNumbersUseBG
+                    IF ShowLineNumbersUseBG THEN
+                        WriteConfigSetting "'[GENERAL SETTINGS]", "ShowLineNumbersUseBG", "TRUE"
+                        menu$(m, s) = CHR$(7) + "#Background color"
+                    ELSE
+                        WriteConfigSetting "'[GENERAL SETTINGS]", "ShowLineNumbersUseBG", "FALSE"
+                        menu$(m, s) = "#Background color"
+                    END IF
+                    PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
+                    GOTO ideloop
+                END IF
+            END IF
+
+            IF RIGHT$(menu$(m, s), 15) = "Sho#w separator" THEN
+                IF LEFT$(menu$(m, s), 1) <> "~" THEN
+                    PCOPY 2, 0
+                    ShowLineNumbersSeparator = NOT ShowLineNumbersSeparator
+                    IF ShowLineNumbersSeparator THEN
+                        WriteConfigSetting "'[GENERAL SETTINGS]", "ShowLineNumbersSeparator", "TRUE"
+                        menu$(m, s) = CHR$(7) + "Sho#w separator"
+                    ELSE
+                        WriteConfigSetting "'[GENERAL SETTINGS]", "ShowLineNumbersSeparator", "FALSE"
+                        menu$(m, s) = "Sho#w separator"
+                    END IF
+                    PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
+                    GOTO ideloop
+                END IF
+            END IF
+
             IF menu$(m, s) = "#Find...  Ctrl+F3" THEN
                 PCOPY 2, 0
                 idefindjmp:
@@ -4938,33 +5036,23 @@ FUNCTION ide2 (ignore)
 
             IF menu$(m, s) = "#Start  F5" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
-                'UseAndroid 0
                 GOTO idemrun
             END IF
 
             IF menu$(m, s) = "Modify #COMMAND$..." THEN
                 PCOPY 2, 0
                 retval = idemodifycommandbox
-                'retval is ignored
                 PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
                 GOTO ideloop
             END IF
 
-'            IF menu$(m, s) = "Make #Android Project" THEN
-'                PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
-'                'UseAndroid 1
-'                GOTO idemrun
-'            END IF
-
             IF menu$(m, s) = "Start (#Detached)  Ctrl+F5" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
-                'UseAndroid 0
                 GOTO idemdetached
             END IF
 
             IF menu$(m, s) = "Make E#XE Only  F11" OR menu$(m, s) = "Make E#xecutable Only  F11" THEN
                 PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt
-                'UseAndroid 0
                 GOTO idemexe
             END IF
 
@@ -5151,7 +5239,7 @@ FUNCTION ide2 (ignore)
             END IF
 
             IF LEFT$(menu$(m, s), 1) = "~" THEN 'Ignore disabled items (starting with "~")
-                PCOPY 3, 0: SCREEN , , 3, 0: idewait4mous: idewait4alt: GOTO ideloop
+                _CONTINUE
             END IF
 
             SCREEN , , 0, 0
@@ -6652,18 +6740,6 @@ END SUB
 FUNCTION idehbar (x, y, h, i2, n2)
     i = i2: n = n2
 
-    'COLOR 0, 7
-    'LOCATE y, x: PRINT CHR$(27);
-    'LOCATE y, x + w - 1: PRINT CHR$(26);
-    'FOR x2 = x + 1 TO x + w - 2
-    'LOCATE y, x2: PRINT chr$(176);
-    'NEXT
-    'IF w > 3 THEN
-    'p2! = w - 2 - .00001
-    'x2 = x + 1 + INT(p2! * p!)
-    'LOCATE y, x2: PRINT chr$(219);
-    'END IF
-
     'h is size in characters (inc. arrows)
 
     'draw background & arrows
@@ -7606,16 +7682,8 @@ FUNCTION idesaveas$ (programname$)
     o(i).sx1 = 0
     o(i).v1 = LEN(programname$)
 
-    'i = i + 1
-    'o(i).typ = 2
-    'o(i).y = 5
-    'o(i).w = 32: o(i).h = 11
-    'o(i).nam = idenewtxt("#Files")
-    'o(i).txt = idenewtxt(filelist$): filelist$ = ""
-
     i = i + 1
     o(i).typ = 2
-    'o(i).x = 10:
     o(i).y = 5
     o(i).w = 44: o(i).h = idewy + idesubwindow - 14
     o(i).nam = idenewtxt("#Paths")
@@ -8006,7 +8074,7 @@ SUB ideshowtext
 
     IF idecx < idesx THEN idesx = idecx
     IF idecy < idesy THEN idesy = idecy
-    IF idecx - idesx >= (idewx - 2) THEN idesx = idecx - (idewx - 3)
+    IF (idecx + maxLineNumberLength) - idesx >= (idewx - 2) THEN idesx = (idecx + maxLineNumberLength) - (idewx - 3)
     IF idecy - idesy >= (idewy - 8) THEN idesy = idecy - (idewy - 9)
 
     sy1 = ideselecty1
@@ -8063,6 +8131,21 @@ SUB ideshowtext
         LOCATE y + 3, 1
         COLOR 7, 1
         PRINT CHR$(179); 'clear prev bookmarks from lhs
+        
+        IF ShowLineNumbers THEN
+            IF ShowLineNumbersUseBG THEN COLOR , 6
+            PRINT SPACE$(maxLineNumberLength);
+            IF l <= iden THEN
+                l2$ = STR$(l)
+                IF POS(1) - (LEN(l2$) + 1) >= 2 THEN
+                    LOCATE y + 3, POS(1) - (LEN(l2$) + 1)
+                    PRINT l2$;
+                END IF
+            END IF
+            IF ShowLineNumbersSeparator THEN LOCATE y + 3, 1 + maxLineNumberLength: PRINT CHR$(179);
+            COLOR , 1
+        END IF
+
         IF l = idefocusline AND idecy <> l THEN
             COLOR 7, 4 'Line with error gets a red background
         ELSEIF idecy = l OR (l >= idecy_multilinestart AND l <= idecy_multilineend) THEN
@@ -8076,7 +8159,7 @@ SUB ideshowtext
             link_idecx = 0
             rgb_idecx = 0
             IF l = idecy THEN
-                IF idecx <= LEN(a$) THEN
+                IF idecx <= LEN(a$) AND idecx >= 1 THEN
                     cc = ASC(a$, idecx)
                     IF cc = 32 THEN
                         IF LTRIM$(LEFT$(a$, idecx)) = "" THEN cc = -1
@@ -8380,12 +8463,19 @@ SUB ideshowtext
 
             DO UNTIL l < UBOUND(InValidLine) 'make certain we have enough InValidLine elements to cover us in case someone scrolls QB64
                 REDIM _PRESERVE InValidLine(UBOUND(InValidLine) + 1000) AS _BIT '   to the end of a program before the IDE has finished
-            LOOP '                                                      verifying the code and growing the array during the IDE passes.
+            LOOP ' verifying the code and growing the array during the IDE passes.
             IF InValidLine(l) AND 1 THEN COLOR 7
 
-            IF 2 + m - idesx >= 2 AND 2 + m - idesx < idewx THEN
-                LOCATE y + 3, 2 + m - idesx
-                PRINT thisChar$;
+            IF ShowLineNumbers THEN
+                IF (2 + m - idesx) + maxLineNumberLength >= 2 + maxLineNumberLength AND (2 + m - idesx) + maxLineNumberLength < idewx THEN
+                    LOCATE y + 3, (2 + m - idesx) + maxLineNumberLength
+                    PRINT thisChar$;
+                END IF
+            ELSE
+                IF 2 + m - idesx >= 2 AND 2 + m - idesx < idewx THEN
+                    LOCATE y + 3, 2 + m - idesx
+                    PRINT thisChar$;
+                END IF
             END IF
 
             'Restore BG color in case a matching bracket was printed with different BG
@@ -8400,7 +8490,7 @@ SUB ideshowtext
                 IF sy1 = sy2 THEN 'single line select
                     COLOR 1, 7
                     x2 = idesx
-                    FOR x = 2 TO (idewx - 2)
+                     FOR x = 2 + maxLineNumberLength TO (idewx - 2)
                         IF x2 >= sx1 AND x2 < sx2 THEN
                             a = SCREEN(y + 3, x)
 
@@ -8417,16 +8507,17 @@ SUB ideshowtext
                                 LOCATE y + 3, x: PRINT CHR$(a);
                             END IF
 
+
                         END IF
                         x2 = x2 + 1
                     NEXT
                     COLOR 7, 1
                 ELSE 'multiline select
                     IF idecx = 1 AND l = sy2 AND idecy > sy1 THEN GOTO nofinalselect
-                    LOCATE y + 3, 2
+                    LOCATE y + 3, 2 + maxLineNumberLength
                     COLOR 1, 7
 
-                    FOR x = idesx TO idesx + idewx - 2
+                    FOR x = idesx TO idesx + idewx - (2 + maxLineNumberLength)
                         PRINT MID$(a2$, x, 1);
                     NEXT
 
@@ -8463,7 +8554,7 @@ SUB ideshowtext
     LOCATE idewy + idesubwindow, (idewx - 10) - LEN(a$)
     PRINT a$;
 
-    SCREEN , , 0, 0: LOCATE idecy - idesy + 3, idecx - idesx + 2: SCREEN , , 3, 0
+    SCREEN , , 0, 0: LOCATE idecy - idesy + 3, maxLineNumberLength + idecx - idesx + 2: SCREEN , , 3, 0
 
     EXIT SUB
     FindQuoteComment:
@@ -9396,30 +9487,14 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
                 c = c + n * 4 'add characters for bracing < > buttons
                 whitespace = w - c
                 spacing = whitespace \ (n + 1)
-                'f2 = o.foc + 1
-                'IF f2 < 1 OR f2 > n THEN
-                'IF o.dft THEN f2 = o.dft
-                'END IF
                 n2 = 1
                 a3$ = ""
-                'LOCATE o.par.y + o.y, o.par.x + o.x
                 x = o.par.x + o.x
-                'COLOR 0, 7
                 FOR i2 = 1 TO LEN(a$)
                     a2$ = MID$(a$, i2, 1)
                     IF a2$ <> CHR$(0) THEN a3$ = a3$ + a2$
                     IF a2$ = CHR$(0) OR i2 = LEN(a$) THEN
-                        'PRINT SPACE$(spacing);
                         x = x + spacing
-                        'IF f2 = n2 THEN COLOR 15, 7 ELSE COLOR 0, 7
-                        'PRINT "< ";
-                        'COLOR 0, 7: idehPRINT a3$
-                        'IF f2 = n2 THEN COLOR 15, 7 ELSE COLOR 0, 7
-                        'IF n2 = o.foc + 1 THEN
-                        'o.cx = x + 2: o.cy = o.par.y + o.y
-                        'END IF
-                        'PRINT " >";
-                        'COLOR 0, 7
                         x2 = idehlen(a3$) + 4
                         IF mx >= x AND mx < x + x2 THEN info = n2: focus = f + n2 - 1
 
@@ -9458,35 +9533,6 @@ SUB ideobjupdate (o AS idedbotype, focus, f, focusoffset, kk$, altletter$, mb, m
             END IF
         END IF 'mousedown
         IF focusoffset = 0 THEN
-
-            'a$ = idetxt(o.txt)
-            'IF LEN(kk$) = 1 THEN
-            'k = ASC(kk$)
-            'IF k = 8 AND o.v1 > 0 THEN
-            'a1$ = LEFT$(a$, o.v1 - 1)
-            'IF o.v1 <= LEN(a$) THEN a2$ = RIGHT$(a$, LEN(a$) - o.v1) ELSE a2$ = ""
-            'a$ = a1$ + a2$: o.v1 = o.v1 - 1
-            'END IF
-            'IF k >= 32 AND k <= 126 THEN
-            'IF o.v1 > 0 THEN a1$ = LEFT$(a$, o.v1) ELSE a1$ = ""
-            'IF o.v1 <= LEN(a$) THEN a2$ = RIGHT$(a$, LEN(a$) - o.v1) ELSE a2$ = ""
-            'a$ = a1$ + kk$ + a2$: o.v1 = o.v1 + 1
-            'END IF
-            'idetxt(o.txt) = a$
-            'END IF
-            'IF kk$ = CHR$(0) + "S" THEN 'DEL
-            'IF o.v1 > 0 THEN a1$ = LEFT$(a$, o.v1) ELSE a1$ = ""
-            'IF o.v1 < LEN(a$) THEN a2$ = RIGHT$(a$, LEN(a$) - o.v1 - 1) ELSE a2$ = ""
-            'a$ = a1$ + a2$
-            'idetxt(o.txt) = a$
-            'END IF
-            ''cursor control
-            'IF kk$ = CHR$(0) + "K" THEN o.v1 = o.v1 - 1
-            'IF kk$ = CHR$(0) + "M" THEN o.v1 = o.v1 + 1
-            'IF kk$ = CHR$(0) + "G" THEN o.v1 = 0
-            'IF kk$ = CHR$(0) + "O" THEN o.v1 = LEN(a$)
-            'IF o.v1 < 0 THEN o.v1 = 0
-            'IF o.v1 > LEN(a$) THEN o.v1 = LEN(a$)
 
             IF kk$ = CHR$(0) + "H" THEN o.sel = 1
             IF kk$ = CHR$(0) + "P" THEN o.sel = 0
@@ -10524,7 +10570,6 @@ FUNCTION ideadvancedbox
 
     i = i + 1
     o(i).typ = 3 '
-    'o(i).y = y
     o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
     o(i).dft = 1
 
@@ -10925,184 +10970,6 @@ FUNCTION ideyesnobox$ (titlestr$, messagestr$) 'returns "Y" or "N"
 
 END FUNCTION 'yes/no box
 
-'FUNCTION ideandroidbox
-'
-'    '-------- generic dialog box header --------
-'    PCOPY 0, 2
-'    PCOPY 0, 1
-'    SCREEN , , 1, 0
-'    focus = 1
-'    DIM p AS idedbptype
-'    DIM o(1 TO 100) AS idedbotype
-'    DIM oo AS idedbotype
-'    DIM sep AS STRING * 1
-'    sep = CHR$(0)
-'    '-------- end of generic dialog box header --------
-'
-'    '-------- init --------
-'    i = 0
-'
-'    idepar p, 75, 15 - 4 - 4, "Google Android Options"
-'
-'    i = i + 1
-'    o(i).typ = 4 'check box
-'    o(i).y = 2
-'    o(i).nam = idenewtxt("Enable #Run Menu Commands")
-'    o(i).sel = IdeAndroidMenu
-'
-'    'a2$ = IdeAndroidStartScript
-'    'IF a2$ = "" THEN a2$ = "programs\android\start_android.bat"
-'    'i = i + 1
-'    'o(i).typ = 1
-'    'o(i).y = 7
-'    'o(i).nam = idenewtxt(CHR$(34) + "Start Android Project" + CHR$(34) + " Script")
-'    'o(i).txt = idenewtxt(a2$)
-'    'o(i).v1 = LEN(a2$)
-'
-'
-'    'a2$ = IdeAndroidMakeScript
-'    'IF a2$ = "" THEN a2$ = "programs\android\make_android.bat"
-'    'i = i + 1
-'    'o(i).typ = 1
-'    'o(i).y = 11 - 4
-'    'o(i).nam = idenewtxt(CHR$(34) + "Make Android Project Only" + CHR$(34) + " Script")
-'    'o(i).txt = idenewtxt(a2$)
-'    'o(i).v1 = LEN(a2$)
-'
-'    i = i + 1
-'    o(i).typ = 3
-'    o(i).y = 15 - 4 - 4
-'    o(i).txt = idenewtxt("OK" + sep + "#Cancel")
-'    o(i).dft = 1
-'    '-------- end of init --------
-'
-'    '-------- generic init --------
-'    FOR i = 1 TO 100: o(i).par = p: NEXT 'set parent info of objects
-'    '-------- end of generic init --------
-'
-'    DO 'main loop
-'
-'
-'        '-------- generic display dialog box & objects --------
-'        idedrawpar p
-'        f = 1: cx = 0: cy = 0
-'        FOR i = 1 TO 100
-'            IF o(i).typ THEN
-'
-'                'prepare object
-'                o(i).foc = focus - f 'focus offset
-'                o(i).cx = 0: o(i).cy = 0
-'                idedrawobj o(i), f 'display object
-'                IF o(i).cx THEN cx = o(i).cx: cy = o(i).cy
-'            END IF
-'        NEXT i
-'        lastfocus = f - 1
-'        '-------- end of generic display dialog box & objects --------
-'
-'        '-------- custom display changes --------
-'        COLOR 2, 7: LOCATE p.y + 3, p.x + 4: PRINT "Projects are created at:";
-'        COLOR 2, 7: LOCATE p.y + 4, p.x + 6: PRINT "qb64\programs\android\";
-'        COLOR 0, 7
-'        PRINT "bas_file_name_without_extension";
-'        COLOR 2, 7: PRINT "\";
-'        'COLOR 2, 7: LOCATE p.y + 9, p.x + 4: PRINT "Script file is launched from within project's folder";
-'        'COLOR 2, 7: LOCATE p.y + 13 - 4, p.x + 4: PRINT "Script file is launched from within project's folder";
-'
-'        '-------- end of custom display changes --------
-'
-'        'update visual page and cursor position
-'        PCOPY 1, 0
-'        IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
-'
-'        '-------- read input --------
-'        change = 0
-'        DO
-'            GetInput
-'            IF mWHEEL THEN change = 1
-'            IF KB THEN change = 1
-'            IF mCLICK THEN mousedown = 1: change = 1
-'            IF mRELEASE THEN mouseup = 1: change = 1
-'            IF mB THEN change = 1
-'            alt = KALT: IF alt <> oldalt THEN change = 1
-'            oldalt = alt
-'            _LIMIT 100
-'        LOOP UNTIL change
-'        IF alt THEN idehl = 1 ELSE idehl = 0
-'        'convert "alt+letter" scancode to letter's ASCII character
-'        altletter$ = ""
-'        IF alt THEN
-'            IF LEN(K$) = 1 THEN
-'                k = ASC(UCASE$(K$))
-'                IF k >= 65 AND k <= 90 THEN altletter$ = CHR$(k)
-'            END IF
-'        END IF
-'        SCREEN , , 0, 0: LOCATE , , 0: SCREEN , , 1, 0
-'        '-------- end of read input --------
-'
-'        '-------- generic input response --------
-'        info = 0
-'        IF K$ = "" THEN K$ = CHR$(255)
-'        IF KSHIFT = 0 AND K$ = CHR$(9) THEN focus = focus + 1
-'        IF (KSHIFT AND K$ = CHR$(9)) OR (INSTR(_OS$, "MAC") AND K$ = CHR$(25)) THEN focus = focus - 1: K$ = ""
-'        IF focus < 1 THEN focus = lastfocus
-'        IF focus > lastfocus THEN focus = 1
-'        f = 1
-'        FOR i = 1 TO 100
-'            t = o(i).typ
-'            IF t THEN
-'                focusoffset = focus - f
-'                ideobjupdate o(i), focus, f, focusoffset, K$, altletter$, mB, mousedown, mouseup, mX, mY, info, mWHEEL
-'            END IF
-'        NEXT
-'        '-------- end of generic input response --------
-'
-'        'specific post controls
-'
-'        a$ = idetxt(o(2).txt)
-'        IF LEN(a$) > 256 THEN a$ = LEFT$(a$, 256)
-'        idetxt(o(2).txt) = a$
-'        a$ = idetxt(o(3).txt)
-'        IF LEN(a$) > 256 THEN a$ = LEFT$(a$, 256)
-'        idetxt(o(3).txt) = a$
-'
-'        IF K$ = CHR$(27) OR (focus = 3 AND info <> 0) THEN EXIT FUNCTION
-'        IF K$ = CHR$(13) OR (focus = 2 AND info <> 0) THEN
-'            v% = o(1).sel
-'            IF v% < IdeAndroidMenu THEN
-'                menusize(5) = menusize(5) - 2
-'            END IF
-'            IF v% > IdeAndroidMenu THEN
-'                menusize(5) = menusize(5) + 2
-'            END IF
-'            IF v% THEN
-'                WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMenu", "TRUE"
-'            ELSE
-'                WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMenu", "FALSE"
-'            END IF
-'
-'            'v$ = ""
-'            'IF LEN(v$) > 256 THEN v$ = LEFT$(v$, 256)
-'            'IF LEN(v$) < 256 THEN v$ = v$ + SPACE$(256 - LEN(v$))
-'            'v3$ = idetxt(o(3 - 1).txt)
-'            'IF LEN(v3$) > 256 THEN v3$ = LEFT$(v3$, 256)
-'            'IF LEN(v3$) < 256 THEN v3$ = v3$ + SPACE$(256 - LEN(v3$))
-'            '    WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidMakeScript$",  v3$
-'            '    WriteConfigSetting "'[ANDROID MENU]", "IDE_AndroidStartScript$", v$
-'
-'            IdeAndroidMenu = o(1).sel
-'            'IdeAndroidStartScript = "" 'idetxt(o(2).txt)
-'            'IdeAndroidMakeScript = idetxt(o(3 - 1).txt)
-'
-'            EXIT FUNCTION
-'        END IF
-'
-'        'end of custom controls
-'
-'        mousedown = 0
-'        mouseup = 0
-'    LOOP
-'END FUNCTION
-
 FUNCTION idedisplaybox
 
     '-------- generic dialog box header --------
@@ -11120,7 +10987,6 @@ FUNCTION idedisplaybox
     '-------- init --------
     i = 0
 
-    'idepar p, 60, 16, "Display"
     'note: manually set window position in case display to set too large by accident
     p.x = (80 \ 2) - 60 \ 2
     p.y = (25 \ 2) - 16 \ 2
@@ -12735,17 +12601,9 @@ SUB Help_ShowText
 
     COLOR 7, 0
 
-    'CLS
-    'FOR y = Help_wy1 - 1 TO Help_wy2 + 1
-    '    FOR x = Help_wx1 - 1 TO Help_wx2 + 1
-    '        LOCATE y, x: PRINT chr$(219);
-    '    NEXT
-    'NEXT
-
     sy = Help_wy1
     FOR y = Help_sy TO Help_sy + Help_wh - 1
         IF y <= help_h THEN
-            'PRINT CVL(MID$(Help_Line$, (y - 1) * 4 + 1, 4)), LEN(Help_Txt$)
             l = CVL(MID$(Help_Line$, (y - 1) * 4 + 1, 4))
             x = l
             x3 = 1
@@ -12810,21 +12668,6 @@ SUB Help_ShowText
         sy = sy + 1
     NEXT
 
-    'LOCATE Help_cy - Help_sy + Help_wy1, Help_cx - Help_sx + Help_wx1
-    'COLOR 15, 4
-    'PRINT CHR$(SCREEN(CSRLIN, POS(0)));
-
-    'c = 0
-    'DO
-    '    old_kcontrol = KCONTROL
-    '    GetInput
-    '    IF KB > 0 THEN c = 1
-    '    IF mCLICK THEN c = 1
-    '    IF mWHEEL THEN c = 1
-    '    IF KCONTROL AND old_kcontrol = 0 THEN c = 0
-    '    IF mB THEN c = 1
-    'LOOP UNTIL c
-
 END SUB
 
 FUNCTION idesearchedbox$
@@ -12881,12 +12724,6 @@ FUNCTION idesearchedbox$
     o(i).txt = idenewtxt(l$)
     o(i).sel = 1
     o(i).nam = idenewtxt("Find")
-
-    'i = i + 1
-    'o(i).typ = 3
-    'o(i).y = idewy - 6
-    'o(i).txt = idenewtxt("#OK" + sep + "#Cancel")
-    'o(i).dft = 1
 
     '-------- end of init --------
 
@@ -13304,7 +13141,7 @@ SUB IdeMakeContextualMenu
     a$ = idegetline(idecy)
     a2$ = ""
     x = idecx
-    IF x <= LEN(a$) THEN
+    IF x <= LEN(a$) AND x >= 1 THEN
         IF alphanumeric(ASC(a$, x)) THEN
             x1 = x
             DO WHILE x1 > 1

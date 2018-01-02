@@ -1,5 +1,8 @@
-if(oldstr4745){
-if(oldstr4745->fixed)qbs_set(oldstr4745,_SUB_IDESAVE_STRING_F);
-qbs_free(_SUB_IDESAVE_STRING_F);
+if(oldstr21929){
+if(oldstr21929->fixed)qbs_set(oldstr21929,_FUNC_IDEZFILELIST_STRING_PATH);
+qbs_free(_FUNC_IDEZFILELIST_STRING_PATH);
 }
-qbs_free(_SUB_IDESAVE_STRING_A);
+qbs_free(_FUNC_IDEZFILELIST_STRING1_SEP);
+qbs_free(_FUNC_IDEZFILELIST_STRING_FILELIST);
+qbs_free(_FUNC_IDEZFILELIST_STRING_A);
+qbs_free(_FUNC_IDEZFILELIST_STRING_A2);

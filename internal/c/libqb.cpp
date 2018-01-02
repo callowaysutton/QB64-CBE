@@ -42,13 +42,6 @@
     #endif
 #endif
 
-/* #ifdef QB64_ANDROID
-    #include <cstdlib> //required for system()
-    struct android_app *android_state;
-    JavaVM *android_vm;
-    JNIEnv *android_env;
-#endif */
-
 #ifdef QB64_WINDOWS
     #include <fcntl.h>
     #include <shellapi.h>
@@ -182,10 +175,9 @@ float environment_2d__screen_y_scale = 1.0f;
 int32 environment_2d__screen_smooth = 0; //1(LINEAR) or 0(NEAREST)
 int32 environment_2d__letterbox = 0; //1=vertical black stripes required, 2=horizontal black stripes required
 
-// int32 qloud_next_input_index = 1;
-
 int32 window_exists = 0;
 int32 create_window = 0;
+int32 window_focused=0; //Not used on Windows
 uint8 *window_title = NULL;
 
 double max_fps = 60; //60 is the default
@@ -211,6 +203,7 @@ int32 resize_event_y = 0;
 
 int32 ScreenResizeScale = 0;
 int32 ScreenResize = 0;
+
 extern "C" int QB64_Resizable()
 {
     return ScreenResize;
@@ -834,6 +827,7 @@ static uint16 codepage437_to_unicode16[] = {
 #define ORWL_GIGA UINT64_C(1000000000)
 static double orwl_timebase = 0.0;
 static uint64_t orwl_timestart = 0;
+
 int64 orwl_gettime (void)
 {
     if (!orwl_timestart) {
@@ -1114,6 +1108,7 @@ typedef enum {
     QBVK_NUMLOCK    = 300,
     QBVK_CAPSLOCK   = 301,
     QBVK_SCROLLOCK  = 302,
+    //If more modifiers are added, the window defocus code in qb64_os_event_linux must be altered
     QBVK_RSHIFT     = 303,
     QBVK_LSHIFT     = 304,
     QBVK_RCTRL      = 305,
@@ -1158,42 +1153,6 @@ typedef enum {
 #define KMOD_ALT    (KMOD_LALT|KMOD_RALT)
 #define KMOD_META   (KMOD_LMETA|KMOD_RMETA)
 
-//extern int32 cloud_app;
-//int32 cloud_chdir_complete = 0;
-// cloud_port[8];
-
-/* Restricted Functionality: (Security focused approach, does not include restricting sound etc)
-
-   Block while compiling: (ONLY things that cannot be caught at runtime)
-   - $CHECKING:OFF [X]
-   - _MEM(x,y) [X]
-   - DECLARE LIBRARY [X]
-
-   Block at runtime:
-   - paths [fixdir]
-   - MKDIR [sub_mkdir]
-   - SHELL(subs/functions)
-   [func__shellhide,
-   func__shell,
-   sub_shell,
-   sub_shell2,
-   sub_shell3,
-   sub_shell4]
-   - RUN "filename" [sub_run]
-   - CHAIN [sub_chain]
-   - SCREENPRINT [sub__screenprint]
-   - SCREENCLICK [sub__screenclick]
-   - SCREENIMAGE (returns a blank 1024x768 image)[func__screenimage]
-   - ENVIRON [func_environ(num&str), sub_environ]
-
-   Reference notes:
-   - KILL calls fixdir()
-
-   Ports:
-   - Client connections are unrestricted
-   - Host ports values are either 1 or 2, but the default is port 1 for out of range values
-
-*/
 
 //QB64 memory blocks
 uint64 mem_lock_id = 1073741823; //this value should never be 0 or 1
@@ -1205,8 +1164,6 @@ mem_lock *mem_lock_tmp;
 int32 mem_lock_freed_max = 1000; //number of allocated entries
 int32 mem_lock_freed_n = 0; //number of entries
 ptrszint *mem_lock_freed = (ptrszint *) malloc (sizeof (ptrszint) * mem_lock_freed_max);
-
-//inline removed because it is incompatible with Android studio x86 build
 
 void new_mem_lock()
 {
@@ -1241,25 +1198,6 @@ void free_mem_lock (mem_lock *lock)
 
     mem_lock_freed[mem_lock_freed_n++] = (ptrszint) lock;
 }
-
-/*
-  int32 allocated_bytes=0;
-  void *malloc2(int x){
-  allocated_bytes+=x;
-  return malloc(x);
-  }
-  void *realloc2(void *x, int y){
-  allocated_bytes+=y;
-  return realloc(x,y);
-  }
-  void *calloc2(int x, int y){
-  allocated_bytes+=(x*y);
-  return calloc(x,y);
-  }
-  #define malloc(x) malloc2(x)
-  #define calloc(x,y) calloc2(x,y)
-  #define realloc(x,y) realloc2(x,y)
-*/
 
 int64 device_event_index = 0;
 int32 device_mouse_relative = 0;
@@ -1474,10 +1412,6 @@ int32 *font = (int32 *) calloc (4 * (48 + 1), 1); //NULL=unused index
 int32 *fontheight = (int32 *) calloc (4 * (48 + 1), 1);
 int32 *fontwidth = (int32 *) calloc (4 * (48 + 1), 1);
 int32 *fontflags = (int32 *) calloc (4 * (48 + 1), 1);
-
-#ifdef QB64_WINDOWS
-    //NO_S_D_L// #define QB64_IME
-#endif
 
 //keyboard input upgrade
 
@@ -2343,11 +2277,6 @@ void keyup_vk (uint32 x)
 #ifndef _SDL_ime_H_
 #define _SDL_ime_H_
 
-/*
-  #include <stdio.h>
-  #include "SDL_version.h"
-  #include "SDL.h"
-*/
 #include "begin_code.h"
 
 #define INPUT_METHOD_MAJOR_VERSION  0
@@ -2395,14 +2324,6 @@ typedef enum {
     INPUT_METHOD_ERROR_INVALID_BOOTSTRAP
 } InputMethod_Result;
 
-/*
-  typedef enum
-  {
-  INPUT_METHOD_STATUS_ON,
-  INPUT_METHOD_STATUS_OFF
-  } InputMethod_Status;
-*/
-
 extern DECLSPEC InputMethod_Result SDLCALL InputMethod_Init (void);
 
 extern DECLSPEC int SDLCALL InputMethod_GetEventNumber (void);
@@ -2441,10 +2362,7 @@ typedef struct _SDL_InputMethod {
     */
     Uint16 * (*get_name) (void);
     Uint16 InputMethodName[INPUT_METHOD_NAME_STRING_LENGTH];
-    /*
-      InputMethod_Status (*get_status)(void);
-      void (*set_status)(InputMethod_Status status);
-    */
+
 } SDL_InputMethod;
 
 extern DECLSPEC InputMethod_Result SDLCALL InputMethod_PostEvent (
@@ -2534,15 +2452,11 @@ static InputMethod_Result InputMethod_PostCharEvent (Uint16 unicode);
 void InputMethod_SetEventFilter (void)
 {
     IsEnableUNICODEOld = SDL_EnableUNICODE (1);
-    //OriginalFilterSDL = SDL_GetEventFilter();
-    //SDL_SetEventFilter(InputMethod_SDLEventFilter);
 }
 
 void InputMethod_RestoreEventFilter (void)
 {
     SDL_EnableUNICODE (IsEnableUNICODEOld);
-    //SDL_SetEventFilter(OriginalFilterSDL);
-    //OriginalFilterSDL = NULL;
 }
 
 InputMethod_Result InputMethod_Init (void)
@@ -3224,21 +3138,7 @@ int CompositionProcessing (HWND hWnd, LPARAM lParam)
     }
 
     ImmGetCompositionStringW (hImc, GCS_COMPSTR, string, needSize);
-    //string[needSize - 1] = '\0';
-    //  fwrite(string, strlen(string), 1, stdout);
-    //  fputc('\n', stdout);
-    /*
-      needSize =
-      MultiByteToWideChar(CP_ACP, 0, string, -1, NULL, 0)
-      * sizeof(Uint16);
-      unicodeString = (Uint16*)calloc(needSize, 1);
-      if (unicodeString == NULL) {
-      ImmReleaseContext(hWnd, hImc);
-      free(string);
-      return -1;
-      }
-      MultiByteToWideChar(CP_ACP, 0, string, -1, (LPWSTR)unicodeString, needSize);
-    */
+
     unicodeString = (Uint16 *) string;
     orgCompositionPosition = 0;
     orgCompositionLength = 0;
@@ -3293,7 +3193,7 @@ int CompositionProcessing (HWND hWnd, LPARAM lParam)
         INPUT_METHOD_MESSAGE_CHANGE,
         unicodeString,
         cursorPosition, compositionPosition, compositionLength);
-    //free(unicodeString);
+
     free (string);
     ImmReleaseContext (hWnd, hImc);
     return 0;
@@ -3317,20 +3217,7 @@ int ResultProcessing (HWND hWnd)
 
     ImmGetCompositionStringW (hImc, GCS_RESULTSTR, string, needSize);
     //note: commented to avoid garbling UNICODE16 string returned by ImmGetCompositionStringW
-    /*
-      needSize =
-      MultiByteToWideChar(CP_ACP, 0, string, -1, NULL, 0)
-      * sizeof(Uint16);
-      unicodeString = (Uint16*)malloc(needSize);
-      if (unicodeString == NULL) {
-      ImmReleaseContext(hWnd, hImc);
-      free(string);
-      return -1;
-      }
 
-      MultiByteToWideChar(CP_ACP, 0, string, -1, (LPWSTR)unicodeString, needSize);
-
-    */
     InputMethod_PostEvent (
         INPUT_METHOD_MESSAGE_RESULT,
         (Uint16 *) string,
@@ -3971,22 +3858,7 @@ void FreeConsole()
 
 int MessageBox2 (int ignore, char *message, char *title, int type)
 {
-    /*    if (cloud_app) {
-            FILE *f = fopen ("..\\final.txt", "w");
 
-            if (f != NULL) {
-                fprintf (f, "%s", title);
-                fprintf (f, "\n");
-                fprintf (f, "%s", message);
-                fclose (f);
-            }
-
-            exit (0); //should log error
-        } */
-
-    //#ifdef QB64_ANDROID
-    //    showErrorOnScreen (message, 0, 0); //display error message on screen and enter infinite loop
-    //#endif
 #ifdef QB64_WINDOWS
     return MessageBox (window_handle, message, title, type);
 #else
@@ -4006,9 +3878,6 @@ void alert (char *x)
 {
     MessageBox (0, x, "Alert", MB_OK);
 }
-
-//vc->project->properties->configuration properties->general->configuration type->application(.exe)
-//vc->project->properties->configuration properties->general->configuration type->static library(.lib)
 
 extern void QBMAIN (void *);
 extern void TIMERTHREAD();
@@ -4356,7 +4225,6 @@ int32 exit_value = 0;
 //3=X-button and CTRL-BREAK
 
 //MLP
-//int32 qbshlp1=0;
 
 void error (int32 error_number); //for forward references
 
@@ -4365,43 +4233,6 @@ char *fixdir (qbs *filename)
     //note: changes the slashes in a filename to make it compatible with the OS
     //applied to QB commands: open, bload/bsave, loadfont, loadimage, sndopen/sndplayfile
     static int32 i;
-
-    /*    if (cloud_app) {
-            for (i = 0; i < filename->len; i++) {
-                if ( (filename->chr[i] >= 48) && (filename->chr[i] <= 57) ) {
-                    goto ok;
-                }
-
-                if ( (filename->chr[i] >= 65) && (filename->chr[i] <= 90) ) {
-                    filename->chr[i] += 32;    //force lowercase
-                    goto ok;
-                }
-
-                if ( (filename->chr[i] >= 97) && (filename->chr[i] <= 122) ) {
-                    goto ok;
-                }
-
-                if (filename->chr[i] == 95) {
-                    goto ok;    //underscore
-                }
-
-                if (filename->chr[i] == 46) {
-                    if (i != 0) {
-                        goto ok;    //period cannot be the first character
-                    }
-                }
-
-                if (filename->chr[i] == 0) {
-                    if (i == (filename->len - 1) ) {
-                        goto ok;    //NULL terminator
-                    }
-                }
-
-                error (263); //"Paths/Filename illegal in QLOUD"
-            ok:
-                ;
-            }
-        }*/
 
     for (i = 0; i < filename->len; i++) {
 #ifdef QB64_WINDOWS
@@ -4446,10 +4277,6 @@ uint32 palette_256[256];
 uint32 palette_64[64];
 
 //QB64 2D PROTOTYPE 1.0
-
-//NO_S_D_L//SDL_Surface *ts,*ts2;
-//NO_S_D_L//SDL_PixelFormat pixelformat32;
-//NO_S_D_L//SDL_PixelFormat pixelformat8;
 
 int32 pages = 1;
 int32 *page = (int32 *) calloc (1, 4);
@@ -4675,16 +4502,6 @@ void pset (int32 x, int32 y, uint32 col)
         };
     }
 }
-
-/*
-  img_struct *img=(img_struct*)malloc(1024*sizeof(img_struct));
-  uint32 nimg=1024;
-  uint32 nextimg=0;//-1=none have been assigned
-
-  uint32 *freeimg=(uint32*)malloc(1024*4);//a list to recover freed indexes
-  uint32 nfreeimg=1024;
-  uint32 lastfreeimg=-1;//-1=no freed indexes exist
-*/
 
 //returns an index to free img structure
 uint32 newimg()
@@ -7349,8 +7166,6 @@ int32 selectfont (int32 f, img_struct *im)
     return 1;//success
 }
 
-//NO_S_D_L//SDL_Rect *modes=NULL;
-//NO_S_D_L//SDL_Rect **sdl_modes;
 int32 nmodes = 0;
 int32 anymode = 0;
 
@@ -7372,8 +7187,6 @@ int32 sndqueue_first = 0;
 int32 sndqueue_wait = -1;
 int32 sndqueue_played = 0;
 
-//NO_S_D_L//uint32 func__sndraw(uint8* data,uint32 bytes);//called by sndsetup
-
 void call_int (int32 i);
 
 uint32 frame = 0;
@@ -7389,12 +7202,6 @@ struct mouse_message {
     int16 movementx;
     int16 movementy;
 };
-
-/*
-mouse_message mouse_messages[65536];//a circular buffer of mouse messages
-int32 last_mouse_message=0;
-int32 current_mouse_message=0;
-*/
 
 //Mouse message queue system
 //--------------------------
@@ -8779,18 +8586,12 @@ int32 asciicode_reading = 0;
 int32 lock_display = 0;
 int32 lock_display_required = 0;
 
-//NO_S_D_L//SDL_Thread *thread;
-//NO_S_D_L//SDL_Thread *thread2;
-
 //cost delay, made obselete by managing thread priorities (consider removal)
 #define cost_limit 10000
 #define cost_delay 0
 uint32 cost = 0;
 
 #include "msbin.c"
-
-//#include "time64.c"
-//#include "time64.h"
 
 int64 build_int64 (uint32 val2, uint32 val1)
 {
@@ -9266,10 +9067,6 @@ void fix_error()
         }
 
         snprintf (errtitle, len + 1, FIXERRMSG_TITLE, (!prevent_handling ? FIXERRMSG_UNHAND : FIXERRMSG_CRIT), new_error);
-        //Android cannot halt threads, so the easiest compromise is to just display the error
-        //#ifdef QB64_ANDROID
-        //        showErrorOnScreen (cp, new_error, ercl);
-        //#endif
 
         if (prevent_handling) {
             v = MessageBox2 (NULL, errmess, errtitle, MB_OK);
@@ -9435,16 +9232,6 @@ void error (int32 error_number)
         exit (0);
     }
 
-    /* if (error_number == 262) {
-        MessageBox2 (NULL, "Function unavailable in QLOUD", "Critical Error", MB_OK | MB_SYSTEMMODAL);
-        exit (0);
-    } */
-
-    /* if (error_number == 263) {
-        MessageBox2 (NULL, "Paths/Filename illegal in QLOUD", "Critical Error", MB_OK | MB_SYSTEMMODAL);
-        exit (0);
-    } */
-
     if (error_number == 270) {
         MessageBox2 (NULL, "_GL command called outside of SUB _GL's scope", "Critical Error", MB_OK | MB_SYSTEMMODAL);
         exit (0);
@@ -9566,9 +9353,6 @@ struct cmem_dynamic_link_type {
 };
 
 cmem_dynamic_link_type cmem_dynamic_link[147136 + 1]; //+1 is added because array is used from index 1
-
-//i=cmem_dynamic_next_link++; if (i>=147136) error(257);//not enough blocks
-//newlink=(cmem_dynamic_link_type*)&cmem_dynamic_link[i];
 
 cmem_dynamic_link_type *cmem_dynamic_link_first = NULL;
 int32 cmem_dynamic_next_link = 0;
@@ -9778,22 +9562,10 @@ ptrszint *qbs_malloc_freed = (ptrszint *) malloc (ptrsz * 65536);
 uint32 qbs_malloc_freed_size = 65536;
 uint32 qbs_malloc_freed_num = 0; //number of freed qbs descriptors
 
-/*MLP
-  uint32 *dbglist=(uint32*)malloc(4*10000000);
-  uint32 dbglisti=0;
-  uint32 dbgline=0;
-*/
-
 qbs *qbs_new_descriptor()
 {
     //MLP //qbshlp1++;
     if (qbs_malloc_freed_num) {
-        /*MLP
-          static qbs *s;
-          s=(qbs*)memset((void *)qbs_malloc_freed[--qbs_malloc_freed_num],0,sizeof(qbs));
-          s->dbgl=dbgline;
-          return s;
-        */
         return (qbs *) memset ( (void *) qbs_malloc_freed[--qbs_malloc_freed_num], 0, sizeof (qbs) );
     }
 
@@ -9802,14 +9574,6 @@ qbs *qbs_new_descriptor()
         qbs_malloc_next = 0;
     }
 
-    /*MLP
-      dbglist[dbglisti]=(uint32)&qbs_malloc[qbs_malloc_next];
-      static qbs* s;
-      s=(qbs*)&qbs_malloc[qbs_malloc_next++];
-      s->dbgl=dbgline;
-      dbglisti++;
-      return s;
-    */
     return &qbs_malloc[qbs_malloc_next++];
 }
 
@@ -15020,10 +14784,6 @@ void fast_line (int32 x1, int32 y1, int32 x2, int32 y2, uint32 col)
     static float m, x1f, y1f;
     lineclip (x1, y1, x2, y2, write_page->view_x1, write_page->view_y1, write_page->view_x2, write_page->view_y2);
 
-    //style=(style&65535)+(style<<16);
-    //lineclip_skippixels&=15;
-    //style=_lrotl(style,lineclip_skippixels);
-
     if (lineclip_draw) {
         l = abs (lineclip_x1 - lineclip_x2);
         l2 = abs (lineclip_y1 - lineclip_y2);
@@ -17139,10 +16899,6 @@ void printchr (int32 character)
         character &= 255;    //unicodefontsupport
     }
 
-    //if (mode==1) img[i].print_mode=3;//fill
-    //if (mode==2) img[i].print_mode=1;//keep
-    //if (mode==3) img[i].print_mode=2;//only
-
     if (f >= 32) { //custom font
 
         //8-bit / alpha-disabled 32-bit / dont-blend(alpha may still be applied)
@@ -17689,27 +17445,6 @@ void qbs_print (qbs *str, int32 finish_on_new_line)
         return;
     }
 
-    /*
-      if (!str->len){
-      if (!newline) return;//no action required
-      if (write_page->holding_cursor){//extra CR required before return
-      write_page->holding_cursor=0;
-      i=-1;
-      write_page->cursor_x++;
-      goto print_unhold_cursor;
-      }
-      }
-
-      if (!str->len) goto null_length;
-
-      if (write_page->holding_cursor){
-      write_page->holding_cursor=0;
-      i=-1;
-      write_page->cursor_x++;
-      goto print_unhold_cursor;
-      }
-    */
-
     //holding cursor?
     if (write_page->holding_cursor) {
         if (str->len) {
@@ -18015,64 +17750,7 @@ void qbs_print (qbs *str, int32 finish_on_new_line)
     held_cursor:
     skip:
         ;
-        /*
-          tabbing1:
 
-          write_page->cursor_x++;
-
-          //hold cursor?
-          if (write_page->cursor_x>qbg_width_in_characters){//past last x position
-          if (!newline){//don't need a new line
-          if (i==(str->len-1)){//last character
-          write_page->cursor_x--;
-          write_page->holding_cursor=1;
-          goto hold_cursor;
-          }
-          }
-          }
-
-          qbs_print_skipchar:;
-
-          print_unhold_cursor:
-
-          if (write_page->cursor_x>qbg_width_in_characters){
-          qbs_print_newline:
-          newlineadded=1;
-
-          if (write_page->cursor_y==qbg_height_in_characters) write_page->cursor_y=qbg_bottom_row;
-
-          write_page->cursor_y++;
-          write_page->cursor_x=1;
-
-          if (write_page->cursor_y>qbg_bottom_row){
-          //move screen space within view print up 1 row
-          //if (qbg_mode==13){
-
-          ///memmove(&cmem[655360+(qbg_top_row-1)*2560],&cmem[655360+qbg_top_row*2560],(qbg_bottom_row-qbg_top_row)*2560);
-          ///memset(&cmem[655360+(qbg_bottom_row-1)*2560],0,2560);
-          if (qbg_text_only){
-
-          memmove(qbg_active_page_offset+(qbg_top_row-1)*qbg_width_in_characters*2,
-          qbg_active_page_offset+(qbg_top_row)*qbg_width_in_characters*2,
-          (qbg_bottom_row-qbg_top_row)*qbg_width_in_characters*2);
-          for (i2=0;i2<qbg_width_in_characters;i2++){
-          qbg_active_page_offset[(qbg_bottom_row-1)*qbg_width_in_characters*2+i2*2]=32;
-          qbg_active_page_offset[(qbg_bottom_row-1)*qbg_width_in_characters*2+i2*2+1]=7;
-
-          }
-
-          }else{
-          memmove(qbg_active_page_offset+(qbg_top_row-1)*qbg_bytes_per_pixel*qbg_width*qbg_character_height,
-          qbg_active_page_offset+qbg_top_row*qbg_bytes_per_pixel*qbg_width*qbg_character_height,
-          (qbg_bottom_row-qbg_top_row)*qbg_bytes_per_pixel*qbg_width*qbg_character_height);
-          memset(qbg_active_page_offset+(qbg_bottom_row-1)*qbg_bytes_per_pixel*qbg_width*qbg_character_height,0,qbg_bytes_per_pixel*qbg_width*qbg_character_height);
-          }
-
-          write_page->cursor_y=qbg_bottom_row;
-          }
-
-          }
-        */
     }//i
 
 null_length:
@@ -18087,15 +17765,6 @@ null_length:
         }
     }
 
-    /*
-      null_length:
-
-      //begin new line?
-      if (newline&&(!newlineadded)) {newline=0; goto qbs_print_newline;}
-
-      //hold cursor
-      hold_cursor:
-    */
     return;
 }
 
@@ -19764,7 +19433,7 @@ qbs_input_sep_arg_done:
             multiple *= 10;
         }//i
 
-        //////////////////////////
+
     assess_float:
         ;
         //nb. 0.???? means digits_before_point==0
@@ -20014,7 +19683,6 @@ qbs_input_sep_arg_done:
             //are applied!
             c->chr[0] = 0;
             qbs_set (qbs_input_arguements[argn], qbs_add (qbs_input_arguements[argn], c) );
-            //sscanf((char*)qbs_input_arguements[argn]->chr,"%lf",(long double*)qbs_input_variableoffsets[argn]);
             static double sscanf_fix;
             sscanf ( (char *) qbs_input_arguements[argn]->chr, "%lf", &sscanf_fix);
             * (long double *) qbs_input_variableoffsets[argn] = sscanf_fix;
@@ -20669,6 +20337,10 @@ int32 func__hasfocus()
     }
 
     return - (window_handle == GetForegroundWindow() );
+
+#elif defined(QB64_LINUX) && !defined(QB64_MACOSX)
+    return window_focused;
+
 #endif
 #endif
     return -1;
@@ -21212,10 +20884,6 @@ void sub_open (qbs *name, int32 type, int32 access, int32 sharing, int32 i, int6
         g_restrictions = 2;
     }
 
-    /*    if (cloud_app) {
-            g_restrictions = 0;    //applying restrictions on server not possible
-        } */
-
     //note: In QB, opening a file already open for OUTPUT/APPEND created the 'file already open' error.
     //      However, from a new cmd window (or a SHELLed QB program) it can be opened!
     //      So it is not a true OS restriction/lock, just a block applied internally by QB.
@@ -21298,10 +20966,7 @@ void sub_open (qbs *name, int32 type, int32 access, int32 sharing, int32 i, int6
             static int32 e;
 
             if (e = gfs_read (x, -1, &c, 1) ) {
-                //if (e==-10) return -1;
-                //if (e==-2){error(258); return -2;}//invalid handle
-                //if (e==-3){error(54); return -2;}//bad file mode
-                //if (e==-4){error(5); return -2;}//illegal function call
+
                 if (e == -7) {
                     error (70);    //permission denied
                     return;
@@ -23722,14 +23387,7 @@ void call_interrupt (int32 intno, void *inregs, void *outregs)
 
     static byte_element_struct *ele;
     static uint16 *sp;
-    /* testing only
-       static qbs* s=NULL;
-       if (s==NULL) s=qbs_new(0,0);
-       qbs_set(s,qbs_str(ele->length));
-       MessageBox2(NULL,(char*)s->chr,"CALL INTERRUPT: size",MB_OK|MB_SYSTEMMODAL);
-       qbs_set(s,qbs_str( ((uint8*)(ele->offset))[0] ));
-       MessageBox2(NULL,(char*)s->chr,"CALL INTERRUPT: value",MB_OK|MB_SYSTEMMODAL);
-    */
+
     /* reference
        TYPE RegType
        AX AS INTEGER
@@ -25114,141 +24772,6 @@ void sub_graphics_put (float x1f, float y1f, void *element, int32 option, uint32
         return;
     }//32
 
-    /*
-      static byte_element_struct *ele;
-      ele=(byte_element_struct*)element;
-      static int32 x,y;
-      static int32 sx,sy,c,px,py;
-      static uint8 *cp;
-      static int32 *lp;
-
-      sx=((uint16*)ele->offset)[0];
-      sy=((uint16*)ele->offset)[1];
-      cp=(uint8*)(ele->offset+4);
-      lp=(int32*)cp;
-
-      static int32 sizeinbytes;
-      static int32 byte;
-      static int32 bitvalue;
-      static int32 bytesperrow;
-      static int32 row2offset;
-      static int32 row3offset;
-      static int32 row4offset;
-
-      static int32 longval;
-
-      if (write_page->bits_per_pixel==8){
-      mask&=255;
-      //create error if not divisible by 8!
-      sx>>=3;
-      }
-
-      if (write_page->bits_per_pixel==1){
-      mask&=1;
-      }
-
-      if (write_page->bits_per_pixel==2){
-      mask&=3;
-      sx>>=1;
-      }
-
-      if (write_page->bits_per_pixel==4){
-      mask&=15;
-      bytesperrow=sx>>3; if (sx&7) bytesperrow++;
-      row2offset=bytesperrow;
-      row3offset=bytesperrow*2;
-      row4offset=bytesperrow*3;
-      }
-
-      for (y=0;y<sy;y++){
-      py=y1+y;
-
-      if (write_page->bits_per_pixel==4){
-      bitvalue=128;
-      byte=0;
-      }
-
-      for (x=0;x<sx;x++){
-      px=x1+x;
-
-      //get colour
-      if (write_page->bits_per_pixel==8){
-      c=*cp;
-      cp++;
-      }
-
-      if (write_page->bits_per_pixel==4){
-      byte=x>>3;
-      c=0;
-      if (cp[byte]&bitvalue) c|=1;
-      if (cp[row2offset+byte]&bitvalue) c|=2;
-      if (cp[row3offset+byte]&bitvalue) c|=4;
-      if (cp[row4offset+byte]&bitvalue) c|=8;
-      bitvalue>>=1; if (bitvalue==0) bitvalue=128;
-      }
-
-      if (write_page->bits_per_pixel==1){
-      if (!(x&7)){
-      byte=*cp;
-      cp++;
-      }
-      c=(byte&128)>>7; byte<<=1;
-      }
-
-      if (write_page->bits_per_pixel==2){
-      if (!(x&3)){
-      byte=*cp;
-      cp++;
-      }
-      c=(byte&192)>>6; byte<<=2;
-      }
-
-      if ((px>=0)&&(px<write_page->width)&&(py>=0)&&(py<write_page->height)){
-
-      //check color
-      if (passed){
-      if (c==mask) goto maskpixel;
-      }
-
-      //"pset" color
-
-      //PUT[{STEP}](?,?),?[,[{PSET|PRESET|AND|OR|XOR}][,[?]]]
-      //apply option
-
-      if (option==1){
-      write_page->offset[py*write_page->width+px]=c;
-      }
-      if (option==2){
-      //PRESET=bitwise NOT
-      write_page->offset[py*write_page->width+px]=(~c)&write_page->mask;
-      }
-      if (option==3){
-      write_page->offset[py*write_page->width+px]&=c;
-      }
-      if (option==4){
-      write_page->offset[py*write_page->width+px]|=c;
-      }
-      if ((option==5)||(option==0)){
-      write_page->offset[py*write_page->width+px]^=c;
-      }
-
-      }
-      maskpixel:;
-
-      }//x
-
-      if (write_page->bits_per_pixel==4) cp+=(bytesperrow*4);
-
-      //if (_bits_per_pixel==1){
-      // if (sx&7) cp++;
-      //}
-
-      //if (_bits_per_pixel==2){
-      // if (sx&3) cp++;
-      //}
-
-      }//y
-    */
 }
 
 void sub_date (qbs *date)
@@ -27407,32 +26930,9 @@ int64 func_shell (qbs *str)
         if (use_console) {
             qbs_set (strz, qbs_add (str, qbs_new_txt_len ("\0", 1) ) );
             shell_call_in_progress = 1;
-            /*
-            freopen("stdout.buf", "w", stdout);
-            freopen("stderr.buf", "w", stderr);
-            */
+
             return_code = system ( (char *) strz->chr);
-            /*
-            freopen("CON", "w", stdout);
-            freopen("CON", "w", stderr);
-            static char buf[1024];
-            static int buflen;
-            static int fd;
-            fd = open("stdout.buf", O_RDONLY);
-            while((buflen = read(fd, buf, 1024)) > 0)
-            {
-            write(1, buf, buflen);
-            }
-            close(fd);
-            fd = open("stderr.buf", O_RDONLY);
-            while((buflen = read(fd, buf, 1024)) > 0)
-            {
-            write(1, buf, buflen);
-            }
-            close(fd);
-            remove("stdout.buf");
-            remove("stderr.buf");
-            */
+
             shell_call_in_progress = 0;
             goto shell_complete;
         }
@@ -27552,32 +27052,6 @@ int64 func_shell (qbs *str)
                 goto shell_complete;
             }
 
-            /*
-            qbs_set(strz,qbs_add(qbs_new_txt("cmd.exe /c "),str));
-            qbs_set(strz,qbs_add(strz,qbs_new_txt_len("\0",1)));
-            ZeroMemory( &si, sizeof(si) ); si.cb = sizeof(si); ZeroMemory( &pi, sizeof(pi) );
-            if(CreateProcess(
-              NULL,           // No module name (use command line)
-              (char*)&strz->chr[0], // Command line
-              NULL,           // Process handle not inheritable
-              NULL,           // Thread handle not inheritable
-              FALSE,          // Set handle inheritance to FALSE
-              DETACHED_PROCESS, // No creation flags
-              NULL,           // Use parent's environment block
-              NULL,           // Use parent's starting directory
-              &si,            // Pointer to STARTUPINFO structure
-              &pi )           // Pointer to PROCESS_INFORMATION structure
-            ){
-            shell_call_in_progress=1;
-            // Wait until child process exits.
-            WaitForSingleObject( pi.hProcess, INFINITE );
-            // Close process and thread handles.
-            CloseHandle( pi.hProcess );
-            CloseHandle( pi.hThread );
-            shell_call_in_progress=0;
-            goto shell_complete;
-            }
-            */
             return_code = 1;
             goto shell_complete;//failed
 
@@ -27668,11 +27142,6 @@ int64 func__shellhide (qbs *str) //func _SHELLHIDE(...
     if (new_error) {
         return 1;
     }
-
-    /*    if (cloud_app) {
-            error (262);
-            return 1;
-        } */
 
     static int64 return_code;
     return_code = 0;
@@ -27822,32 +27291,6 @@ int64 func__shellhide (qbs *str) //func _SHELLHIDE(...
             goto shell_complete;
         }
 
-        /*
-          qbs_set(strz,qbs_add(qbs_new_txt("cmd.exe /c "),str));
-          qbs_set(strz,qbs_add(strz,qbs_new_txt_len("\0",1)));
-          ZeroMemory( &si, sizeof(si) ); si.cb = sizeof(si); ZeroMemory( &pi, sizeof(pi) );
-          if(CreateProcess(
-          NULL,           // No module name (use command line)
-          (char*)&strz->chr[0], // Command line
-          NULL,           // Process handle not inheritable
-          NULL,           // Thread handle not inheritable
-          FALSE,          // Set handle inheritance to FALSE
-          CREATE_NO_WINDOW, // No creation flags
-          NULL,           // Use parent's environment block
-          NULL,           // Use parent's starting directory
-          &si,            // Pointer to STARTUPINFO structure
-          &pi )           // Pointer to PROCESS_INFORMATION structure
-          ){
-          shell_call_in_progress=1;
-          // Wait until child process exits.
-          WaitForSingleObject( pi.hProcess, INFINITE );
-          // Close process and thread handles.
-          CloseHandle( pi.hProcess );
-          CloseHandle( pi.hThread );
-          shell_call_in_progress=0;
-          goto shell_complete;
-          }
-        */
         return_code = 1;
         goto shell_complete;//failed
 
@@ -27900,11 +27343,6 @@ void sub_shell (qbs *str, int32 passed)
     if (new_error) {
         return;
     }
-
-    /*    if (cloud_app) {
-            error (262);
-            return;
-        } */
 
     //exit full screen mode if necessary
     static int32 full_screen_mode;
@@ -27964,32 +27402,9 @@ void sub_shell (qbs *str, int32 passed)
         if (use_console) {
             qbs_set (strz, qbs_add (str, qbs_new_txt_len ("\0", 1) ) );
             shell_call_in_progress = 1;
-            /*
-            freopen("stdout.buf", "w", stdout);
-            freopen("stderr.buf", "w", stderr);
-            */
+
             system ( (char *) strz->chr);
-            /*
-            freopen("CON", "w", stdout);
-            freopen("CON", "w", stderr);
-            static char buf[1024];
-            static int buflen;
-            static int fd;
-            fd = open("stdout.buf", O_RDONLY);
-            while((buflen = read(fd, buf, 1024)) > 0)
-            {
-            write(1, buf, buflen);
-            }
-            close(fd);
-            fd = open("stderr.buf", O_RDONLY);
-            while((buflen = read(fd, buf, 1024)) > 0)
-            {
-            write(1, buf, buflen);
-            }
-            close(fd);
-            remove("stdout.buf");
-            remove("stderr.buf");
-            */
+
             shell_call_in_progress = 0;
             goto shell_complete;
         }
@@ -28106,32 +27521,6 @@ void sub_shell (qbs *str, int32 passed)
                 goto shell_complete;
             }
 
-            /*
-            qbs_set(strz,qbs_add(qbs_new_txt("cmd.exe /c "),str));
-            qbs_set(strz,qbs_add(strz,qbs_new_txt_len("\0",1)));
-            ZeroMemory( &si, sizeof(si) ); si.cb = sizeof(si); ZeroMemory( &pi, sizeof(pi) );
-            if(CreateProcess(
-              NULL,           // No module name (use command line)
-              (char*)&strz->chr[0], // Command line
-              NULL,           // Process handle not inheritable
-              NULL,           // Thread handle not inheritable
-              FALSE,          // Set handle inheritance to FALSE
-              DETACHED_PROCESS, // No creation flags
-              NULL,           // Use parent's environment block
-              NULL,           // Use parent's starting directory
-              &si,            // Pointer to STARTUPINFO structure
-              &pi )           // Pointer to PROCESS_INFORMATION structure
-            ){
-            shell_call_in_progress=1;
-            // Wait until child process exits.
-            WaitForSingleObject( pi.hProcess, INFINITE );
-            // Close process and thread handles.
-            CloseHandle( pi.hProcess );
-            CloseHandle( pi.hThread );
-            shell_call_in_progress=0;
-            goto shell_complete;
-            }
-            */
             goto shell_complete;//failed
 
         } else {
@@ -28370,32 +27759,6 @@ void sub_shell2 (qbs *str, int32 passed) //HIDE
             goto shell_complete;
         }
 
-        /*
-          qbs_set(strz,qbs_add(qbs_new_txt("cmd.exe /c "),str));
-          qbs_set(strz,qbs_add(strz,qbs_new_txt_len("\0",1)));
-          ZeroMemory( &si, sizeof(si) ); si.cb = sizeof(si); ZeroMemory( &pi, sizeof(pi) );
-          if(CreateProcess(
-          NULL,           // No module name (use command line)
-          (char*)&strz->chr[0], // Command line
-          NULL,           // Process handle not inheritable
-          NULL,           // Thread handle not inheritable
-          FALSE,          // Set handle inheritance to FALSE
-          CREATE_NO_WINDOW, // No creation flags
-          NULL,           // Use parent's environment block
-          NULL,           // Use parent's starting directory
-          &si,            // Pointer to STARTUPINFO structure
-          &pi )           // Pointer to PROCESS_INFORMATION structure
-          ){
-          shell_call_in_progress=1;
-          // Wait until child process exits.
-          WaitForSingleObject( pi.hProcess, INFINITE );
-          // Close process and thread handles.
-          CloseHandle( pi.hProcess );
-          CloseHandle( pi.hThread );
-          shell_call_in_progress=0;
-          goto shell_complete;
-          }
-        */
         goto shell_complete;//failed
 
     } else {
@@ -28591,28 +27954,6 @@ void sub_shell3 (qbs *str, int32 passed) //_DONTWAIT
             goto shell_complete;
         }
 
-        /*
-          qbs_set(strz,qbs_add(qbs_new_txt("cmd.exe /c "),str));
-          qbs_set(strz,qbs_add(strz,qbs_new_txt_len("\0",1)));
-          ZeroMemory( &si, sizeof(si) ); si.cb = sizeof(si); ZeroMemory( &pi, sizeof(pi) );
-          if(CreateProcess(
-          NULL,           // No module name (use command line)
-          (char*)&strz->chr[0], // Command line
-          NULL,           // Process handle not inheritable
-          NULL,           // Thread handle not inheritable
-          FALSE,          // Set handle inheritance to FALSE
-          DETACHED_PROCESS, // No creation flags
-          NULL,           // Use parent's environment block
-          NULL,           // Use parent's starting directory
-          &si,            // Pointer to STARTUPINFO structure
-          &pi )           // Pointer to PROCESS_INFORMATION structure
-          ){
-          //ref: The created process remains in the system until all threads within the process have terminated and all handles to the process and any of its threads have been closed through calls to CloseHandle. The handles for both the process and the main thread must be closed through calls to CloseHandle. If these handles are not needed, it is best to close them immediately after the process is created.
-          CloseHandle( pi.hProcess );
-          CloseHandle( pi.hThread );
-          goto shell_complete;
-          }
-        */
         goto shell_complete;//failed
 
     } else {
@@ -28796,28 +28137,6 @@ void sub_shell4 (qbs *str, int32 passed) //_DONTWAIT & _HIDE
             goto shell_complete;
         }
 
-        /*
-          qbs_set(strz,qbs_add(qbs_new_txt("cmd.exe /c "),str));
-          qbs_set(strz,qbs_add(strz,qbs_new_txt_len("\0",1)));
-          ZeroMemory( &si, sizeof(si) ); si.cb = sizeof(si); ZeroMemory( &pi, sizeof(pi) );
-          if(CreateProcess(
-          NULL,           // No module name (use command line)
-          (char*)&strz->chr[0], // Command line
-          NULL,           // Process handle not inheritable
-          NULL,           // Thread handle not inheritable
-          FALSE,          // Set handle inheritance to FALSE
-          DETACHED_PROCESS, // No creation flags
-          NULL,           // Use parent's environment block
-          NULL,           // Use parent's starting directory
-          &si,            // Pointer to STARTUPINFO structure
-          &pi )           // Pointer to PROCESS_INFORMATION structure
-          ){
-          //ref: The created process remains in the system until all threads within the process have terminated and all handles to the process and any of its threads have been closed through calls to CloseHandle. The handles for both the process and the main thread must be closed through calls to CloseHandle. If these handles are not needed, it is best to close them immediately after the process is created.
-          CloseHandle( pi.hProcess );
-          CloseHandle( pi.hThread );
-          goto shell_complete;
-          }
-        */
         goto shell_complete;//failed
 
     } else {
@@ -29033,19 +28352,6 @@ void sub_chdir (qbs *str)
     static int32 tmp_long;
     static int32 got_ports = 0;
 
-    /*    if (cloud_app) {
-            cloud_chdir_complete = 1;
-
-            if (!got_ports) {
-                got_ports = 1;
-                static FILE *file = fopen ("..\\ports.txt\0", "r");
-                fscanf (file, "%d", &tmp_long);
-                cloud_port[1] = tmp_long;
-                fscanf (file, "%d", &tmp_long);
-                cloud_port[2] = tmp_long;
-                fclose (file);
-            }
-        } */
 }
 
 void sub_mkdir (qbs *str)
@@ -29053,11 +28359,6 @@ void sub_mkdir (qbs *str)
     if (new_error) {
         return;
     }
-
-    /*    if (cloud_app) {
-            error (262);
-            return;
-        } */
 
     static qbs *strz = NULL;
 
@@ -29446,14 +28747,7 @@ float func__mousex (int32 context, int32 passed)
     }
 
     x = queue->queue[queue->current].x;
-    /*
-      if (cloud_app){
-      x2=display_page->width; if (display_page->text) x2*=fontwidth[display_page->font];
-      x_limit=x2-1;
-      x_scale=1;
-      x_offset=0;
-      }
-    */
+
     //calculate pixel offset of mouse within SCREEN using environment variables
     x -= environment_2d__screen_x1;
     x = qbr_float_to_long ( ( ( (float) x + 0.5f) / environment_2d__screen_x_scale) - 0.5f);
@@ -29516,14 +28810,7 @@ float func__mousey (int32 context, int32 passed)
     }
 
     y = queue->queue[queue->current].y;
-    /*
-      if (cloud_app){
-      y2=display_page->height; if (display_page->text) y2*=fontheight[display_page->font];
-      y_limit=y2-1;
-      y_scale=1;
-      y_offset=0;
-      }
-    */
+
     //calculate pixel offset of mouse within SCREEN using environment variables
     y -= environment_2d__screen_y1;
     y = qbr_float_to_long ( ( ( (float) y + 0.5f) / environment_2d__screen_y_scale) - 0.5f);
@@ -29857,8 +29144,6 @@ void call_int (int32 i)
             return;
         }
 
-        //MessageBox2(NULL,"Unknown MOUSE Sub-function","Call Interrupt Error",MB_OK|MB_SYSTEMMODAL);
-        //exit(cpu.ax);
         return;
     }
 }
@@ -31367,59 +30652,6 @@ int32 func__printwidth (qbs *text, int32 screenhandle, int32 passed)
     return xpos + 1;
 }
 
-/*int32 func__printwidth(qbs* text,int32 i,int32 passed){
-  if (new_error) return 0;
-
-  static int32 f;
-  static img_struct *im;
-
-  if (passed){
-    if (i>=0){//validate i
-  validatepage(i); i=page[i];
-    }else{
-  i=-i; if (i>=nextimg){error(258); return 0;} if (!img[i].valid){error(258); return 0;}
-    }
-  }else{
-    i=write_page_index;
-  }
-  im=&img[i];
-  if (im->text){error(5); return 0;}//graphics modes only
-  if (!text->len) return 0;
-
-  if (f>=32){//custom font
-    //8-bit / alpha-disabled 32-bit / dont-blend(alpha may still be applied)
-    if ((im->bytes_per_pixel==1)||((im->bytes_per_pixel==4)&&(im->alpha_disabled))||(fontflags[f]&8)){
-  //render
-  static int32 ok;
-  static uint8 *rt_data;
-  static int32 rt_w,rt_h,rt_pre_x,rt_post_x;
-  //int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-  //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-  ok=FontRenderTextASCII(font[f],(uint8*)text->chr,text->len,1,
-                 &rt_data,&rt_w,&rt_h,&rt_pre_x,&rt_post_x);
-  if (!ok) return 0;
-  free(rt_data);
-  return rt_w;
-    }//1-8 bit
-    //assume 32-bit blended
-    //render
-    static int32 ok;
-    static uint8 *rt_data;
-    static int32 rt_w,rt_h,rt_pre_x,rt_post_x;
-    //int32 FontRenderTextASCII(int32 i,uint8*codepoint,int32 codepoints,int32 options,
-    //                          uint8**out_data,int32*out_x,int32 *out_y,int32*out_x_pre_increment,int32*out_x_post_increment){
-    ok=FontRenderTextASCII(font[f],(uint8*)text->chr,text->len,0,
-               &rt_data,&rt_w,&rt_h,&rt_pre_x,&rt_post_x);
-    if (!ok) return 0;
-    free(rt_data);
-    return rt_w;
-  }//custom font
-
-  //default fonts
-  return text->len*8;
-
-  }//printwidth*/
-
 int32 func__loadfont (qbs *f, int32 size, qbs *requirements, int32 passed)
 {
     //f=_LOADFONT(ttf_filename$,height[,"bold,italic,underline,monospace,dontblend,unicode"])
@@ -32475,46 +31707,6 @@ void sub_end()
     dont_call_sub_gl = 1;
     sub_close (NULL, 0);
     exit_blocked = 0; //allow exit via X-box or CTRL+BREAK
-
-    /*    if (cloud_app) {
-            //1. set the display page as the destination page
-            sub__dest (func__display() );
-            //2. VIEW PRINT bottomline,bottomline
-            static int32 y;
-
-            if (write_page->text) {
-                y = write_page->height;
-
-            } else {
-                y = write_page->height / fontheight[write_page->font];
-            }
-
-            qbg_sub_view_print (y, y, 1 | 2);
-            //3. PRINT 'clears the line without having to worry about its contents/size
-            qbs_print (nothingstring, 1);
-            //4. PRINT "Press any key to continue"
-            qbs_print (qbs_new_txt ("Program ended. Closing (10 seconds)..."), 0);
-            //6. Enable autodisplay
-            autodisplay = 1;
-            int sec = 7;
-
-            while (sec--) {
-                evnt (1);
-                SDL_Delay (1000);
-                qbs_print (qbs_new_txt ("."), 0);
-            }
-
-            sec = 3;
-
-            while (sec--) {
-                SDL_Delay (1000);
-                evnt (1);
-            }
-
-            close_program = 1;
-            end();
-            exit (0); //<-- should never happen
-        } */
 
 #ifdef DEPENDENCY_CONSOLE_ONLY
     screen_hide = 1;
@@ -33579,7 +32771,7 @@ int32 print_using_float (qbs *format, long double value, int32 start, qbs *outpu
     static int32 i, len, neg_exp;
     static uint8 c;
     static int64 exp;
-    //len=sprintf((char*)&pu_buf,"% .255E",value);//256 character limit ([1].[255])
+
 #ifdef QB64_MINGW
     len = __mingw_sprintf ( (char *) &pu_buf, "% .255Lf", value); //256 character limit ([1].[255])
 #else
@@ -33727,11 +32919,6 @@ void sub_run (qbs *f)
     if (new_error) {
         return;
     }
-
-    /*    if (cloud_app) {
-            error (262);
-            return;
-        } */
 
     //run program
     static qbs *str = NULL;
@@ -34056,19 +33243,7 @@ int32 func_screenicon()
 #ifdef QB64_WINDOWS
     return -IsIconic (window_handle);
 #else
-    /*
-     Linux code not compiling for now
-#include <X11/X.h>
-#include <X11/Xlib.h>
-     extern Display *X11_display;
-     extern Window X11_window;
-     extern int32 screen_hide;
-     XWindowAttributes attribs;
-     while (!(X11_display && X11_window));
-     XGetWindowAttributes(X11_display, X11_window, &attribs);
-     if (attribs.map_state == IsUnmapped) return -1;
-     return 0;
-#endif */
+
     return 0; //if we get here and haven't exited already, we failed somewhere along the way.
 #endif
 #endif
@@ -34690,9 +33865,6 @@ nextchar:
             return;
         }
 
-        //if (c64<0){error(5); return;}
-        //c64b=1; c64b<<=write_page->bits_per_pixel; c64b--;
-        //if (c64>c64b){error(5); return;}
         col = c64;
         write_page->draw_color = col;
         goto nextchar;
@@ -34746,9 +33918,6 @@ nextchar:
             return;
         }
 
-        //if (c64<0){error(5); return;}
-        //c64b=1; c64b<<=write_page->bits_per_pixel; c64b--;
-        //if (c64>c64b){error(5); return;}
         c64c = c64;
         c = sub_draw_cp[sub_draw_i];
 
@@ -34773,9 +33942,6 @@ nextchar:
             return;
         }
 
-        //if (c64<0){error(5); return;}
-        //c64b=1; c64b<<=write_page->bits_per_pixel; c64b--;
-        //if (c64>c64b){error(5); return;}
         //revert px,py to x,y offsets
         if (write_page->clipping_or_scaling) {
             if (write_page->clipping_or_scaling == 2) {
@@ -35577,12 +34743,6 @@ int32 connection_new (int32 method, qbs *info_in, int32 value)
                 return -1;
             }
 
-            /*            if (cloud_app) {
-                            if (port == cloud_port_redirect) {
-                                port = cloud_port[1];
-                            }
-                        } */
-
             static void *connection;
             qbs_set (str, qbs_add (info_part[3], strz) );
             connection = tcp_client_open (str->chr, port);
@@ -35623,25 +34783,6 @@ int32 connection_new (int32 method, qbs *info_in, int32 value)
                 return -1;
             }
 
-            /*            if (cloud_app) {
-                            if (port == cloud_port[1]) {
-                                goto gotcloudport;
-                            }
-
-                            if (port == cloud_port[2]) {
-                                goto gotcloudport;
-                            }
-
-                            if ( (port >= 1) && (port <= 2) ) {
-                                port = cloud_port[port];
-                                goto gotcloudport;
-                            }
-
-                            cloud_port_redirect = port;
-                            port = cloud_port[1]; //unknown values default to primary hosting port
-                        } */
-
-            //gotcloudport:
             static void *connection;
             connection = tcp_host_open (port);
 
@@ -35931,281 +35072,6 @@ error:
     return 0;
 }
 
-/* 2012
-
-   uint8 net_tcp_init_done=0;
-   void net_tcp_init(){
-   if (!net_tcp_init_done){
-   net_tcp_init_done=1;
-   //NO_S_D_L//if(SDLNet_Init()==-1){
-   //NO_S_D_L////assume success
-   //NO_S_D_L//}
-   }
-   }
-
-   int32 func__connected(int32 i){
-   if (new_error) return 0;
-
-   #ifndef NO_S_D_L
-
-   //validate
-   if (i>=0){error(52); return 0;}//Bad file name or number
-   i=-(i+1);
-   if (i>=special_handle_max){error(52); return 0;}
-   if ((special_handle[i].type<1)||(special_handle[i].type>3)){error(52); return 0;}
-   if (net_tcp[i].error) return 0;
-   if ((special_handle[i].type==2)||(special_handle[i].type==3)){
-   net_tcp_updatebuffer(i);//attempt to trigger error state by updating buffer
-   if (net_tcp[i].error) return 0;
-   }
-
-   #endif //NO_S_D_L
-
-   return -1;
-   }
-
-   qbs *func__connectionaddress(int32 i){
-   static qbs *tqbs,*tqbs2,*str=NULL,*str2=NULL;
-   if (new_error) goto error;
-   if (!str) str=qbs_new(0,0);
-   if (!str2) str2=qbs_new(0,0);
-
-   #ifndef NO_S_D_L
-
-   //validate
-   if (i>=0){error(52); goto error;}//Bad file name or number
-   i=-(i+1);
-   if (i>=special_handle_max){error(52); goto error;}
-   if ((special_handle[i].type<1)||(special_handle[i].type>3)){error(52); goto error;}
-
-   if (special_handle[i].type==1){//host (1) returns its own address
-   qbs_set(str,qbs_new_txt("TCP/IP:"));//network type
-   qbs_set(str,qbs_add(str,qbs_ltrim(qbs_str(net_tcp[i].portused))));//port
-   qbs_set(str,qbs_add(str,qbs_new_txt(":")));
-   tqbs2=WHATISMYIP();
-   if (tqbs2->len){
-   qbs_set(str,qbs_add(str,tqbs2));
-   }else{
-   //global IP unavailable, use local IP
-   //IP4
-   static IPaddress ip;
-   if(SDLNet_ResolveHost(&ip,"localhost",0)==-1) goto error;
-   qbs_set(str,qbs_add(str,qbs_ltrim(qbs_str((int32)(ip.host)&255))));
-   qbs_set(str,qbs_add(str,qbs_new_txt(".")));
-   qbs_set(str,qbs_add(str,qbs_ltrim(qbs_str((int32)((ip.host)>>8)&255))));
-   qbs_set(str,qbs_add(str,qbs_new_txt(".")));
-   qbs_set(str,qbs_add(str,qbs_ltrim(qbs_str((int32)((ip.host)>>16)&255))));
-   qbs_set(str,qbs_add(str,qbs_new_txt(".")));
-   qbs_set(str,qbs_add(str,qbs_ltrim(qbs_str((int32)((ip.host)>>24)&255))));
-   }
-   tqbs=qbs_new(str->len,1);
-   memmove(tqbs->chr,str->chr,str->len);
-   return tqbs;
-   }
-
-   //assume connection/client socket (2/3)
-   static IPaddress *pip;
-   pip=SDLNet_TCP_GetPeerAddress(net_tcp[i].socket);
-   qbs_set(str,qbs_new_txt("TCP/IP:"));//network type
-   qbs_set(str,qbs_add(str,qbs_ltrim(qbs_str(net_tcp[i].portused))));//port
-   qbs_set(str,qbs_add(str,qbs_new_txt(":")));
-   //IP4
-   qbs_set(str,qbs_add(str,qbs_ltrim(qbs_str((int32)(pip->host)&255))));
-   qbs_set(str,qbs_add(str,qbs_new_txt(".")));
-   qbs_set(str,qbs_add(str,qbs_ltrim(qbs_str((int32)((pip->host)>>8)&255))));
-   qbs_set(str,qbs_add(str,qbs_new_txt(".")));
-   qbs_set(str,qbs_add(str,qbs_ltrim(qbs_str((int32)((pip->host)>>16)&255))));
-   qbs_set(str,qbs_add(str,qbs_new_txt(".")));
-   qbs_set(str,qbs_add(str,qbs_ltrim(qbs_str((int32)((pip->host)>>24)&255))));
-   tqbs=qbs_new(str->len,1);
-   memmove(tqbs->chr,str->chr,str->len);
-   return tqbs;
-
-   #endif //NO_S_D_L
-
-   error:
-   tqbs=qbs_new(0,1);
-   return tqbs;
-   }
-
-   #ifndef NO_S_D_L
-
-   int32 func__openhost(qbs* method){
-   if (new_error) return 0;
-
-   //generic data
-   static qbs *s=NULL; if (!s){s=qbs_new(0,0);}
-   static qbs *s2=NULL; if (!s2){s2=qbs_new(0,0);}
-   static qbs *s3=NULL; if (!s3){s3=qbs_new(0,0);}
-   static double d;
-   static int32 i,i2,portused;
-
-   qbs_set(s,method);
-   qbs_set(s2,qbs_ucase(s));
-
-   //TCP/IP Network
-   qbs_set(s3,qbs_new_txt("TCP/IP:"));
-   if (func_instr(NULL,s2,s3,NULL)==1){
-   qbs_set(s,func_mid(s,8,NULL,NULL));
-   net_tcp_init();
-   //***assume*** string s contains an integer port number
-   static IPaddress ip;
-   static TCPsocket socket;
-   d=func_val(s);
-   i=qbr_double_to_long(d);
-
-   if (cloud_app){
-   if (i==cloud_port[1]) goto gotcloudport;
-   if (i==cloud_port[2]) goto gotcloudport;
-   if ((i>=1)&&(i<=2)){i=cloud_port[i]; goto gotcloudport;}
-   cloud_port_redirect=i;
-   i=cloud_port[1];//unknown values default to primary hosting port
-   }
-   gotcloudport:
-
-   //***assume*** port number is within valid range
-   portused=i;
-   if(SDLNet_ResolveHost(&ip,NULL,i)==-1) return 0;
-   socket=SDLNet_TCP_Open(&ip);
-   if(!socket) return 0;
-
-   i2=special_handle_new();
-   special_handle[i2].type=1;//TCPIP host
-   if (i2>=net_tcp_bufsize) net_tcp=(net_tcp_struct*)realloc(net_tcp,sizeof(net_tcp_struct)*(++net_tcp_bufsize));
-   net_tcp[i2].ip=ip;
-   net_tcp[i2].socket=socket;
-   net_tcp[i2].error=0;
-   net_tcp[i2].buffer=NULL; net_tcp[i2].buffer_size=0; net_tcp[i2].buffer_space=0;
-   net_tcp[i2].portused=i;
-
-   return -1-i2;
-
-   }//TCP/IP
-
-   error(5); return 0;
-
-   }
-
-   int32 func__openconnection(int32 host){
-
-   static int32 i2;
-
-   //validate host handle
-   host=-(host+1);
-   if ((host<0)||(host>=special_handle_max)){error(258); return 0;}//invalid handle
-   if (special_handle[host].type!=1){error(258); return 0;}//invalid handle
-   static TCPsocket socket;
-   socket=SDLNet_TCP_Accept(net_tcp[host].socket);
-   if (!socket) return 0;
-
-   //create socket set for watching
-   static SDLNet_SocketSet set;
-   set=SDLNet_AllocSocketSet(1);
-   if (!set){
-   SDLNet_TCP_Close(socket);
-   return 0;
-   }
-   //add socket to set
-   if (SDLNet_TCP_AddSocket(set,socket)!=1){
-   SDLNet_FreeSocketSet(set);
-   SDLNet_TCP_Close(socket);
-   return 0;
-   }
-
-   i2=special_handle_new();
-   special_handle[i2].type=3;//TCPIP connection
-   if (i2>=net_tcp_bufsize) net_tcp=(net_tcp_struct*)realloc(net_tcp,sizeof(net_tcp_struct)*(++net_tcp_bufsize));
-   net_tcp[i2].socket=socket;
-   net_tcp[i2].set=set;
-   net_tcp[i2].error=0;
-   net_tcp[i2].buffer=NULL; net_tcp[i2].buffer_size=0; net_tcp[i2].buffer_space=0;
-   net_tcp[i2].eof=0;
-   net_tcp[i2].portused=net_tcp[host].portused;
-
-   return -1-i2;
-
-   }
-
-   int32 func__openclient(qbs* method){
-   if (new_error) return 0;
-
-   //generic data
-   static qbs *z=NULL; if (!z){z=qbs_new(1,0); z->chr[0]=0;}
-   static qbs *s=NULL; if (!s){s=qbs_new(0,0);}
-   static qbs *s2=NULL; if (!s2){s2=qbs_new(0,0);}
-   static qbs *s3=NULL; if (!s3){s3=qbs_new(0,0);}
-   static double d;
-   static int32 i,i2,portused;
-
-   qbs_set(s,method);
-   qbs_set(s2,qbs_ucase(s));
-
-   //TCP/IP Network
-   qbs_set(s3,qbs_new_txt("TCP/IP:"));
-   if (func_instr(NULL,s2,s3,NULL)==1){
-   qbs_set(s,func_mid(s,8,NULL,NULL));
-   net_tcp_init();
-
-   //read port number
-   qbs_set(s3,qbs_new_txt(":"));
-   i=func_instr(NULL,s,s3,NULL);
-   if (!i){error(5); return 0;}
-   qbs_set(s3,func_mid(s,1,i-1,1)); qbs_set(s,func_mid(s,i+1,NULL,NULL));
-   d=func_val(s3);
-   i2=qbr_double_to_long(d);
-   //***assume*** port number is within valid range
-   portused=i2;
-
-   if (cloud_app){
-   if (i2==cloud_port_redirect) i2=cloud_port[1];
-   }
-
-   //read address
-   if (!s->len){error(5); return 0;}
-   //null terminate address
-   qbs_set(s3,qbs_add(s,z));
-   static IPaddress ip;
-   static TCPsocket socket;
-   if(SDLNet_ResolveHost(&ip,(char*)s3->chr,i2)==-1) return 0;
-   socket=SDLNet_TCP_Open(&ip);
-   if (!socket) return 0;
-
-   //create socket set for watching
-   static SDLNet_SocketSet set;
-   set=SDLNet_AllocSocketSet(1);
-   if (!set){
-   SDLNet_TCP_Close(socket);
-   return 0;
-   }
-   //add socket to set
-   if (SDLNet_TCP_AddSocket(set,socket)!=1){
-   SDLNet_FreeSocketSet(set);
-   SDLNet_TCP_Close(socket);
-   return 0;
-   }
-
-   i2=special_handle_new();
-   special_handle[i2].type=2;//TCPIP client
-   if (i2>=net_tcp_bufsize) net_tcp=(net_tcp_struct*)realloc(net_tcp,sizeof(net_tcp_struct)*(++net_tcp_bufsize));
-   net_tcp[i2].ip=ip;
-   net_tcp[i2].socket=socket;
-   net_tcp[i2].set=set;
-   net_tcp[i2].error=0;
-   net_tcp[i2].buffer=NULL; net_tcp[i2].buffer_size=0; net_tcp[i2].buffer_space=0;
-   net_tcp[i2].eof=0;
-   net_tcp[i2].portused=portused;
-   return -1-i2;
-
-   }//TCP/IP
-
-   error(5); return 0;
-
-   }
-
-   #endif //NO_S_D_L
-
-   2012 */
-
 int32 func__exit()
 {
     exit_blocked = 1;
@@ -36277,9 +35143,6 @@ void setupx11clipboard()
 
     if (!setup) {
         setup = 1;
-        //SDL_GetWMInfo(&syswminfo);
-        //SDL_EventState(SDL_SYSWMEVENT,SDL_ENABLE);
-        //SDL_SetEventFilter(x11filter);
         x11_lock();
         targets = XInternAtom (X11_display, "TARGETS", True);
         utf8string = XInternAtom (X11_display, "UTF8_STRING", True);
@@ -36445,18 +35308,7 @@ void sub__clipboard (qbs *text)
     x11clipboardcopy ( (char *) textz->chr);
     return;
     //Need to find a way to get the clipboard working on Linux! (Hack freeGLUT, switch to GLFW, small 'helper' program?)
-    /*   while (!display_surface) Sleep(1);
-    lock_mainloop=1; while (lock_mainloop!=2) Sleep(1);//lock
-    if (!linux_clipboard_init){
 
-      linux_clipboard_init=1;
-      setupx11clipboard();
-    }
-    static qbs *textz=NULL; if (!textz) textz=qbs_new(0,0);
-    qbs_set(textz,qbs_add(text,qbs_new_txt_len("\0",1)));
-    x11clipboardcopy((char*)textz->chr);
-    lock_mainloop=0; Sleep(1);//unlock
-    return; */
 #endif
 #endif
 #endif
@@ -36687,9 +35539,7 @@ qbs *func__clipboard()
         size = CFDataGetLength (flavorData);
         text = qbs_new (size, 1);
         memcpy (text->chr, data, text->len);
-        //CFRelease (flavorData);
-        //CFRelease (flavorTypeArray);
-        //CFRelease(inPasteboard);
+
         return text;
     CantGetPasteboardItemIdentifier:
         ;
@@ -36699,82 +35549,7 @@ CantGetPasteboardItemCount:
     text = qbs_new (0, 1);
     return text;
     return NULL;
-    /*
-      PasteboardRef inPasteboard;
-      if (PasteboardCreate(kPasteboardClipboard, &inPasteboard) != noErr) {
-      return NULL;
-      }
 
-      ItemCount  itemCount;
-
-      PasteboardSynchronize( inPasteboard );
-      PasteboardGetItemCount( inPasteboard, &itemCount );
-      UInt32 itemIndex = 1; // should be 1 or the itemCount?
-
-      PasteboardItemID    itemID;
-      CFArrayRef          flavorTypeArray;
-      CFIndex             flavorCount;
-
-      PasteboardGetItemIdentifier( inPasteboard, itemIndex, &itemID );
-      PasteboardCopyItemFlavors( inPasteboard, itemID, &flavorTypeArray );
-
-      flavorCount = CFArrayGetCount( flavorTypeArray );
-
-      for(CFIndex flavorIndex = 0 ; flavorIndex < flavorCount; flavorIndex++ )
-      {
-      CFStringRef  flavorType = (CFStringRef)CFArrayGetValueAtIndex( flavorTypeArray, flavorIndex );
-
-      if (UTTypeConformsTo(flavorType, CFSTR("public.utf8-plain-text")))
-      {
-      CFDataRef   flavorData;
-      PasteboardCopyItemFlavorData( inPasteboard, itemID,flavorType, &flavorData );
-
-      CFIndex  flavorDataSize = CFDataGetLength( flavorData );
-      //out.resize( flavorDataSize/2 );
-      //memcpy(&out[0], flavorData, flavorDataSize);
-      //CFRelease (flavorData);
-      //break;
-
-      text=qbs_new(flavorDataSize,1);
-      memcpy(text->chr,flavorData,text->len);
-      CFRelease (flavorData);
-      CFRelease (flavorTypeArray);
-      CFRelease(inPasteboard);
-      return text;
-
-      }
-      }
-      CFRelease (flavorTypeArray);
-      CFRelease(inPasteboard);
-      text=qbs_new(0,1);
-      return text;
-    */
-    /*
-      PasteboardRef clipboard;
-      if (PasteboardCreate(kPasteboardClipboard, &clipboard) != noErr) {
-      return NULL;
-      }
-    */
-    /*
-      PasteboardRef clipboard;
-      if (PasteboardCreate(kPasteboardClipboard, &clipboard) != noErr) {
-      return NULL;
-      }
-      if (PasteboardClear(clipboard) != noErr) {
-      CFRelease(clipboard);
-      return;
-      }
-      CFDataRef data = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, text->chr,
-      text->len, kCFAllocatorNull);
-      if (data == NULL) {
-      CFRelease(clipboard);
-      return;
-      }
-      OSStatus err;
-      err = PasteboardPutItemFlavor(clipboard, NULL, kUTTypeUTF8PlainText, data, 0);
-      CFRelease(clipboard);
-      CFRelease(data);
-    */
 #endif
 #ifdef QB64_LINUX
 #ifndef QB64_MACOSX
@@ -36793,92 +35568,7 @@ CantGetPasteboardItemCount:
     }
 
     return text;
-    //char *XFetchBytes(display, nbytes_return)
-    //Display *display;
-    /*
-    Atom a1, a2, type;
-    int format, result;
-    unsigned long len, bytes_left, dummy;
-    unsigned char *data;
-    Window Sown;
-    Display *dpy=X11_display;
 
-    x11_lock_request=1; while (x11_locked==0) Sleep(1);
-
-    Sown = XGetSelectionOwner (dpy, XA_PRIMARY);
-    //printf ("Selection owner%i\n", (int)Sown);
-    if (Sown != None) {
-
-    XConvertSelection (dpy, XA_PRIMARY, XA_STRING, None,
-    Sown, CurrentTime);
-    XFlush (dpy);
-
-    //
-    // Do not get any data, see how much data is there
-    //
-
-    XGetWindowProperty (dpy, Sown,
-    XA_STRING, // Tricky..
-    0, 0, // offset - len
-    0, // Delete 0==FALSE
-    AnyPropertyType, //flag
-    &type, // return type
-    &format, // return format
-    &len, &bytes_left, //that
-    &data);
-    //printf ("type:%i len:%i format:%i byte_left:%i\n",
-    //(int)type, len, format, bytes_left);
-    // DATA is There
-
-    if (bytes_left > 0)
-    {
-    result = XGetWindowProperty (dpy, Sown,
-    XA_STRING, 0,bytes_left,0,
-    AnyPropertyType, &type,&format,
-    &len, &dummy, &data);
-    if (result == Success){
-    //printf ("DATA IS HERE!!```%s'''\n",
-    //data);
-    //XFree (data);
-    x11_locked=0;
-    return qbs_new_txt((const char*)data);
-    }
-    else
-    { //printf ("FAIL\n");
-    //XFree (data);
-    }
-    }//bytes_left
-    }//Sown != None
-
-    x11_locked=0;
-    return qbs_new(0,1);
-
-    */
-    /*
-        int bytes;
-        char *data=XFetchBytes(X11_display, &bytes);
-        if (bytes==0) return qbs_new(0,1);
-        return qbs_new_txt_len(data, bytes);
-    */
-    //Linux clipboard not functional, see comment in sub__clipboard
-    /*    static char *cp;
-    static qbs *text;
-    while (!display_surface) Sleep(1);
-    lock_mainloop=1; while (lock_mainloop!=2) Sleep(1);//lock
-    if (!linux_clipboard_init){
-      linux_clipboard_init=1;
-      setupx11clipboard();
-    }
-    cp=x11clipboardpaste();
-    if (!cp){
-      text=qbs_new(0,1);
-    }else{
-      text=qbs_new(strlen(cp),1);
-      memcpy(text->chr,cp,text->len);
-      free(cp);
-    }
-    lock_mainloop=0; Sleep(1);//unlock
-    return text; */
 #endif
 #endif
 #endif
@@ -38097,15 +36787,7 @@ int32 gfs_open (qbs *filename, int32 access, int32 restrictions, int32 how)
 
         static COMMTIMEOUTS ct;
         ZeroMemory (&ct, sizeof (COMMTIMEOUTS) );
-        /*dump port state and return "file not found" (used for debugging only)
-        if (!GetCommTimeouts(f_w->file_handle,&ct)){CloseHandle(f_w->file_handle); gfs_free(i); return -8;}//device unavailable
-        ofstream mydump("f:\\comdump.bin");
-        mydump.write((char*)&cs,sizeof(cs));
-        mydump.write((char*)&ct,sizeof(ct));
-        mydump.close();
-        CloseHandle(f_w->file_handle); gfs_free(i);
-        return -4;
-        */
+
         cs.BaudRate = f->com_baud_rate;
         x = f->com_stop_bits;
 
@@ -38960,158 +37642,7 @@ int32 func__screenimage (int32 x1, int32 y1, int32 x2, int32 y2, int32 passed)
     sub__dest (i2);
     ReleaseDC (NULL, hdc);
     return i;
-    /*
-    //   FUNCTION: CaptureAnImage(HWND hWnd)
-    //
-    //   PURPOSE: Captures a screenshot into a window and then saves it in a .bmp file.
-    //
-    //   COMMENTS:
-    //
-    //      Note: This sample will attempt to create a file called captureqwsx.bmp
-    //
-
-    int CaptureAnImage(HWND hWnd)
-    {
-    HDC hdcScreen;
-    HDC hdcWindow;
-    HDC hdcMemDC = NULL;
-    HBITMAP hbmScreen = NULL;
-    BITMAP bmpScreen;
-
-    // Retrieve the handle to a display device context for the client
-    // area of the window.
-    hdcScreen = GetDC(NULL);
-    hdcWindow = GetDC(hWnd);
-
-    // Create a compatible DC which is used in a BitBlt from the window DC
-    hdcMemDC = CreateCompatibleDC(hdcWindow);
-
-    if(!hdcMemDC)
-    {
-    MessageBox2(hWnd, L"StretchBlt has failed",L"Failed", MB_OK);
-    goto done;
-    }
-
-    // Get the client area for size calculation
-    RECT rcClient;
-    GetClientRect(hWnd, &rcClient);
-
-    //This is the best stretch mode
-    SetStretchBltMode(hdcWindow,HALFTONE);
-
-    //The source DC is the entire screen and the destination DC is the current window (HWND)
-    if(!StretchBlt(hdcWindow,
-    0,0,
-    rcClient.right, rcClient.bottom,
-    hdcScreen,
-    0,0,
-    GetSystemMetrics (SM_CXSCREEN),
-    GetSystemMetrics (SM_CYSCREEN),
-    SRCCOPY))
-    {
-    MessageBox2(hWnd, L"StretchBlt has failed",L"Failed", MB_OK);
-    goto done;
-    }
-
-    // Create a compatible bitmap from the Window DC
-    hbmScreen = CreateCompatibleBitmap(hdcWindow, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
-
-    if(!hbmScreen)
-    {
-    MessageBox2(hWnd, L"CreateCompatibleBitmap Failed",L"Failed", MB_OK);
-    goto done;
-    }
-
-    // Select the compatible bitmap into the compatible memory DC.
-    SelectObject(hdcMemDC,hbmScreen);
-
-    // Bit block transfer into our compatible memory DC.
-    if(!BitBlt(hdcMemDC,
-    0,0,
-    rcClient.right-rcClient.left, rcClient.bottom-rcClient.top,
-    hdcWindow,
-    0,0,
-    SRCCOPY))
-    {
-    MessageBox2(hWnd, L"BitBlt has failed", L"Failed", MB_OK);
-    goto done;
-    }
-
-    // Get the BITMAP from the HBITMAP
-    GetObject(hbmScreen,sizeof(BITMAP),&bmpScreen);
-
-    BITMAPFILEHEADER   bmfHeader;
-    BITMAPINFOHEADER   bi;
-
-    bi.biSize = sizeof(BITMAPINFOHEADER);
-    bi.biWidth = bmpScreen.bmWidth;
-    bi.biHeight = bmpScreen.bmHeight;
-    bi.biPlanes = 1;
-    bi.biBitCount = 32;
-    bi.biCompression = BI_RGB;
-    bi.biSizeImage = 0;
-    bi.biXPelsPerMeter = 0;
-    bi.biYPelsPerMeter = 0;
-    bi.biClrUsed = 0;
-    bi.biClrImportant = 0;
-
-    DWORD dwBmpSize = ((bmpScreen.bmWidth * bi.biBitCount + 31) / 32) * 4 * bmpScreen.bmHeight;
-
-    // Starting with 32-bit Windows, GlobalAlloc and LocalAlloc are implemented as wrapper functions that
-    // call HeapAlloc using a handle to the process's default heap. Therefore, GlobalAlloc and LocalAlloc
-    // have greater overhead than HeapAlloc.
-    HANDLE hDIB = GlobalAlloc(GHND,dwBmpSize);
-    char *lpbitmap = (char *)GlobalLock(hDIB);
-
-    // Gets the "bits" from the bitmap and copies them into a buffer
-    // which is pointed to by lpbitmap.
-    GetDIBits(hdcWindow, hbmScreen, 0,
-    (UINT)bmpScreen.bmHeight,
-    lpbitmap,
-    (BITMAPINFO *)&bi, DIB_RGB_COLORS);
-
-    // A file is created, this is where we will save the screen capture.
-    HANDLE hFile = CreateFile(L"captureqwsx.bmp",
-    GENERIC_WRITE,
-    0,
-    NULL,
-    CREATE_ALWAYS,
-    FILE_ATTRIBUTE_NORMAL, NULL);
-
-    // Add the size of the headers to the size of the bitmap to get the total file size
-    DWORD dwSizeofDIB = dwBmpSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-
-    //Offset to where the actual bitmap bits start.
-    bmfHeader.bfOffBits = (DWORD)sizeof(BITMAPFILEHEADER) + (DWORD)sizeof(BITMAPINFOHEADER);
-
-    //Size of the file
-    bmfHeader.bfSize = dwSizeofDIB;
-
-    //bfType must always be BM for Bitmaps
-    bmfHeader.bfType = 0x4D42; //BM
-
-    DWORD dwBytesWritten = 0;
-    WriteFile(hFile, (LPSTR)&bmfHeader, sizeof(BITMAPFILEHEADER), &dwBytesWritten, NULL);
-    WriteFile(hFile, (LPSTR)&bi, sizeof(BITMAPINFOHEADER), &dwBytesWritten, NULL);
-    WriteFile(hFile, (LPSTR)lpbitmap, dwBmpSize, &dwBytesWritten, NULL);
-
-    //Unlock and Free the DIB from the heap
-    GlobalUnlock(hDIB);
-    GlobalFree(hDIB);
-
-    //Close the handle for the file that was created
-    CloseHandle(hFile);
-
-    //Clean up
-    done:
-    DeleteObject(hbmScreen);
-    ReleaseDC(hWnd, hdcMemDC);
-    ReleaseDC(NULL,hdcScreen);
-    ReleaseDC(hWnd,hdcWindow);
-
-    return 0;
-    }
-    */
+    
 #endif
 #ifdef QB64_LINUX
 #ifdef BROKEN
@@ -39665,174 +38196,7 @@ void sub__screenprint (qbs *txt)
 
     static int32 i, s, x, vk, c;
 #ifdef QB64_MACOSX
-    /* MACOSX virtual key code reference (with ASCII value & shift state):
-       static int32 MACVK_ANSI_A                    = 0x0000+65+32;
-       static int32 MACVK_ANSI_S                    = 0x0100+83+32;
-       static int32 MACVK_ANSI_D                    = 0x0200+68+32;
-       static int32 MACVK_ANSI_F                    = 0x0300+70+32;
-       static int32 MACVK_ANSI_H                    = 0x0400+72+32;
-       static int32 MACVK_ANSI_G                    = 0x0500+71+32;
-       static int32 MACVK_ANSI_Z                    = 0x0600+90+32;
-       static int32 MACVK_ANSI_X                    = 0x0700+88+32;
-       static int32 MACVK_ANSI_C                    = 0x0800+67+32;
-       static int32 MACVK_ANSI_V                    = 0x0900+86+32;
-       static int32 MACVK_ANSI_B                    = 0x0B00+66+32;
-       static int32 MACVK_ANSI_Q                    = 0x0C00+81+32;
-       static int32 MACVK_ANSI_W                    = 0x0D00+87+32;
-       static int32 MACVK_ANSI_E                    = 0x0E00+69+32;
-       static int32 MACVK_ANSI_R                    = 0x0F00+82+32;
-       static int32 MACVK_ANSI_Y                    = 0x1000+89+32;
-       static int32 MACVK_ANSI_T                    = 0x1100+84+32;
-       static int32 MACVK_ANSI_1                    = 0x1200+49;
-       static int32 MACVK_ANSI_2                    = 0x1300+50;
-       static int32 MACVK_ANSI_3                    = 0x1400+51;
-       static int32 MACVK_ANSI_4                    = 0x1500+52;
-       static int32 MACVK_ANSI_6                    = 0x1600+54;
-       static int32 MACVK_ANSI_5                    = 0x1700+53;
-       static int32 MACVK_ANSI_Equal                = 0x1800+61;
-       static int32 MACVK_ANSI_9                    = 0x1900+57;
-       static int32 MACVK_ANSI_7                    = 0x1A00+55;
-       static int32 MACVK_ANSI_Minus                = 0x1B00+45;
-       static int32 MACVK_ANSI_8                    = 0x1C00+56;
-       static int32 MACVK_ANSI_0                    = 0x1D00+48;
-       static int32 MACVK_ANSI_RightBracket         = 0x1E00+93;
-       static int32 MACVK_ANSI_O                    = 0x1F00+79+32;
-       static int32 MACVK_ANSI_U                    = 0x2000+85+32;
-       static int32 MACVK_ANSI_LeftBracket          = 0x2100+91;
-       static int32 MACVK_ANSI_I                    = 0x2200+73+32;
-       static int32 MACVK_ANSI_P                    = 0x2300+80+32;
-       static int32 MACVK_ANSI_L                    = 0x2500+76+32;
-       static int32 MACVK_ANSI_J                    = 0x2600+74+32;
-       static int32 MACVK_ANSI_Quote                = 0x2700+39;
-       static int32 MACVK_ANSI_K                    = 0x2800+75+32;
-       static int32 MACVK_ANSI_Semicolon            = 0x2900+59;
-       static int32 MACVK_ANSI_Backslash            = 0x2A00+92;
-       static int32 MACVK_ANSI_Comma                = 0x2B00+44;
-       static int32 MACVK_ANSI_Slash                = 0x2C00+47;
-       static int32 MACVK_ANSI_N                    = 0x2D00+78+32;
-       static int32 MACVK_ANSI_M                    = 0x2E00+77+32;
-       static int32 MACVK_ANSI_Period               = 0x2F00+46;
-       static int32 MACVK_ANSI_Grave                = 0x3200+96;
-       static int32 MACVK_ANSI_KeypadDecimal        = 0x4100;
-       static int32 MACVK_ANSI_KeypadMultiply       = 0x4300;
-       static int32 MACVK_ANSI_KeypadPlus           = 0x4500;
-       static int32 MACVK_ANSI_KeypadClear          = 0x4700;
-       static int32 MACVK_ANSI_KeypadDivide         = 0x4B00;
-       static int32 MACVK_ANSI_KeypadEnter          = 0x4C00;
-       static int32 MACVK_ANSI_KeypadMinus          = 0x4E00;
-       static int32 MACVK_ANSI_KeypadEquals         = 0x5100;
-       static int32 MACVK_ANSI_Keypad0              = 0x5200;
-       static int32 MACVK_ANSI_Keypad1              = 0x5300;
-       static int32 MACVK_ANSI_Keypad2              = 0x5400;
-       static int32 MACVK_ANSI_Keypad3              = 0x5500;
-       static int32 MACVK_ANSI_Keypad4              = 0x5600;
-       static int32 MACVK_ANSI_Keypad5              = 0x5700;
-       static int32 MACVK_ANSI_Keypad6              = 0x5800;
-       static int32 MACVK_ANSI_Keypad7              = 0x5900;
-       static int32 MACVK_ANSI_Keypad8              = 0x5B00;
-       static int32 MACVK_ANSI_Keypad9              = 0x5C00;
-       static int32 MACVK_Return                    = 0x2400+13;
-       static int32 MACVK_Tab                       = 0x3000+9;
-       static int32 MACVK_Space                     = 0x3100+32;
-       static int32 MACVK_Delete                    = 0x3300+8;
-       static int32 MACVK_Escape                    = 0x3500+27;
-       static int32 MACVK_Command                   = 0x3700;
-       static int32 MACVK_Shift                     = 0x3800;
-       static int32 MACVK_CapsLock                  = 0x3900;
-       static int32 MACVK_Option                    = 0x3A00;
-       static int32 MACVK_Control                   = 0x3B00;
-       static int32 MACVK_RightShift                = 0x3C00;
-       static int32 MACVK_RightOption               = 0x3D00;
-       static int32 MACVK_RightControl              = 0x3E00;
-       static int32 MACVK_Function                  = 0x3F00;
-       static int32 MACVK_F17                       = 0x4000;
-       static int32 MACVK_VolumeUp                  = 0x4800;
-       static int32 MACVK_VolumeDown                = 0x4900;
-       static int32 MACVK_Mute                      = 0x4A00;
-       static int32 MACVK_F18                       = 0x4F00;
-       static int32 MACVK_F19                       = 0x5000;
-       static int32 MACVK_F20                       = 0x5A00;
-       static int32 MACVK_F5                        = 0x6000;
-       static int32 MACVK_F6                        = 0x6100;
-       static int32 MACVK_F7                        = 0x6200;
-       static int32 MACVK_F3                        = 0x6300;
-       static int32 MACVK_F8                        = 0x6400;
-       static int32 MACVK_F9                        = 0x6500;
-       static int32 MACVK_F11                       = 0x6700;
-       static int32 MACVK_F13                       = 0x6900;
-       static int32 MACVK_F16                       = 0x6A00;
-       static int32 MACVK_F14                       = 0x6B00;
-       static int32 MACVK_F10                       = 0x6D00;
-       static int32 MACVK_F12                       = 0x6F00;
-       static int32 MACVK_F15                       = 0x7100;
-       static int32 MACVK_Help                      = 0x7200;
-       static int32 MACVK_Home                      = 0x7300;
-       static int32 MACVK_PageUp                    = 0x7400;
-       static int32 MACVK_ForwardDelete             = 0x7500;
-       static int32 MACVK_F4                        = 0x7600;
-       static int32 MACVK_End                       = 0x7700;
-       static int32 MACVK_F2                        = 0x7800;
-       static int32 MACVK_PageDown                  = 0x7900;
-       static int32 MACVK_F1                        = 0x7A00;
-       static int32 MACVK_LeftArrow                 = 0x7B00;
-       static int32 MACVK_RightArrow                = 0x7C00;
-       static int32 MACVK_DownArrow                 = 0x7D00;
-       static int32 MACVK_UpArrow                   = 0x7E00;
-       static int32 MACVK_ISO_Section               = 0x0A00;
-       static int32 MACVK_JIS_Yen                   = 0x5D00;
-       static int32 MACVK_JIS_Underscore            = 0x5E00;
-       static int32 MACVK_JIS_KeypadComma           = 0x5F00;
-       static int32 MACVK_JIS_Eisu                  = 0x6600;
-       static int32 MACVK_JIS_Kana                  = 0x6800;
-       static int32 MACVKS_ANSI_A                    = 0x0000+65+128;
-       static int32 MACVKS_ANSI_S                    = 0x0100+83+128;
-       static int32 MACVKS_ANSI_D                    = 0x0200+68+128;
-       static int32 MACVKS_ANSI_F                    = 0x0300+70+128;
-       static int32 MACVKS_ANSI_H                    = 0x0400+72+128;
-       static int32 MACVKS_ANSI_G                    = 0x0500+71+128;
-       static int32 MACVKS_ANSI_Z                    = 0x0600+90+128;
-       static int32 MACVKS_ANSI_X                    = 0x0700+88+128;
-       static int32 MACVKS_ANSI_C                    = 0x0800+67+128;
-       static int32 MACVKS_ANSI_V                    = 0x0900+86+128;
-       static int32 MACVKS_ANSI_B                    = 0x0B00+66+128;
-       static int32 MACVKS_ANSI_Q                    = 0x0C00+81+128;
-
-       static int32 MACVKS_ANSI_W                    = 0x0D00+87+128;
-       static int32 MACVKS_ANSI_E                    = 0x0E00+69+128;
-       static int32 MACVKS_ANSI_R                    = 0x0F00+82+128;
-       static int32 MACVKS_ANSI_Y                    = 0x1000+89+128;
-       static int32 MACVKS_ANSI_T                    = 0x1100+84+128;
-       static int32 MACVKS_ANSI_1                    = 0x1200+33+128;
-       static int32 MACVKS_ANSI_2                    = 0x1300+64+128;
-       static int32 MACVKS_ANSI_3                    = 0x1400+35+128;
-       static int32 MACVKS_ANSI_4                    = 0x1500+36+128;
-       static int32 MACVKS_ANSI_6                    = 0x1600+94+128;
-       static int32 MACVKS_ANSI_5                    = 0x1700+37+128;
-       static int32 MACVKS_ANSI_Equal                = 0x1800+43+128;
-       static int32 MACVKS_ANSI_9                    = 0x1900+40+128;
-       static int32 MACVKS_ANSI_7                    = 0x1A00+38+128;
-       static int32 MACVKS_ANSI_Minus                = 0x1B00+95+128;
-       static int32 MACVKS_ANSI_8                    = 0x1C00+42+128;
-       static int32 MACVKS_ANSI_0                    = 0x1D00+41+128;
-       static int32 MACVKS_ANSI_RightBracket         = 0x1E00+125+128;
-       static int32 MACVKS_ANSI_O                    = 0x1F00+79+128;
-       static int32 MACVKS_ANSI_U                    = 0x2000+85+128;
-       static int32 MACVKS_ANSI_LeftBracket          = 0x2100+123+128;
-       static int32 MACVKS_ANSI_I                    = 0x2200+73+128;
-       static int32 MACVKS_ANSI_P                    = 0x2300+80+128;
-       static int32 MACVKS_ANSI_L                    = 0x2500+76+128;
-       static int32 MACVKS_ANSI_J                    = 0x2600+74+128;
-       static int32 MACVKS_ANSI_Quote                = 0x2700+34+128;
-       static int32 MACVKS_ANSI_K                    = 0x2800+75+128;
-       static int32 MACVKS_ANSI_Semicolon            = 0x2900+58+128;
-       static int32 MACVKS_ANSI_Backslash            = 0x2A00+124+128;
-       static int32 MACVKS_ANSI_Comma                = 0x2B00+60+128;
-       static int32 MACVKS_ANSI_Slash                = 0x2C00+63+128;
-       static int32 MACVKS_ANSI_N                    = 0x2D00+78+128;
-       static int32 MACVKS_ANSI_M                    = 0x2E00+77+128;
-       static int32 MACVKS_ANSI_Period               = 0x2F00+62+128;
-       static int32 MACVKS_ANSI_Grave                = 0x3200+126+128;
-    */
+    
     static CGEventSourceRef es;
     static CGEventRef e;
 
@@ -40476,9 +38840,7 @@ static int message_loop (
 
 static int GetUnicodeStringLength (Uint16 *unicodeString);
 static Uint16 *CatUnicodeString (Uint16 *dest, Uint16 *src);
-/*
-  static Uint16 *CopyUnicodeString(Uint16 *dest, Uint16 *src);
-*/
+
 static Uint16 *CopyNumUnicodeString (Uint16 *dest, Uint16 *src, int num);
 static int DrawCursor (SDL_Surface *back, TTF_Font *font, int cursorPosition);
 static int MessageChange (SDL_Surface *back, TTF_Font *font, int inputedWidth);
@@ -40499,22 +38861,6 @@ int GetUnicodeStringLength (Uint16 *unicodeString)
 
     return i;
 }
-
-/*
-  Uint16 *CopyUnicodeString(Uint16 *dest, Uint16 *src)
-  {
-  int i;
-
-  i = 0;
-  while (src[i]) {
-  dest[i] = src[i];
-  i++;
-  }
-  dest[i] = 0x0000;
-
-  return dest;
-  }
-*/
 
 Uint16 *CopyNumUnicodeString (Uint16 *dest, Uint16 *src, int num)
 {
@@ -40554,8 +38900,6 @@ Uint16 *CatUnicodeString (Uint16 *dest, Uint16 *src)
 int DrawCursor (SDL_Surface *back, TTF_Font *font, int cursorPosition)
 {
     SDL_Rect rect;
-    ///SDL_Color bg = {0x00, 0x00, 0x00};
-    ///SDL_Color cfg = {0x66, 0xFF, 0x66};
     SDL_Color bg = {0xFF, 0xFF, 0xFF, 0xFF};
     SDL_Color cfg = {0x00, 0x00, 0x00, 0x00};
     int cursorWidth;
@@ -40650,13 +38994,7 @@ int DrawMessageBlock (
 
 int MessageChange (SDL_Surface *back, TTF_Font *font, int inputedWidth)
 {
-    ///SDL_Color fg = {0x66, 0x66, 0xFF};
-    ///SDL_Color bg = {0x00, 0x00, 0x00};
-    /*ref
-    int DrawMessageBlock(
-    SDL_Surface *back, TTF_Font *font, Uint16 *string,
-    int drawStartWidth, SDL_Color fg, SDL_Color bg, int cursorPosition)
-    */
+
     SDL_Color fg = {0x00, 0x00, 0x00, 0x00};
     SDL_Color bg = {0xFF, 0xFF, 0xFF, 0xFF};
     int compositionLastPosition;
@@ -42580,15 +40918,7 @@ void sub__maptriangle (int32 cull_options, float sx1, float sy1, float sx2, floa
       'Reference:
       'Fixed point division: a/b -> a*65536/b (using intermediate _INTEGER64)
     */
-    /* debugging method
-       ofstream f;
-       char fn[] = "c:\\qb64\\20c.txt";
-       f.open(fn, ios::app);
-       f<<"\n";
-       f<<variablename;
-       f<<"\n";
-       f.close();
-    */
+
     static int32 limit, limit2, nlimit, nlimit2;
     //----------------------------------------------------------------------------------------------------------------------------------------------------
     limit = 16383;
@@ -43931,39 +42261,12 @@ void GLUT_key_ascii (int32 key, int32 down)
     static int32 mod;
     mod = glutGetModifiers(); //shift=1, control=2, alt=4
 #ifndef CORE_FREEGLUT
-    /*
-    if (mod&GLUT_ACTIVE_SHIFT){
-      keydown_vk(VK+QBVK_LSHIFT);
-    }else{
-      keyup_vk(VK+QBVK_LSHIFT);
-    }
-
-    if (mod&GLUT_ACTIVE_CTRL){
-      keydown_vk(VK+QBVK_LCTRL);
-    }else{
-      keyup_vk(VK+QBVK_LCTRL);
-    }
-
-    if (mod&GLUT_ACTIVE_ALT){
-      keydown_vk(VK+QBVK_LALT);
-    }else{
-      keyup_vk(VK+QBVK_LALT);
-    }
-    */
 #endif
 
     //Note: The following is required regardless of whether FREEGLUT is/isn't being used
     //#ifdef CORE_FREEGLUT
     //Is CTRL key down? If so, unencode character (applying shift as required)
     if (mod & 2) {
-        //if (key==127){ //Removed: Might clash with CTRL+DELETE
-        // key=8;
-        // goto ctrl_mod;
-        //}//127
-        //if (key==3){//CTRL+(BREAK|SCROLL-LOCK)
-        //if (down) keydown_vk(VK+QBVK_BREAK); else keyup_vk(VK+QBVK_BREAK);
-        //return;
-        //}
         if (key == 10) {
             key = 13;
             goto ctrl_mod;
@@ -44021,9 +42324,6 @@ ctrl_mod:
 
 void GLUT_KEYBOARD_FUNC (unsigned char key, int x, int y)
 {
-    //glutPostRedisplay();
-    //qbs_print(qbs_str(key),0);
-    //qbs_print(qbs_str((int32)glutGetModifiers()),1);
     GLUT_key_ascii (key, 1);
 }
 void GLUT_KEYBOARDUP_FUNC (unsigned char key, int x, int y)
@@ -44035,27 +42335,7 @@ void GLUT_key_special (int32 key, int32 down)
 {
 #ifdef QB64_GLUT
 #ifndef CORE_FREEGLUT
-    /*
-        static int32 mod;
-    mod=glutGetModifiers();//shift=1, control=2, alt=4
-    if (mod&GLUT_ACTIVE_SHIFT){
-      keydown_vk(VK+QBVK_LSHIFT);
-    }else{
-      keyup_vk(VK+QBVK_LSHIFT);
-    }
 
-    if (mod&GLUT_ACTIVE_CTRL){
-      keydown_vk(VK+QBVK_LCTRL);
-    }else{
-      keyup_vk(VK+QBVK_LCTRL);
-    }
-
-    if (mod&GLUT_ACTIVE_ALT){
-      keydown_vk(VK+QBVK_LALT);
-    }else{
-      keyup_vk(VK+QBVK_LALT);
-    }
-        */
 #endif
     static int32 vk;
     vk = -1;
@@ -44186,7 +42466,6 @@ void GLUT_key_special (int32 key, int32 down)
 
 void GLUT_SPECIAL_FUNC (int key, int x, int y)
 {
-    //qbs_print(qbs_str((int32)glutGetModifiers()),1);
     GLUT_key_special (key, 1);
 }
 void GLUT_SPECIALUP_FUNC (int key, int x, int y)
@@ -44217,7 +42496,6 @@ void GLUT_IDLEFUNC()
 #ifdef DEPENDENCY_DEVICEINPUT
     //must be in same thread as GLUT for OSX
     QB64_GAMEPAD_POLL();
-    //[[[[NSApplication sharedApplication] mainWindow] standardWindowButton:NSWindowCloseButton] setEnabled:YES];
 #endif
 #endif
 #ifdef QB64_GLUT
@@ -44412,13 +42690,6 @@ qbs *func__startdir()
 
 qbs *rootDir = NULL; //the dir moved to when program begins
 
-//char *android_dir_downloads = NULL;
-//char *android_dir_documents = NULL;
-//char *android_dir_pictures = NULL;
-//char *android_dir_music = NULL;
-//char *android_dir_video = NULL;
-//char *android_dir_dcim = NULL;
-
 qbs *func__dir (qbs *context_in)
 {
     static qbs *context = NULL;
@@ -44432,10 +42703,6 @@ qbs *func__dir (qbs *context_in)
     if (qbs_equal (qbs_ucase (context), qbs_new_txt ("TEXT") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("DOCUMENT") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("DOCUMENTS") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("MY DOCUMENTS") ) ) {
-        //#ifdef QB64_ANDROID
-        //        mkdir (android_dir_documents, 0770);
-        //        return qbs_new_txt (android_dir_documents);
-        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44449,10 +42716,6 @@ qbs *func__dir (qbs *context_in)
     if (qbs_equal (qbs_ucase (context), qbs_new_txt ("MUSIC") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("AUDIO") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("SOUND") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("SOUNDS") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("MY MUSIC") ) ) {
-        //#ifdef QB64_ANDROID
-        //        mkdir (android_dir_music, 0770);
-        //        return qbs_new_txt (android_dir_music);
-        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44467,10 +42730,6 @@ qbs *func__dir (qbs *context_in)
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("PICTURES") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("IMAGE") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("IMAGES") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("MY PICTURES") ) ) {
-        //#ifdef QB64_ANDROID
-        //        mkdir (android_dir_pictures, 0770);
-        //        return qbs_new_txt (android_dir_pictures);
-        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44485,10 +42744,6 @@ qbs *func__dir (qbs *context_in)
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("CAMERA ROLL") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("PHOTO") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("PHOTOS") ) ) {
-        //#ifdef QB64_ANDROID
-        //        mkdir (android_dir_dcim, 0770);
-        //        return qbs_new_txt (android_dir_dcim);
-        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44502,10 +42757,6 @@ qbs *func__dir (qbs *context_in)
     if (qbs_equal (qbs_ucase (context), qbs_new_txt ("MOVIE") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("MOVIES") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("VIDEO") ) || qbs_equal (qbs_ucase (context), qbs_new_txt ("VIDEOS") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("MY VIDEOS") ) ) {
-        //#ifdef QB64_ANDROID
-        //        mkdir (android_dir_video, 0770);
-        //        return qbs_new_txt (android_dir_video);
-        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44518,10 +42769,6 @@ qbs *func__dir (qbs *context_in)
 
     if (qbs_equal (qbs_ucase (context), qbs_new_txt ("DOWNLOAD") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("DOWNLOADS") ) ) {
-        //#ifdef QB64_ANDROID
-        //        mkdir (android_dir_downloads, 0770);
-        //        return qbs_new_txt (android_dir_downloads);
-        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44535,10 +42782,6 @@ qbs *func__dir (qbs *context_in)
     }
 
     if (qbs_equal (qbs_ucase (context), qbs_new_txt ("DESKTOP") ) ) {
-        //#ifdef QB64_ANDROID
-        //        mkdir (android_dir_downloads, 0770);
-        //        return qbs_new_txt (android_dir_downloads);
-        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44553,9 +42796,6 @@ qbs *func__dir (qbs *context_in)
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("APPLICATION DATA") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("PROGRAM DATA") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("DATA") ) ) {
-        //#ifdef QB64_ANDROID
-        //        return qbs_add (rootDir, qbs_new_txt ("/") );
-        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44570,9 +42810,6 @@ qbs *func__dir (qbs *context_in)
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("LOCAL APPLICATION DATA") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("LOCAL PROGRAM DATA") )
             || qbs_equal (qbs_ucase (context), qbs_new_txt ("LOCAL DATA") ) ) {
-        //#ifdef QB64_ANDROID
-        //        return qbs_add (rootDir, qbs_new_txt ("/") );
-        //#endif
 #ifdef QB64_WINDOWS
         CHAR osPath[MAX_PATH];
 
@@ -44593,239 +42830,16 @@ qbs *func__dir (qbs *context_in)
 
     return qbs_new_txt (".\\"); //current location
 #else
-    //#ifdef QB64_ANDROID
-    //    mkdir (android_dir_downloads, 0770);
-    //    return qbs_new_txt (android_dir_downloads);
-    //#endif
+
     return qbs_new_txt ("./"); //current location
 #endif
 }
 
 extern void set_dynamic_info();
 
-//#ifdef QB64_ANDROID
 
-/* void android_get_file_asset (AAssetManager *mgr, char *filename)
-{
-    AAsset *asset = AAssetManager_open (mgr, filename, AASSET_MODE_STREAMING);
-    char buf[BUFSIZ];
-    int nb_read = 0;
-    FILE *out = fopen (filename, "w");
-
-    while ( (nb_read = AAsset_read (asset, buf, BUFSIZ) ) > 0) {
-        fwrite (buf, nb_read, 1, out);
-    }
-
-    fclose (out);
-    AAsset_close (asset);
-} */
-
-//notes:
-// * Actual entry point is in fg_runtime_android.c which has been modified to pass 'android_app' to us
-
-/* int main (int argc, char *argv[], struct android_app *android_state_in)
-{
-    android_state = android_state_in;
-    android_vm = android_state->activity->vm;
-    android_env = android_state->activity->env;
-    struct android_app *app = android_state_in;
-    JNIEnv *env = app->activity->env;
-    JavaVM *vm = app->activity->vm;
-    vm->AttachCurrentThread (&env, NULL);
-    // Get a handle on our calling NativeActivity class
-    jclass activityClass = env->GetObjectClass (app->activity->clazz);
-    // Get path to files dir
-    jmethodID getFilesDir = env->GetMethodID (activityClass, "getFilesDir", "()Ljava/io/File;");
-    jobject file = env->CallObjectMethod (app->activity->clazz, getFilesDir);
-    jclass fileClass = env->FindClass ("java/io/File");
-    jmethodID getAbsolutePath = env->GetMethodID (fileClass, "getAbsolutePath", "()Ljava/lang/String;");
-    jstring jpath = (jstring) env->CallObjectMethod (file, getAbsolutePath);
-    const char *app_dir = env->GetStringUTFChars (jpath, NULL);
-    // chdir in the application files directory
-    LOGI ("app_dir: %s", app_dir);
-    chdir (app_dir);
-    env->ReleaseStringUTFChars (jpath, app_dir);
-    // Pre-extract assets, to avoid Android-specific file opening
-    AAssetManager *mgr = app->activity->assetManager;
-    /* Old code which pulled all root directory assets, in QB64 assets are specified in code so this just wastes time
-    AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
-    const char* filename = (const char*)NULL;
-    while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
-            android_get_file_asset(mgr,filename);
-    }
-    AAssetDir_close(assetDir);
-    */
-//#include "../temp/assets.txt"
-//get _DIR$(...) paths
-/* {
-    //upscope
-
-    jfieldID fieldId;
-    jclass envClass = env->FindClass ("android/os/Environment");
-    char **targetString;
-    jstring jstrParam;
-    char *s;
-    jstring sType;
-
-    for (int i = 1; i <= 6; i++)
-    {
-        if (i == 1) {
-            targetString = &android_dir_dcim;
-            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_DCIM", "Ljava/lang/String;");
-        }
-
-        if (i == 2) {
-            targetString = &android_dir_downloads;
-            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_DOWNLOADS", "Ljava/lang/String;");
-        }
-
-        if (i == 3) {
-            targetString = &android_dir_documents;
-            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_DOCUMENTS", "Ljava/lang/String;");
-        }
-
-        if (i == 4) {
-            targetString = &android_dir_pictures;
-            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_PICTURES", "Ljava/lang/String;");
-        }
-
-        if (i == 5) {
-            targetString = &android_dir_music;
-            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_MUSIC", "Ljava/lang/String;");
-        }
-
-        if (i == 6) {
-            targetString = &android_dir_video;
-            fieldId = env->GetStaticFieldID (envClass, "DIRECTORY_MOVIES", "Ljava/lang/String;");
-        }
-
-        //retrieve jstring representation of environment variable
-        jstrParam = (jstring) env->GetStaticObjectField (envClass, fieldId);
-        s = env->GetStringUTFChars (jstrParam, NULL);
-        LOGI ("String name of Environment.Variable: %s", s);
-        env->ReleaseStringUTFChars (jstrParam, s);
-        //use jstring representation to retrieve folder name
-        sType = jstrParam;
-        jmethodID midEnvironmentGetExternalStoragePublicDirectory = env->GetStaticMethodID (envClass,
-                "getExternalStoragePublicDirectory", "(Ljava/lang/String;)Ljava/io/File;");
-        jobject oExternalStorageDirectory = NULL;
-        oExternalStorageDirectory = env->CallStaticObjectMethod (envClass, midEnvironmentGetExternalStoragePublicDirectory,
-                                    sType);
-        jclass cFile = env->GetObjectClass (oExternalStorageDirectory);
-        jmethodID midFileGetAbsolutePath = env->GetMethodID (cFile, "getAbsolutePath", "()Ljava/lang/String;");
-        env->DeleteLocalRef (cFile);
-        jstring extStoragePath = (jstring) env->CallObjectMethod (oExternalStorageDirectory, midFileGetAbsolutePath);
-        const char *extStoragePathString = env->GetStringUTFChars (extStoragePath, NULL);
-        LOGI ("Path: %s", extStoragePathString); // /storage/emulated/0/Download
-        *targetString = (char *) calloc (1, strlen (extStoragePathString) + 2);
-        memcpy (*targetString, extStoragePathString, strlen (extStoragePathString) );
-        (*targetString) [strlen (extStoragePathString)] = 47; //append "/"
-        env->ReleaseStringUTFChars (extStoragePath, extStoragePathString);
-        env->DeleteLocalRef (sType);
-    }
-
-}//downscope
-//JavaVMAttachArgs args = { JNI_VERSION_1_6, NULL, NULL };
-//vm->AttachCurrentThread( &env, &args );
-//jmethodID activityConstructor =  env->GetMethodID(app->activity->clazz, "<init>", "()V");
-//jobject object = env->NewObject(app->activity->clazz, activityConstructor);
-//jmethodID toastID = env->GetMethodID(app->activity->clazz, "toast", "(Ljava/lang/String;)V");
-//jstring message1 = env->NewStringUTF("This comes from jni.");
-//env->CallVoidMethod(object, toastID, message1);
-//vm->DetachCurrentThread();
-//jstring jstr = env->NewStringUTF("This comes from jni.");
-//    jmethodID messageMe = env->GetMethodID(app->activity->clazz, "toast", "(Ljava/lang/String;)V");
-//    jobject result = env->CallObjectMethod(obj, messageMe, jstr);
-//    const char* str = (*env)->GetStringUTFChars(env,(jstring) result, NULL); // should be released but what a heck, it's a tutorial :)
-//    printf("%s\n", str);
-//    return (*env)->NewStringUTF(env, str);
-//JNIEXPORT void JNICALL Java_com_example_jnitoast_MainActivity_displayToast
-//(JNIEnv *pEnv, jobject thiz, jobject txt, jint time)
-//{
-/*
-        jclass Toast = NULL;
-        jobject toast = NULL;
-        jmethodID makeText = NULL;
-        jmethodID show = NULL;
-
-        Toast = env->FindClass("android/widget/Toast");
-        if(NULL == Toast)
-        {
-                LOGI("FindClass failed");
-                return;
-        }
-
-        makeText = env->GetStaticMethodID(Toast,"makeText", "(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;");
-        if( NULL == makeText )
-        {
-                LOGI("FindStaticMethod failed");
-                return;
-        }
-
-        //toast = env->CallStaticObjectMethod(Toast, makeText, thiz, txt, time);
-        toast = env->CallStaticObjectMethod(Toast, makeText, thiz, txt, time);
-        if ( NULL == toast)
-        {
-                LOGI("CALLSTATICOBJECT FAILED");
-                return;
-        }
-*/
-/*
-        show = env->GetMethodID(pEnv,Toast,"show","()V");
-        if ( NULL == show )
-        {
-                LOGI("GetMethodID Failed");
-                return;
-        }
-        env->CallVoidMethod(pEnv,toast,show);
-*/
-/*
-AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
-char buf[BUFSIZ];
-int nb_read = 0;
-FILE* out = fopen(filename, "w");
-while ((nb_read = AAsset_read(asset, buf, BUFSIZ)) > 0)
-fwrite(buf, nb_read, 1, out);
-fclose(out);
-AAsset_close(asset);
-}
-*/
-/*
-        // Get a handle on our calling NativeActivity class
-        jclass activityClass = env->GetObjectClass( app->activity->clazz);
-        // Get path to files dir
-        jmethodID getFilesDir = env->GetMethodID( activityClass, "getFilesDir", "()Ljava/io/File;");
-        jobject file = env->CallObjectMethod( app->activity->clazz, getFilesDir);
-        jclass fileClass = env->FindClass( "java/io/File");
-        jmethodID getAbsolutePath = env->GetMethodID( fileClass, "getAbsolutePath", "()Ljava/lang/String;");
-        jstring jpath = (jstring)env->CallObjectMethod( file, getAbsolutePath);
-        const char* app_dir = env->GetStringUTFChars( jpath, NULL);
-        // chdir in the application files directory
-        LOGI("app_dir: %s", app_dir);
-        chdir(app_dir);
-        env->ReleaseStringUTFChars( jpath, app_dir);
-        // Pre-extract assets, to avoid Android-specific file opening
-        {
-        AAssetManager* mgr = app->activity->assetManager;
-        AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
-        const char* filename = (const char*)NULL;
-        while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
-        AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
-        char buf[BUFSIZ];
-        int nb_read = 0;
-        FILE* out = fopen(filename, "w");
-        while ((nb_read = AAsset_read(asset, buf, BUFSIZ)) > 0)
-        fwrite(buf, nb_read, 1, out);
-        fclose(out);
-        AAsset_close(asset);
-        }
-        AAssetDir_close(assetDir);
-            }
-*/
-// #else */
 int main (int argc, char *argv[])
 {
-    //#endif
 #ifdef QB64_LINUX
 #ifndef QB64_MACOSX
 #ifdef X11
@@ -44886,9 +42900,7 @@ int main (int argc, char *argv[])
     this_mouse_message_queue->queue = (mouse_message *) calloc (1,
                                       sizeof (mouse_message) * (this_mouse_message_queue->lastIndex + 1) );
 
-    //    if (!cloud_app) {
     snd_init();
-    //    }
 
     if (screen_hide_startup) {
         screen_hide = 1;
@@ -44962,8 +42974,6 @@ int main (int argc, char *argv[])
     x = newimg(); //reserve index 1
     img[x].valid = 0;
     memset (&cpu, 0, sizeof (cpu_struct) );
-    //uint8 *asmcodep=(uint8*)&asmcode[0];
-    //memcpy(&cmem[0],asmcodep,sizeof(asmcode));
     reg8[0] = &cpu.al;
     reg8[1] = &cpu.cl;
     reg8[2] = &cpu.dl;
@@ -44995,31 +43005,7 @@ int main (int argc, char *argv[])
     segreg[4] = &cpu.fs;
     segreg[5] = &cpu.gs;
 #ifdef QB64_WINDOWS
-    /*
 
-      HANDLE WINAPI GetStdHandle(
-      __in  DWORD nStdHandle
-      );
-      STD_INPUT_HANDLE
-      (DWORD)-10
-
-      The standard input device. Initially, this is the console input buffer, CONIN$.
-
-      STD_OUTPUT_HANDLE
-      (DWORD)-11
-
-      The standard output device. Initially, this is the active console screen buffer, CONOUT$.
-
-      STD_ERROR_HANDLE
-      (DWORD)-12
-
-      The standard error device. Initially, this is the active console screen buffer, CONOUT$.
-
-      // BOOL WINAPI SetConsoleMode(
-      //   __in  HANDLE hConsoleHandle,
-      //   __in  DWORD dwMode
-      // );
-      */
 #endif
 
     for (i = 0; i < 32; i++) {
@@ -45046,7 +43032,6 @@ int main (int argc, char *argv[])
     qbs_set (startDir, func__cwd() );
     //switch to directory of this EXE file
     //http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe
-    //#ifndef QB64_ANDROID
 #ifdef QB64_WINDOWS
 #ifndef QB64_MICROSOFT
     static char *exepath = (char *) malloc (65536);
@@ -45093,11 +43078,7 @@ int main (int argc, char *argv[])
     qbs_set (rootDir, func__cwd() );
     unknown_opcode_mess = qbs_new (0, 0);
     qbs_set (unknown_opcode_mess, qbs_new_txt_len ("Unknown Opcode (  )\0", 20) );
-    /*#ifdef QB64_ANDROID
-        func_command_str = qbs_new (0, 0);
-        func_command_array = NULL;
-        func_command_count = 0;
-    #else*/
+
     i = argc;
 
     if (i > 1) {
@@ -45147,94 +43128,7 @@ int main (int argc, char *argv[])
 #ifdef QB64_WINDOWS
 
     if (console) {
-        /*
-        FILE * ctt = fopen("CON", "w" );
-        freopen( "CON", "w", stdout );
-        freopen( "CON", "w", stderr );
-        */
-        //freopen("CON", "wt", stdout);
-        //freopen("CON", "wt", stderr);
-        /* BESTBESTBESTBESTBESTBESTBESTBESTBESTBESTBESTBESTBESTBESTBESTBESTBEST
 
-        FILE * ctt = fopen("CON", "w" );//***Do not remove ever!***
-        freopen("CON", "w", stdout);
-        freopen("CON", "w", stderr);
-
-        */
-        //FILE * ctt = fopen("CONOUT$", "w" );
-        //freopen("CONOUT$", "w", stdout);
-        //freopen("CONOUT$", "w", stderr);
-        //freopen("CONIN$", "r", stdin);
-        //SetStdHandle(STD_OUTPUT_HANDLE,ctt);
-        //SetStdHandle(STD_OUTPUT_HANDLE,ctt);
-        //freopen("CON", "rt", stdin);
-        //HANDLE  ConsoleX = CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE,
-        //                      0,0,CONSOLE_TEXTMODE_BUFFER,0);
-        //  SetConsoleActiveScreenBuffer(ConsoleX);
-        //SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
-        //SetConsoleTitle("Lua Console");
-        //console input
-        //char cis[1000];
-        //fgets(cis,sizeof(cis),stdin);//yues this works, need to cull new line char
-        //char *remove_newline(char *s)
-        //{
-        //    int len = strlen(s);
-        //
-        //    if (len > 0 && s[len-1] == '\n')  // if there's a newline
-        //        s[len-1] = '\0';          // truncate the string
-        //
-        //    return s;
-        //}
-        //cout<<"Hello"; printf(" World!");
-        /*
-        HANDLE hConsoleIn;
-        hConsoleIn = GetStdHandle(STD_INPUT_HANDLE);
-        if (hConsoleIn == INVALID_HANDLE_VALUE) exit(0);
-
-        //ReadConsole hConsoleIn, ConsoleReadLine, Len(ConsoleReadLine), vbNull, vbNull
-        char rcbuffer[10000];
-        DWORD rcchrtoread;
-        DWORD rcchrread;
-
-        //this input works for the loaded console...yeah!
-        //note: this does block.
-
-        ReadConsole(
-        hConsoleIn,
-        &rcbuffer[0],
-        1,
-        &rcchrread,
-        NULL
-        );
-        //****readline might be a better choice for crossplatform compatibility
-
-        //if (rcbuffer[0]==65) exit(0);
-        error_erl=rcbuffer[0];
-        */
-        /*
-        BOOL WINAPI ReadConsole(
-        __in      HANDLE hConsoleInput,
-        __out     LPVOID lpBuffer,
-        __in      DWORD nNumberOfCharsToRead,
-        __out     LPDWORD lpNumberOfCharsRead,
-        __in_opt  LPVOID pInputControl
-        );
-        */
-        //nStdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE)
-        //ENABLE_PROCESSED_OUTPUT
-        //DWORD cmode;
-        //GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),&cmode);
-        //error_erl=cmode;
-        //if (cmode&ENABLE_ECHO_INPUT) cmode^=ENABLE_ECHO_INPUT;
-        //SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),cmode);
-        //string mystr;
-        //getline (cin, mystr);
-        /*
-        DWORD cmode;
-        GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE),&cmode);
-        cmode=cmode|ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT;
-        SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE),cmode);
-        */
     }
 
 #endif
@@ -45283,11 +43177,6 @@ int main (int argc, char *argv[])
         qb64_firsttimervalue = 0; //time unknown! (set to midnight)
     }
 
-    /* Used as follows for calculating TIMER value:
-       x=GetTicks();
-       x-=clock_firsttimervalue;
-       x+=qb64_firsttimervalue;
-    */
     //init truetype .ttf/.fon font library
     //NO_S_D_L//if (TTF_Init()==-1) exit(7000);
     //NO_S_D_L//atexit(TTF_Quit);
@@ -45377,12 +43266,7 @@ int main (int argc, char *argv[])
     inputedString = (Uint16 *) malloc (sizeof (Uint16) );
     inputedString[0] = 0x0000;
     inputedWidth = 0;
-    /* possible exit options
-       free(inputedString);
-       TTF_CloseFont(ime_font);
-       InputMethod_Quit();
-       SDL_Quit();
-    */
+
 #endif
     //NO_S_D_L//memset(snd,0,sizeof(snd));
     //init fake keyb. cyclic buffer
@@ -45497,25 +43381,7 @@ int main (int argc, char *argv[])
         pthread_create (&thread_handle, NULL, &TIMERTHREAD_LINUX, NULL);
     }
 #endif
-    /*
-      GLenum err = glewInit();
-      if (GLEW_OK != err)
-      {
-      exit(0);
-      }
-      //fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
 
-      GLenum err = glewInit();
-      if (GLEW_OK != err)
-      {
-      qbs_print(qbs_str((int32)err),1);
-
-      qbs_print(qbs_new_txt((char*)glewGetString(err)),1);
-
-      //error(70);
-      //exit(0);
-      }
-    */
     lock_display_required = 1;
 #ifndef QB64_GUI
     //normally MAIN_LOOP() is launched in a separate thread to reserve the primary thread for GLUT
@@ -45545,32 +43411,8 @@ int main (int argc, char *argv[])
 
 #ifdef QB64_GLUT
     glutInit (&argc, argv);
-    /* #ifdef QB64_ANDROID
-        //Note: GLUT_ACTION_CONTINUE_EXECUTION is not supported in Android
-        glutSetOption (GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
-    #endif */
 #ifdef QB64_MACOSX
-    //This is a global keydown handler for OSX, it requires assistive devices in asseccibility to be enabled
-    //becuase of security concerns (QB64 will not use this)
-    /*
-    [NSEvent addGlobalMonitorForEventsMatchingMask:NSKeyDownMask
-                                                                                   handler:^(NSEvent *event){
-     NSString *chars = [[event characters] lowercaseString];
-     unichar character = [chars characterAtIndex:0];
-     NSLog(@"keydown globally! Which key? This key: %c", character);
-    }];
-    */
-    /*
-    [NSEvent addLocalMonitorForEventsMatchingMask:NSKeyDownMask handler:^NSEvent* (NSEvent* event){
-     //NSString *keyPressed = event.charactersIgnoringModifiers;
-     //[self.keystrokes appendString:keyPressed];
-     NSString *chars = [[event characters] lowercaseString];
-     unichar character = [chars characterAtIndex:0];
-     NSLog(@"keydown locally! Which key? This key: %c", character);
-     return event;
-     }];
-    */
-    //[[[[NSApplication sharedApplication] mainWindow] standardWindowButton:NSWindowCloseButton] setEnabled:YES];
+
     [NSEvent addLocalMonitorForEventsMatchingMask:NSFlagsChangedMask handler:^NSEvent * (NSEvent * event) {
                 //notes on bitfields:
                 //if ([event modifierFlags] == 131330) keydown_vk(VK+QBVK_LSHIFT);// 100000000100000010
@@ -45661,37 +43503,10 @@ int main (int argc, char *argv[])
 
         return event;
     }];
-    /*
-       [NSEvent addLocalMonitorForEventsMatchingMask:NSKeyDownMask|NSFlagsChangedMask handler:^NSEvent *(NSEvent *incomingEvent) {
-        if (incomingEvent.type == NSFlagsChanged && (incomingEvent.modifierFlags & NSDeviceIndependentModifierFlagsMask)) {
-        NSLog(@"modifier key down");
-        } else if (incomingEvent.type == NSKeyDown) {
-        NSLog(@"other key down");
-        }
-        return incomingEvent;
-    }];
-    */
-    /*
-    if (NSApp){
-            NSMenu      *menu;
-            NSMenuItem  *menuItem;
 
-            [NSApp setMainMenu:[[NSMenu alloc] init]];
-
-            menu = [[NSMenu alloc] initWithTitle:@""];
-            [menu addItemWithTitle:@"About..." action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
-
-            menuItem = [[NSMenuItem alloc] initWithTitle:@"Apple" action:nil keyEquivalent:@""];
-            [menuItem setSubmenu:menu];
-            [[NSApp mainMenu] addItem:menuItem];
-            [NSApp setAppleMenu:menu];
-    }
-    */
 #endif
     glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize (640, 400); //cannot be changed unless display_x(etc) are modified
-
-    //glutInitWindowPosition(300, 200);
 
     if (!glutGet (GLUT_DISPLAY_MODE_POSSIBLE) ) { //must be called on Linux or GLUT crashes
         exit (1);
@@ -45801,7 +43616,6 @@ main_loop:
     if (shell_call_in_progress) {
         if (shell_call_in_progress != -1) {
             shell_call_in_progress = -1;
-            //NO_S_D_L//if (key_repeat_on){SDL_EnableKeyRepeat(0,0); key_repeat_on=0;}
             goto update_display_only;
         }
 
@@ -45819,112 +43633,7 @@ main_loop:
         goto end_program;
     }
 
-    //    if (!cloud_app) {
     snd_mainloop();
-    //    }
-
-    //check for input event (qloud_next_input_index)
-    /*     if (cloud_app) {
-            //***should be replaced with a timer based check (or removed)***
-            //static int qloud_input_frame_count=0;
-            //qloud_input_frame_count++;
-            //if (qloud_input_frame_count>8) qloud_input_frame_count=1;
-            //if (qloud_input_frame_count==1){//~8 checks per second (would be ~64 without this check)
-        qloud_input_recheck:
-            FILE *pFile;
-            long lSize;
-            char *buffer;
-            size_t result;
-            pFile = NULL;
-            static char filename[] =
-                "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
-            sprintf (filename, "input_%d.txt\0", qloud_next_input_index);
-            pFile = fopen (filename, "rb");
-
-            if (pFile != NULL) {
-                // obtain file size:
-                fseek (pFile, 0, SEEK_END);
-                lSize = ftell (pFile);
-                rewind (pFile);
-
-                if (lSize > 0) {
-                    // allocate memory to contain the whole file:
-                    buffer = (char *) calloc (1, sizeof (char) * lSize + 1);
-
-                    if (buffer != NULL) {
-                        // copy the file into the buffer:
-                        result = fread (buffer, 1, lSize, pFile);
-
-                        if (result == lSize) {
-                            if (buffer[lSize - 1] == 42) { //"*" terminator
-                                int start, stop;
-                                start = 0;
-                                int bi;
-                            nextcommand:
-
-                                for (bi = start; bi < lSize; bi++) {
-                                    if (buffer[bi] == 0) {
-                                        goto doneall;
-                                    }
-
-                                    if (buffer[bi] == 58) {
-                                        goto gotcolon;
-                                    }
-                                }
-
-                                goto doneall;
-                            gotcolon:
-                                int code;
-                                int v1, v2;
-                                code = buffer[start];
-                                start++;
-    #ifdef QB64_GUI
-
-                                if (code == 77) { //M (mousemove)
-                                    sscanf (buffer + start, "%d,%d", &v1, &v2);
-                                    GLUT_MOTION_FUNC (v1, v2);
-                                }//M
-
-                                if (code == 76) { //L (left mouse button)
-                                    sscanf (buffer + start, "%d,%d", &v1, &v2);
-                                    GLUT_MouseButton_Down (GLUT_LEFT_BUTTON, v1, v2);
-                                }
-
-                                if (code == 108) { //l (left mouse button up)
-                                    sscanf (buffer + start, "%d,%d", &v1, &v2);
-                                    GLUT_MouseButton_Up (GLUT_LEFT_BUTTON, v1, v2);
-                                }
-
-                                if (code == 68) { //D (key down)
-                                    sscanf (buffer + start, "%d", &v1);
-                                    keydown_vk (v1);
-                                }//D
-
-                                if (code == 85) { //U (key up)
-                                    sscanf (buffer + start, "%d", &v1);
-                                    keyup_vk (v1);
-                                }//U
-
-    #endif
-                                start = bi + 1;
-                                goto nextcommand;
-                            doneall:
-                                qloud_next_input_index++;
-                                free (buffer);
-                                fclose (pFile);
-                                goto qloud_input_recheck;
-                            }//* terminator
-                        }//read correct number of bytes
-
-                        free (buffer);
-                    }//could allocate buffer
-                }//file has content
-
-                fclose (pFile);
-            }//not null
-
-            //}//qloud_input_frame_count
-        }//qloud app */
 
     update ^= 1; //toggle update
 #ifndef NO_S_D_L
@@ -46076,18 +43785,6 @@ main_loop:
 
             switch (InputMethod_GetCurrentMessage() ) {
                 case INPUT_METHOD_MESSAGE_ON:
-                    /*
-                              rect.x = 0;
-                              rect.y = 100;
-                              rect.w = 640;
-                              rect.h = 100;
-                              SDL_FillRect(ime_back, &rect, 0x00000000);
-                              surface = TTF_RenderUTF8_Shaded(
-                              ime_font, "IME: ON", fg, bg);
-                              SDL_BlitSurface(surface, NULL, ime_back, &rect);
-                              SDL_FreeSurface(surface);
-                              DrawCursor(ime_back, ime_font, inputedWidth);
-                    */
                     break;
 
                 case INPUT_METHOD_MESSAGE_CHANGE:
@@ -46115,66 +43812,13 @@ main_loop:
                     }
 
                     //don't let it concatenate!
-                    /*
 
-                      stringLength =
-                      GetUnicodeStringLength(inputedString) +
-                      GetUnicodeStringLength(
-
-                      InputMethod_GetCurrentEditingString());
-                      needSize = stringLength * sizeof(Uint16) + sizeof(Uint16);
-                      inputedString = (Uint16*)realloc(inputedString, needSize);
-                      CatUnicodeString(
-                      inputedString,
-                      InputMethod_GetCurrentEditingString());
-
-                      {
-                      long i;
-                      for (i=0;i<stringLength;i++){
-                      //showvalue(inputedString[i]);
-                      }
-                      }
-
-                      surface = TTF_RenderUNICODE_Shaded(
-                      font, inputedString, gfg, bg);
-                      inputedWidth = surface->w;
-                      SDL_BlitSurface(surface, NULL, ime_back, NULL);
-                      SDL_FreeSurface(surface);
-                      DrawCursor(ime_back, font, inputedWidth);
-                    */
                     break;
 
                 case INPUT_METHOD_MESSAGE_CHAR:
-                    /*
-                      stringLength =
-                      GetUnicodeStringLength(inputedString) + 1;
-                      needSize = stringLength * sizeof(Uint16) + sizeof(Uint16);
-                      inputedString = (Uint16*)realloc(inputedString, needSize);
-                      inputedString[stringLength - 1] =
-                      InputMethod_GetCurrentChar();
-                      inputedString[stringLength] = 0x0000;
-
-                      surface = TTF_RenderUNICODE_Shaded(
-                      ime_font, inputedString, rfg, bg);
-                      inputedWidth = surface->w;
-                      SDL_BlitSurface(surface, NULL, ime_back, NULL);
-                      SDL_FreeSurface(surface);
-                      DrawCursor(ime_back, ime_font, inputedWidth);
-                    */
-                    break;
+                     break;
 
                 case INPUT_METHOD_MESSAGE_OFF:
-                    /*
-                      rect.x = 0;
-                      rect.y = 100;
-                      rect.w = 640;
-                      rect.h = 100;
-                      SDL_FillRect(ime_back, &rect, 0x00000000);
-                      surface = TTF_RenderUTF8_Shaded(
-                      ime_font, "IME: OFF", fg, bg);
-                      SDL_BlitSurface(surface, NULL, ime_back, &rect);
-                      SDL_FreeSurface(surface);
-                    */
                     break;
 
                 default:
@@ -46268,17 +43912,6 @@ end_program:
     snd_un_init();
     //    }
 
-    /*    if (cloud_app) {
-            FILE *f = fopen ("..\\final.txt", "w");
-
-            if (f != NULL) {
-                fprintf (f, "Program exited normally");
-                fclose (f);
-            }
-
-            exit (0); //should log error
-        } */
-
     exit (exit_code);
 }
 
@@ -46319,10 +43952,6 @@ void display()
 #ifdef QB64_GLES1 //OPENGL ES does not support GL_BGRA
     BGRA_to_RGBA = 1;
 #endif
-
-    /*    if (cloud_app) { //more converters handle the RGBA data format than BGRA which is dumped
-            BGRA_to_RGBA = 1;
-        } */
 
     if (lock_display == 1) {
         lock_display = 2;
@@ -46366,18 +43995,6 @@ void display()
 
         display_frame[frame_i].state = DISPLAY_FRAME_STATE__BUILDING;
         display_frame[frame_i].order = display_frame_order_next++;
-
-        /*        if (cloud_app) {
-                    static double cloud_timer_value = 0;
-                    static double cloud_timer_now = 0;
-                    cloud_timer_now = func_timer (0.001, 1);
-
-                    if (fabs (cloud_timer_value - cloud_timer_now) < 0.25) {
-                        goto cloud_skip_frame;
-                    }
-
-                    cloud_timer_value = cloud_timer_now;
-                } */
 
         //validate display_page
         if (!display_page) {
@@ -46431,94 +44048,7 @@ void display()
         }//i
 
 #endif //NO_S_D_L
-        /* commented out 2013
-        static int32 full_screen_change;
-        full_screen_change=0;
 
-        if (full_screen_set!=-1){
-        if (full_screen_set==0) goto full_screen0;
-        if (full_screen_set==1) goto full_screen1;
-        if (full_screen_set==2) goto full_screen2;
-        }
-
-        if (full_screen_toggle){
-        full_screen_toggle--;
-
-        if (full_screen==0){
-        full_screen1:
-        if (mode_stretch>-1){//can be displayed
-        full_screen=1;
-        if (autodisplay==1) mousemovementfix_mainloop(); else mousemovementfix();
-        full_screen_change=1;
-        screen_last_valid=0;
-
-        if (!mouse_hideshow_called){
-        #ifdef QB64_LINUX
-        if (autodisplay!=1){
-        lock_mainloop=1; while (lock_mainloop!=2) Sleep(1);//lock
-        }
-        #endif
-        //NO_S_D_L//SDL_ShowCursor(0);
-        #ifdef QB64_LINUX
-        if (autodisplay!=1){
-        lock_mainloop=0; Sleep(1);//unlock
-        }
-        #endif
-        }
-
-        }
-        goto full_screen_toggle_done;
-        }
-
-        if (full_screen==1){
-        full_screen2:
-        if (mode_square>-1&&mode_square!=mode_stretch){//usable 1:1 mode exists (that isn't same as stretched mode)
-        full_screen=2;
-        if (autodisplay==1) mousemovementfix_mainloop(); else mousemovementfix();
-        full_screen_change=1;
-        screen_last_valid=0;
-
-        if (!mouse_hideshow_called){
-        #ifdef QB64_LINUX
-        if (autodisplay!=1){
-        lock_mainloop=1; while (lock_mainloop!=2) Sleep(1);//lock
-        }
-        #endif
-        //NO_S_D_L//SDL_ShowCursor(0);
-        #ifdef QB64_LINUX
-        if (autodisplay!=1){
-        lock_mainloop=0; Sleep(1);//unlock
-        }
-        #endif
-        }
-
-        goto full_screen_toggle_done;
-        }
-        }
-        //back to windowed mode
-        full_screen0:
-        full_screen=0;
-        full_screen_change=1;
-        screen_last_valid=0;
-
-        if (!mouse_hideshow_called){
-        #ifdef QB64_LINUX
-        if (autodisplay!=1){
-        lock_mainloop=1; while (lock_mainloop!=2) Sleep(1);//lock
-        }
-        #endif
-        //NO_S_D_L//SDL_ShowCursor(1);
-        #ifdef QB64_LINUX
-        if (autodisplay!=1){
-        lock_mainloop=0; Sleep(1);//unlock
-        }
-        #endif
-        }
-
-        }
-        full_screen_toggle_done:
-        full_screen_set=-1;
-        */
         x = display_page->width;
         y = display_page->height;
 
@@ -46617,30 +44147,6 @@ void display()
             } else {
                 show_flashing = 0;
             }
-
-            /*            if (cloud_app) {
-                            static double cloud_timer_flash;
-                            cloud_timer_flash = func_timer (0.001, 1) / 2.0;
-                            static int64 cloud_timer_flash_int;
-                            cloud_timer_flash_int = cloud_timer_flash;
-
-                            if (cloud_timer_flash_int & 1) {
-                                show_cursor = 1;
-
-                            } else {
-                                show_cursor = 0;
-                            }
-
-                            if (cloud_timer_flash_int & 1) {
-                                show_flashing = 1;
-
-                            } else {
-                                show_flashing = 0;
-                            }
-
-                            //static int qloud_show_cursor=0;
-                            //qloud_show_cursor++; if (qloud_show_cursor&1) show_cursor=1; else show_cursor=0;
-                        } */
 
             //calculate cursor position (base 0)
             cx = display_page->cursor_x - 1;
@@ -47349,48 +44855,6 @@ void display()
         //if (!display_frame_begin) display_frame_begin=frame_i;
         display_frame[frame_i].state = DISPLAY_FRAME_STATE__READY;
         last_hardware_display_frame_order = display_frame[frame_i].order;
-
-        /* if (cloud_app) {
-            if (cloud_chdir_complete) {
-        #ifdef QB64_WINDOWS
-                /*
-                  static FILE *cloud_screenshot_file_handle=NULL;
-                  if (cloud_screenshot_file_handle==NULL) cloud_screenshot_file_handle=fopen("output_image.raw","w+b");
-                  fseek ( cloud_screenshot_file_handle , 0 , SEEK_SET );//reset file pointer to beginning of file
-                  static int32 w,h;
-                  w=display_frame[frame_i].w;
-                  h=display_frame[frame_i].h;
-                  static int32 wh[2];
-                  wh[0]=w;
-                  wh[1]=h;
-                  fwrite (&wh[0] , 8, 1, cloud_screenshot_file_handle);
-                  fwrite (display_frame[frame_i].bgra , w*h*4, 1, cloud_screenshot_file_handle);
-                  fflush(cloud_screenshot_file_handle);
-                */
-        /* static HANDLE cloud_screenshot_file_handle = NULL;
-
-        if (cloud_screenshot_file_handle == NULL)
-            cloud_screenshot_file_handle = CreateFile ("output_image.raw", GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS,
-                                           /*FILE_ATTRIBUTE_NORMAL*///FILE_FLAG_WRITE_THROUGH, NULL);
-
-        //fseek ( cloud_screenshot_file_handle , 0 , SEEK_SET );//reset file pointer to beginning of file
-        /* static int32 w, h, index = 0;
-        w = display_frame[frame_i].w;
-        h = display_frame[frame_i].h;
-        index++;
-        static int32 header[3];
-        header[0] = index;
-        header[1] = w;
-        header[2] = h;
-        SetFilePointer (cloud_screenshot_file_handle, 12, 0, FILE_BEGIN);
-        WriteFile (cloud_screenshot_file_handle, display_frame[frame_i].bgra, w * h * 4, NULL, NULL);
-        FlushFileBuffers (cloud_screenshot_file_handle);
-        SetFilePointer (cloud_screenshot_file_handle, 0, 0, FILE_BEGIN);
-        WriteFile (cloud_screenshot_file_handle, &header[0], 12, NULL, NULL);
-        //CloseHandle(cloud_screenshot_file_handle);
-        #endif
-        }
-        } */
 
     no_new_frame:
         ;
@@ -48793,113 +46257,36 @@ extern "C" LRESULT qb64_os_event_windows (HWND hWnd, UINT uMsg, WPARAM wParam, L
 #ifdef QB64_LINUX
 #ifdef QB64_GUI //Cannot have X11 events without a GUI
 #ifndef QB64_MACOSX
-//#ifndef QB64_ANDROID
 
-extern "C" void qb64_os_event_linux (XEvent *event, Display *display, int *qb64_os_event_info)
-{
-    if (*qb64_os_event_info == OS_EVENT_PRE_PROCESSING) {
-        if (X11_display == NULL) {
-            X11_display = display;
-            X11_window = event->xexpose.window;
+  extern "C" void qb64_os_event_linux(XEvent *event, Display *display, int *qb64_os_event_info){
+    if (*qb64_os_event_info==OS_EVENT_PRE_PROCESSING){
+
+        if (X11_display==NULL){
+         X11_display=display;
+         X11_window=event->xexpose.window;
         }
 
-        x11filter (event); //handles clipboard request events from other applications
-        /*
-        Atom a1, a2, type;
-        int format, result;
-        unsigned long len, bytes_left, dummy;
-        unsigned char *data;
-        Window Sown;
-        Display *dpy=X11_display;
+        x11filter(event);//handles clipboard request events from other applications
+    }
 
-        Sown = XGetSelectionOwner (dpy, XA_PRIMARY);
-        //printf ("Selection owner%i\n", (int)Sown);
-        if (Sown != None) {
+    if (*qb64_os_event_info==OS_EVENT_POST_PROCESSING){
+        switch (event->type) {
+            case EnterNotify:
+            window_focused = -1;
+            break;
 
-        XConvertSelection (dpy, XA_PRIMARY, XA_STRING, None,
-        Sown, CurrentTime);
-        */
-        ////XFlush (dpy);
-        //
-        // Do not get any data, see how much data is there
-        //
-        /*
-        XGetWindowProperty (dpy, Sown,
-        XA_STRING, // Tricky..
-        0, 0, // offset - len
-        0, // Delete 0==FALSE
-        AnyPropertyType, //flag
-        &type, // return type
-        &format, // return format
-        &len, &bytes_left, //that
-        &data);
-        //printf ("type:%i len:%i format:%i byte_left:%i\n",
-        //(int)type, len, format, bytes_left);
-        // DATA is There
-
-        if (bytes_left > 0)
-        {
-        result = XGetWindowProperty (dpy, Sown,
-        XA_STRING, 0,bytes_left,0,
-        AnyPropertyType, &type,&format,
-        &len, &dummy, &data);
-        if (result == Success){
-        //printf ("DATA IS HERE!!```%s'''\n",
-        //data);
-
-        XFree (data);
-        //return qbs_new_txt((const char*)data);
-        }else{
-         XFree (data);
-        }
-        }
-        //return qbs_new(0,1);
-        }
-        */
-        //if (event->type==KeyPress){
-        //}
-        /*
-
-            XGenericEventCookie *cookie = &event->xcookie;
-            XIRawEvent  *re;
-
-            Window dpy=event->xexpose.window;
-
-            //out
-            Window  root_ret, child_ret;
-            int     root_x, root_y;
-            int     win_x, win_y;
-            unsigned int        mask;
-
-            if (cookie->type != GenericEvent ||
-                cookie->extension != xi_opcode ||
-                !XGetEventData(dpy, cookie))
-        {
-        }
-        else{
-            switch (cookie->evtype) {
-            case XI_RawMotion:
-                re = (XIRawEvent *) cookie->data;
-                XQueryPointer(dpy, DefaultRootWindow(dpy),
-                          &root_ret, &child_ret, &root_x, &root_y, &win_x, &win_y, &mask);
-                //cout<<re->raw_values[0];
-                //printf ("raw %g,%g root %d,%d\n",
-                //    re->raw_values[0], re->raw_values[1],
-                //    root_x, root_y);
-                break;
+            case LeaveNotify:
+            window_focused = 0;
+            //Iterate over all modifiers
+            for (uint32 key = VK + QBVK_RSHIFT; key <= VK + QBVK_MODE; key++) {
+                if (keyheld(key)) keyup(key);
             }
-            XFreeEventData(dpy, cookie);
+            break;
         }
-
-        */
     }
-
-    if (*qb64_os_event_info == OS_EVENT_POST_PROCESSING) {
-    }
-
     return;
-}
-//#endif
+  }
+
 #endif
 #endif
 #endif

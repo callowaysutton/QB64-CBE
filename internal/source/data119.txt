@@ -1,20 +1,11 @@
-qbs*oldstr3675=NULL;
-if(_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_CODE->tmp||_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_CODE->fixed||_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_CODE->readonly){
-oldstr3675=_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_CODE;
-if (oldstr3675->cmem_descriptor){
-_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_CODE=qbs_new_cmem(oldstr3675->len,0);
-}else{
-_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_CODE=qbs_new(oldstr3675->len,0);
+int32 pass21453;
+int32 pass21454;
+int32 *_SUB_IDEDRAWPAR_LONG_X=NULL;
+if(_SUB_IDEDRAWPAR_LONG_X==NULL){
+_SUB_IDEDRAWPAR_LONG_X=(int32*)mem_static_malloc(4);
+*_SUB_IDEDRAWPAR_LONG_X=0;
 }
-memcpy(_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_CODE->chr,oldstr3675->chr,oldstr3675->len);
-}
-qbs*oldstr3676=NULL;
-if(_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_DIR->tmp||_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_DIR->fixed||_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_DIR->readonly){
-oldstr3676=_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_DIR;
-if (oldstr3676->cmem_descriptor){
-_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_DIR=qbs_new_cmem(oldstr3676->len,0);
-}else{
-_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_DIR=qbs_new(oldstr3676->len,0);
-}
-memcpy(_SUB_CREATEANDROIDPROJECT_ADDDIR_STRING_DIR->chr,oldstr3676->chr,oldstr3676->len);
+byte_element_struct *byte_element_21455=NULL;
+if (!byte_element_21455){
+if ((mem_static_pointer+=12)<mem_static_limit) byte_element_21455=(byte_element_struct*)(mem_static_pointer-12); else byte_element_21455=(byte_element_struct*)mem_static_malloc(12);
 }

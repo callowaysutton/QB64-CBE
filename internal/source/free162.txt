@@ -1,9 +1,18 @@
-if(oldstr5026){
-if(oldstr5026->fixed)qbs_set(oldstr5026,_FUNC_IDEZCHANGEPATH_STRING_PATH);
-qbs_free(_FUNC_IDEZCHANGEPATH_STRING_PATH);
+if(oldstr22076){
+if(oldstr22076->fixed)qbs_set(oldstr22076,_FUNC_IDEYESNOBOX_STRING_TITLESTR);
+qbs_free(_FUNC_IDEYESNOBOX_STRING_TITLESTR);
 }
-if(oldstr5027){
-if(oldstr5027->fixed)qbs_set(oldstr5027,_FUNC_IDEZCHANGEPATH_STRING_NEWPATH);
-qbs_free(_FUNC_IDEZCHANGEPATH_STRING_NEWPATH);
+if(oldstr22077){
+if(oldstr22077->fixed)qbs_set(oldstr22077,_FUNC_IDEYESNOBOX_STRING_MESSAGESTR);
+qbs_free(_FUNC_IDEYESNOBOX_STRING_MESSAGESTR);
 }
-qbs_free(_FUNC_IDEZCHANGEPATH_STRING_A);
+if (_FUNC_IDEYESNOBOX_ARRAY_UDT_O[2]&1){
+if (_FUNC_IDEYESNOBOX_ARRAY_UDT_O[2]&4){
+cmem_dynamic_free((uint8*)(_FUNC_IDEYESNOBOX_ARRAY_UDT_O[0]));
+}else{
+free((void*)(_FUNC_IDEYESNOBOX_ARRAY_UDT_O[0]));
+}
+}
+free_mem_lock( (mem_lock*)((ptrszint*)_FUNC_IDEYESNOBOX_ARRAY_UDT_O)[8] );
+qbs_free(_FUNC_IDEYESNOBOX_STRING1_SEP);
+qbs_free(_FUNC_IDEYESNOBOX_STRING_ALTLETTER);

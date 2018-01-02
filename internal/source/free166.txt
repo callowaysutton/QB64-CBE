@@ -1,6 +1,8 @@
-if(oldstr5067){
-if(oldstr5067->fixed)qbs_set(oldstr5067,_FUNC_IDEZTAKEPATH_STRING_F);
-qbs_free(_FUNC_IDEZTAKEPATH_STRING_F);
+if(oldstr22285){
+if(oldstr22285->fixed)qbs_set(oldstr22285,_FUNC_COUNTITEMS_STRING_SEARCHSTRING);
+qbs_free(_FUNC_COUNTITEMS_STRING_SEARCHSTRING);
 }
-qbs_free(_FUNC_IDEZTAKEPATH_STRING_P);
-qbs_free(_FUNC_IDEZTAKEPATH_STRING_A);
+if(oldstr22286){
+if(oldstr22286->fixed)qbs_set(oldstr22286,_FUNC_COUNTITEMS_STRING_ITEM);
+qbs_free(_FUNC_COUNTITEMS_STRING_ITEM);
+}

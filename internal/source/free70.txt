@@ -1,4 +1,4 @@
-if(oldstr3278){
-if(oldstr3278->fixed)qbs_set(oldstr3278,_SUB_PATH_SLASH_CORRECT_STRING_A);
+if(oldstr20265){
+if(oldstr20265->fixed)qbs_set(oldstr20265,_SUB_PATH_SLASH_CORRECT_STRING_A);
 qbs_free(_SUB_PATH_SLASH_CORRECT_STRING_A);
 }
